@@ -1,10 +1,10 @@
 # Obsidian vault .gitignore
 
-# Plugin directories (installed via Obsidian UI, not version controlled)
-.obsidian/plugins/
+# Plugin directories (version controlled)
+# .obsidian/plugins/
 
-# Theme directories (installed via Obsidian UI)
-.obsidian/themes/
+# Theme directories (version controlled)
+# .obsidian/themes/
 
 # OS generated files
 .DS_Store
