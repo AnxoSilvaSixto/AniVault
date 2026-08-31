@@ -10,8 +10,6 @@
 
 ## 📊 Collection Stats
 
-## 📊 Collection Stats
-
 | Category | Count |
 |----------|-------|
 | **Anime Notes** | 369+ |
