@@ -76,12 +76,12 @@ Rating: <1-10>
 
 | Plugin | Description | Link |
 |--------|-------------|------|
-| **dataview** | Query engine for vault data | [GitHub](https://github.com/blacksmithgu/obsidian-dataview) |
-| **obsidian-charts** | Chart visualizations | [GitHub](https://github.com/evunice/obsidian-charts) |
-| **pretty-properties** | Enhanced property display | [Obsidian Hub](https://obsidian.md/plugins?search=pretty-properties) |
-| **obsidian-style-settings** | Theme customization UI | [GitHub](https://github.com/mgmeyers/obsidian-style-settings) |
-| **custom-sort** | Mixed folder/file alphabetical sorting | [GitHub](https://github.com/mickael-carl/custom-sort) |
-| **vault-inspector** | Vault structure inspection | [Obsidian Hub](https://obsidian.md/plugins?search=vault-inspector) |
+| **dataview** | Query engine for vault data | [Plugin](https://community.obsidian.md/plugins/dataview) |
+| **obsidian-charts** | Chart visualizations | [Plugin](https://community.obsidian.md/plugins/obsidian-charts) |
+| **pretty-properties** | Enhanced property display | [Plugin](https://community.obsidian.md/plugins/pretty-properties) |
+| **obsidian-style-settings** | Theme customization UI | [Plugin](https://community.obsidian.md/plugins/obsidian-style-settings) |
+| **custom-sort** | Mixed folder/file alphabetical sorting | [Plugin](https://community.obsidian.md/plugins/custom-sort) |
+| **vault-inspector** | Vault structure inspection | [Plugin](https://community.obsidian.md/plugins/vault-inspector) |
 
 ## 🔄 Automation
 
