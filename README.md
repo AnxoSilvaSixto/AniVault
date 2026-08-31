@@ -45,7 +45,7 @@ AniVault/
 | Component | Tool |
 |-----------|------|
 | **Vault** | Obsidian |
-| **Metadata** | MyAnimeList via Tenrai API (Jikan-compatible) |
+| **Metadata** | [Tenrai API](https://tenrai.org/) (Jikan-compatible) |
 | **Sync** | Python scripts (`sync_anime.py`, `sync_studios.py`) |
 | **Queries** | Dataview + DataviewJS |
 | **Database** | Obsidian Bases |
