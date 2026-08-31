@@ -22,14 +22,14 @@
 - [Community Plugins](#-community-plugins)
 - [Theme & Snippets](#-theme--snippets)
 - [Sorting](#-sorting)
-- [Automation & Scripts](#-automation--scripts)
+- [Automation](#-automation)
 - [Tips & Workflow](#-tips--workflow)
 - [Documentation](#-documentation)
 - [License](#-license)
 
 ## 🌸 Overview
 
-AniVault is a local-first Obsidian vault for tracking watched anime. Every entry is a Markdown note with structured frontmatter (MAL-sourced), linked to reference pages for studios, genres, themes, demographics, sources, and types. Query it with Dataview/Bases, visualize with Charts, and keep metadata fresh via Python sync scripts against the [Tenrai API](https://tenrai.org/) (Jikan-compatible).
+AniVault is a local-first Obsidian vault for tracking watched anime. Every entry is a Markdown note with structured frontmatter (MAL-sourced), linked to reference pages for studios, genres, themes, demographics, sources, and types. Query it with Dataview/Bases and visualize with Charts — all offline, plain Markdown, canvas-driven.
 
 **Why Obsidian?** Plain Markdown, offline, fully queryable, and canvas-driven dashboards — no proprietary DB or cloud lock-in.
 
@@ -39,7 +39,7 @@ AniVault is a local-first Obsidian vault for tracking watched anime. Every entry
 
 | Category | Count | Notes |
 |----------|-------|-------|
-| **Anime Notes** | **369** | standalone + 59 series subfolders in `Anime/` |
+| **Anime Notes** | **369** | standalone + 57 series subfolders in `Anime/` |
 | **Reference Pages** | **183** | `Extra/` total |
 | — Studios | 90 | `Extra/Studio/` |
 | — Themes | 52 | `Extra/Themes/` |
@@ -57,7 +57,6 @@ AniVault is a local-first Obsidian vault for tracking watched anime. Every entry
 |-------------|-----------------|
 | **Obsidian** | ≥ `1.13.4` (vault uses `Baseline 3.2.12` + Bases) |
 | **Git** | For versioning / backup; hook uses `core.hooksPath=.githooks` |
-| **Python** | ≥ `3.10` if you use sync scripts (`sync_anime.py`, `sync_studios.py`) |
 | **Theme** | [Baseline](https://github.com/aaaaalexis/baseline) (included in `.obsidian/themes/`) |
 | **Plugins** | 6 community plugins auto-prompted on open (see below) — keep them enabled |
 
@@ -80,25 +79,14 @@ git clone https://github.com/AnxoSilvaSixto/AniVault.git
 **4. Enable snippets**
 `Settings → Appearance → CSS snippets → Enable` all three: `media-grid`, `obsidian-icons`, `text-centered`.
 
-**5. (Optional) Sync metadata**
-```powershell
-# Interactive menu
-.\Utilities\Scripts\sync_menu.bat
-
-# Or directly
-python Utilities/Scripts/sync_anime.py --mode both --dry-run
-python Utilities/Scripts/sync_anime.py --mode both
-python Utilities/Scripts/sync_studios.py
-```
-
-**6. Verify**
+**5. Verify**
 Open `Utilities/Bases/Anime tracker.base` and `Homepage.canvas` — you should see 369 entries, 4 embedded charts, and no broken links (`vault-inspector`).
 
 ## 🏗️ Structure
 
 ```
 AniVault/
-├── Anime/                 # 369 notes — flat files + 59 series folders (e.g. "Ansatsu Kyoushitsu/")
+├── Anime/                 # 369 notes — flat files + 57 series folders (e.g. "Ansatsu Kyoushitsu/")
 ├── Extra/                 # 183 reference pages
 │   ├── Demographic/       # 5 (Seinen, Shounen, Shoujo, Josei, Kids)
 │   ├── Genre/             # 21 (Action, Romance, …)
@@ -111,8 +99,7 @@ AniVault/
 ├── Utilities/
 │   ├── Bases/             # 7 .base views (tracker + dimension tables)
 │   ├── Graphs/            # 4 DataviewJS chart notes
-│   ├── Scripts/           # sync_anime.py, sync_studios.py, sync_menu.bat, logs in data/
-│   │   └── data/          # Metadata_Updates/, *.log
+│   ├── Scripts/           # helper scripts (auto-updates README stats)
 │   ├── Templates/         # media-grid Template.md (requires media-grid.css)
 │   └── sortspec.md        # Custom Sort spec for Anime/ (mix folders+files A→Z)
 ├── Homepage.canvas        # Dashboard — embeds 4 graphs + bases
@@ -126,7 +113,7 @@ AniVault/
 
 ## 📝 Frontmatter Schema
 
-Every `Anime/*.md` and `Pending/*.md` uses this frontmatter. Lists are YAML arrays of wikilinks. `Rating` is **your** score (sync never overwrites it).
+Every `Anime/*.md` and `Pending/*.md` uses this frontmatter. Lists are YAML arrays of wikilinks. `Rating` is **your** score (personal, not MAL’s).
 
 ```yaml
 ---
@@ -147,7 +134,7 @@ Demographic:
   - "[[Shounen]]"
 Cover: https://cdn.myanimelist.net/images/anime/8/77966l.jpg
 MAL: https://myanimelist.net/anime/30654
-Rating: 8                      # 1–10, personal — excluded from sync
+Rating: 8                      # 1–10, personal — your own score
 # Relational (optional, added when applicable)
 Prequels:
   - "[[Ansatsu Kyoushitsu]]"
@@ -158,15 +145,15 @@ Alternative Version: []
 
 | Field | Type | Source | Notes |
 |-------|------|--------|-------|
-| `ID` | int | Tenrai/MAL | MyAnimeList ID |
-| `Type` | `[[Type]]` | Tenrai | From `Extra/Type/` |
-| `Episodes` | int | Tenrai | `null` if unknown |
-| `Aired` / `Finished` | date | Tenrai | `YYYY-MM-DD` |
-| `Studio` | `[[Studio]][]` | Tenrai | Multi-studio supported |
-| `Source` | `[[Source]]` | Tenrai | |
-| `Genre` / `Themes` / `Demographic` | `[[...]][]` | Tenrai | Arrays, may be empty |
-| `Cover` / `MAL` | url | Tenrai | Hotlink to MAL CDN |
-| `Rating` | 1–10 | **You** | Never overwritten by sync |
+| `ID` | int | MAL | MyAnimeList ID |
+| `Type` | `[[Type]]` | MAL | From `Extra/Type/` |
+| `Episodes` | int | MAL | `null` if unknown |
+| `Aired` / `Finished` | date | MAL | `YYYY-MM-DD` |
+| `Studio` | `[[Studio]][]` | MAL | Multi-studio supported |
+| `Source` | `[[Source]]` | MAL | |
+| `Genre` / `Themes` / `Demographic` | `[[...]][]` | MAL | Arrays, may be empty |
+| `Cover` / `MAL` | url | MAL | Hotlink to MAL CDN |
+| `Rating` | 1–10 | **You** | Personal — never auto-overwritten |
 | `Prequels` / `Sequels` / `Alternative Version` | `[[Anime]][]` | Manual | Rendered as media-grid |
 
 **Example** — `Anime/Ansatsu Kyoushitsu/Ansatsu Kyoushitsu 2nd Season.md` demonstrates multi-genre, `Prequels`, and synopsis callout.
@@ -212,8 +199,7 @@ Embedded together in `Homepage.canvas`:
 | Layer | Tool | Notes |
 |-------|------|-------|
 | **Vault** | Obsidian | `openBehavior: Homepage.canvas`, `newLinkFormat: shortest` |
-| **Metadata** | [Tenrai API](https://tenrai.org/) | Jikan-compatible MAL mirror (original Jikan public API discontinued) |
-| **Sync** | Python 3 (`sync_anime.py`, `sync_studios.py`) | Outputs to `Utilities/Scripts/data/Metadata_Updates/` for manual review |
+| **Metadata** | MyAnimeList (MAL) | Structured frontmatter per anime |
 | **Queries** | Dataview + DataviewJS | Powers `Utilities/Graphs/` |
 | **Database** | Obsidian Bases | 7 views |
 | **Sorting** | Custom Sort (`Utilities/sortspec.md`) | Mixes folders + files A→Z in `Anime/` |
@@ -266,13 +252,13 @@ sorting-spec: |
 
 Fixes Obsidian’s default “folders first” to pure A→Z interleaving. Without it, `Aho Girl.md` sorts after all series folders.
 
-## 🔄 Automation & Scripts
+## 🔄 Automation
 
 ### Auto-backup (Windows)
 
 - **Trigger:** Windows login, weekly (runs only if last backup ≥7 days ago)
 - **Task:** `Task Scheduler → AniVault Git Backup`
-- **Script:** `C:\Scripts\AniVault-backup.ps1` — `git add -A && git commit -m "Last Sync: $(date)" && git push` + `git push` staging
+- **Script:** `C:\Scripts\AniVault-backup.ps1` — auto-updates `README.md` via `Utilities/Scripts/update_readme.py`, then `git add -A && git commit -m "auto: vault backup $(date)" && git push`
 
 ### Pre-commit hook
 
@@ -281,30 +267,11 @@ Versioned at `.githooks/pre-commit` (enabled via `git config core.hooksPath .git
 - Blocks secrets (API keys, tokens, GitHub PATs)
 - Blocks files >10 MB
 
-### Sync scripts
-
-**`Utilities/Scripts/sync_anime.py`**
-```powershell
-python Utilities/Scripts/sync_anime.py --help
-# --full        recheck all files (vs incremental via data/*.log)
-# --mode {info,synopsis,both}  default both
-# --dry-run     preview without writing
-```
-Syncs: `ID, Type, Episodes, Aired, Finished, Studio, Source, Genre, Themes, Demographic, Cover, MAL, Synopsis`. Writes updated Markdown to `Utilities/Scripts/data/Metadata_Updates/` — **never** overwrites in place; you review then move. `Rating` excluded (personal).
-
-**`Utilities/Scripts/sync_studios.py`** — incremental studio metadata (foundation date, cover, MAL link) with `data/studios_synced.log`.
-
-**`Utilities/Scripts/sync_menu.bat`** — interactive menu:
-```
-1. Full sync          2. Sync new synopsis   3. Sync new metadata
-4. Studios full       5. Studios incremental
-```
-
-Logs: `Utilities/Scripts/data/{metadata,synopsis,studios}_synced.log` (ignored `__pycache__/`).
+> `README.md` stats (counts + `Last updated`) are auto-maintained by `Utilities/Scripts/update_readme.py` — run manually with `python Utilities/Scripts/update_readme.py` or let the backup task handle it.
 
 ## 💡 Tips & Workflow
 
-- **New anime:** Create `Anime/<Series>/<Title>.md` from template → fill `ID` → run sync or paste MAL fields manually → rate after watching.
+- **New anime:** Create `Anime/<Series>/<Title>.md` from template → fill `ID` → paste MAL fields → rate after watching.
 - **Watchlist:** Add stubs to `Pending/` (intentionally incomplete — `AGENTS.md §2.3`). When watched, move to `Anime/` and enrich.
 - **Studios:** Don’t create `Extra/Studio/<New>.md` unless a watched `Anime/` note wikilinks it (`AGENTS.md §2.4` — avoids orphans).
 - **Bases vs search:** Prefer Bases for browsing; `Utilities/` & `To-do/` are excluded from Obsidian search/graph by design.
