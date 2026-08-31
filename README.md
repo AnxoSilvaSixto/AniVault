@@ -15,6 +15,7 @@
 - [Prerequisites](#-prerequisites)
 - [Quick Start](#-quick-start)
 - [Structure](#️-structure)
+- [Preview](#️-preview)
 - [Frontmatter Schema](#-frontmatter-schema)
 - [Obsidian Bases](#-obsidian-bases)
 - [DataviewJS Graphs](#-dataviewjs-graphs)
@@ -110,6 +111,12 @@ AniVault/
 ```
 
 > `To-do/` and `Utilities/` are hidden from Obsidian search/graph but tracked in Git. `workspace.json` / `workspace-mobile.json` and `vault-inspector/data.json` are **ignored** (machine-specific cache).
+
+## 🖼️ Preview
+
+![Homepage.canvas preview](.github/assets/canvas-preview.svg)
+
+*Schematic of `Homepage.canvas` — 2 Bases (Hall of Fame + Main, 369 entries) and 4 Graphs (Genres 21 · Themes 52 · Studio 90 · Rating). Open in Obsidian for the interactive canvas (Baseline theme, 6 nodes).*
 
 ## 📝 Frontmatter Schema
 

@@ -29,6 +29,10 @@ __pycache__/
 # Logs
 *.log
 
+# Generated update outputs (manual review only)
+Utilities/Scripts/data/Metadata_Updates/
+Utilities/Scripts/data/Studio_Updates/
+
 # Temp
 *.tmp
 *.bak
