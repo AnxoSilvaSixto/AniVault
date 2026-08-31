@@ -1,18 +1,18 @@
 # Auto-detect text files and normalize to LF on commit
 * text=auto eol=lf
 
-# Explicit text types
-*.md text
-*.canvas text
-*.json text
-*.base text
-*.css text
-*.js text
-*.py text
-*.bat text
-*.ps1 text
-.gitignore text
-.gitattributes text
+# Explicit text types (UTF-8, LF)
+*.md text working-tree-encoding=UTF-8 eol=lf
+*.canvas text eol=lf
+*.json text eol=lf
+*.base text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.py text eol=lf
+*.bat text eol=lf
+*.ps1 text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
 
 # Binary
 *.png binary
