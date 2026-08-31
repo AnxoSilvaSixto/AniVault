@@ -6,6 +6,10 @@
 [![Obsidian](https://img.shields.io/badge/Built%20with-Obsidian-48AA42?style=flat&logo=obsidian&logoColor=white)](https://obsidian.md)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+> **Personal vault** — Feel free to use, modify, and adapt this vault for your own anime tracking. It's open source under MIT license.
+
+## 📊 Collection Stats
+
 ## 📊 Collection Stats
 
 | Category | Count |
@@ -70,12 +74,14 @@ Rating: <1-10>
 
 ## 🔌 Community Plugins
 
-- **dataview** — Query engine for vault data
-- **obsidian-charts** — Chart visualizations
-- **pretty-properties** — Enhanced property display
-- **obsidian-style-settings** — Theme customization UI
-- **custom-sort** — Mixed folder/file alphabetical sorting
-- **vault-inspector** — Vault structure inspection
+| Plugin | Description | Link |
+|--------|-------------|------|
+| **dataview** | Query engine for vault data | [GitHub](https://github.com/blacksmithgu/obsidian-dataview) |
+| **obsidian-charts** | Chart visualizations | [GitHub](https://github.com/evunice/obsidian-charts) |
+| **pretty-properties** | Enhanced property display | [Obsidian Hub](https://obsidian.md/plugins?search=pretty-properties) |
+| **obsidian-style-settings** | Theme customization UI | [GitHub](https://github.com/mgmeyers/obsidian-style-settings) |
+| **custom-sort** | Mixed folder/file alphabetical sorting | [GitHub](https://github.com/mickael-carl/custom-sort) |
+| **vault-inspector** | Vault structure inspection | [Obsidian Hub](https://obsidian.md/plugins?search=vault-inspector) |
 
 ## 🔄 Automation
 
@@ -86,7 +92,6 @@ Rating: <1-10>
 ## 📚 Documentation
 
 - `AGENTS.md` — Project guidelines and rules
-- `_vault_guidelines.md` — Vault management guidelines
 
 ## 📄 License
 
