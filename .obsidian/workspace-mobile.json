@@ -15,8 +15,8 @@
               "state": {
                 "file": "Homepage.canvas",
                 "viewState": {
-                  "x": -452.5100248347069,
-                  "y": -1622.198097779079,
+                  "x": -276.2238347071385,
+                  "y": -1452.949793693786,
                   "zoom": -2.6257422522531133
                 }
               },
@@ -40,7 +40,9 @@
           "type": "file-explorer",
           "state": {
             "sortOrder": "alphabetical",
-            "autoReveal": false
+            "autoReveal": false,
+            "showSearch": false,
+            "searchQuery": ""
           },
           "icon": "lucide-folder-closed",
           "title": "Explorador de archivos"
@@ -103,6 +105,8 @@
   },
   "left-ribbon": {
     "hiddenItems": {
+      "random-note:Abrir nota al azar": false,
+      "vault-inspector:Run scan": false,
       "graph:Abrir vista gráfica": false,
       "canvas:Crear nuevo lienzo": false,
       "command-palette:Abrir paleta de comandos": false,
