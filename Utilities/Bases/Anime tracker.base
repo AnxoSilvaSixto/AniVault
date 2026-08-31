@@ -40,7 +40,7 @@ views:
     name: Searcher
     filters:
       and:
-        - Type == link("Special")
+        - Rating.isEmpty()
     order:
       - file.name
       - Aired

@@ -25,7 +25,7 @@ Themes:
 Demographic: []
 Cover: https://cdn.myanimelist.net/images/anime/1007/151669l.jpg
 MAL: https://myanimelist.net/anime/60336
-Rating: 
+Rating: 3
 ---
 
 > [!summary] Synopsis

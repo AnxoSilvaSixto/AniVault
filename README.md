@@ -114,9 +114,17 @@ AniVault/
 
 ## 🖼️ Preview
 
-![Homepage.canvas preview](.github/assets/canvas-preview.svg)
+### Homepage.canvas
 
-*Schematic of `Homepage.canvas` — 2 Bases (Hall of Fame + Main, 369 entries) and 4 Graphs (Genres 21 · Themes 52 · Studio 90 · Rating). Open in Obsidian for the interactive canvas (Baseline theme, 6 nodes).*
+![Homepage — Hall of Fame, Studio, Genres, Themes](.github/assets/homepage.png)
+
+*`Homepage.canvas` — `Hall of Fame` (8 × Rating 10) + `Studio`/`Genres`/`Themes` doughnuts + `Full list` (369). Baseline theme, 6 nodes. Captured 2026-08-31.*
+
+### Rating Distribution
+
+![Rating Distribution — 366 rated titles, mean 6.42](.github/assets/rating-distribution.png)
+
+*`Utilities/Graphs/Rating Distribution.md` — 366 rated titles, mean 6.42, median 7.00, 75.7% in 5–8. Bar + Normal Distribution curve.*
 
 ## 📝 Frontmatter Schema
 
