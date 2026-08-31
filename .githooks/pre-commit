@@ -1,0 +1,42 @@
+#!/bin/bash
+# Pre-commit hook: check for secrets and large files
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+
+HAS_ERROR=0
+
+for FILE in $STAGED_FILES; do
+    # Skip the hook itself (contains pattern strings for detection)
+    if [[ "$FILE" == ".githooks/pre-commit" || "$FILE" == ".git/hooks/pre-commit" ]]; then
+        continue
+    fi
+    FILEPATH="$REPO_ROOT/$FILE"
+    
+    # Check for secrets
+    if grep -qiE '(api[_-]?key\s*=|secret\s*=|token\s*=|ghp_|github_pat_)' "$FILEPATH" 2>/dev/null; then
+        echo "POSSIBLE SECRET DETECTED in $FILE"
+        HAS_ERROR=1
+    fi
+    
+    # Check for large files (>10MB)
+    if [ -f "$FILEPATH" ]; then
+        SIZE=$(stat -c%s "$FILEPATH" 2>/dev/null || stat -f%z "$FILEPATH" 2>/dev/null)
+        if [ "$SIZE" -gt 10485760 ] 2>/dev/null; then
+            SIZE_MB=$((SIZE / 1048576))
+            echo "Large file staged: $FILE ($SIZE_MB MB > 10MB limit)"
+            HAS_ERROR=1
+        fi
+    fi
+done
+
+if [ $HAS_ERROR -eq 1 ]; then
+    echo ""
+    echo "=== PRE-COMMIT CHECK FAILED ==="
+    echo "Fix the issues above or use: git commit --no-verify"
+    echo ""
+    exit 1
+fi
+
+echo "Pre-commit checks passed."
+exit 0

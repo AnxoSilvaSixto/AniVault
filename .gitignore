@@ -1,10 +1,13 @@
 # Obsidian vault .gitignore
 
-# Plugin directories (version controlled)
-# .obsidian/plugins/
+# --- Vault state (volatile / machine-specific) ---
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/hotkeys.json
+# Vault-inspector scan cache (local state, broken-link detection)
+.obsidian/plugins/vault-inspector/data.json
 
-# Theme directories (version controlled)
-# .obsidian/themes/
+# Plugin/theme code is version-controlled; only caches ignored above
 
 # OS generated files
 .DS_Store
@@ -20,6 +23,15 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.pyc
+.venv/
+.env
 
 # Logs
 *.log
+
+# Temp
+*.tmp
+*.bak
+
+# opencode leftover (should live at .opencode/ or ~/.config/opencode, not inside .git/)
+.git/opencode

@@ -4,9 +4,8 @@
 
 [![GitHub](https://img.shields.io/badge/GitHub-AnxoSilvaSixto/AniVault-181717?style=flat&logo=github)](https://github.com/AnxoSilvaSixto/AniVault)
 [![Obsidian](https://img.shields.io/badge/Built%20with-Obsidian-48AA42?style=flat&logo=obsidian&logoColor=white)](https://obsidian.md)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> **Personal vault** — Feel free to use, modify, and adapt this vault for your own anime tracking. It's open source under MIT license.
+> **Personal vault** — Feel free to use, modify, and adapt this vault for your own anime tracking. No license restrictions — public domain equivalent, do whatever you want.
 
 ## 📊 Collection Stats
 
@@ -32,12 +31,14 @@ AniVault/
 │   ├── Themes/         # Isekai, Mecha, Slice of Life, etc.
 │   └── Type/           # TV, Movie, OVA, ONA, Special
 ├── Pending/            # Watchlist (unwatched anime)
+├── To-do/              # Task tracking (hidden from vault stats)
 ├── Utilities/          # Scripts, graphs, bases, templates
 │   ├── Bases/          # Obsidian Bases database views
 │   ├── Graphs/         # DataviewJS charts
 │   ├── Scripts/        # Python sync scripts
 │   └── Templates/      # Note templates
-└── Homepage.canvas     # Main dashboard
+├── Homepage.canvas     # Main dashboard
+└── README.md           # This file (GitHub landing page)
 ```
 
 ## 🛠️ Tech Stack
@@ -89,11 +90,11 @@ Rating: <1-10>
 
 ## 📚 Documentation
 
-- `AGENTS.md` — Project guidelines and rules
+- `.obsidian/AGENTS.md` — Project guidelines and rules (hidden from vault)
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+No license — public domain equivalent. No rights reserved. Use, modify, and adapt without restriction or attribution.
 
 ---
 

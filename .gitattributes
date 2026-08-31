@@ -1,0 +1,26 @@
+# Auto-detect text files and normalize to LF on commit
+* text=auto eol=lf
+
+# Explicit text types
+*.md text
+*.canvas text
+*.json text
+*.base text
+*.css text
+*.js text
+*.py text
+*.bat text
+*.ps1 text
+.gitignore text
+.gitattributes text
+
+# Binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
