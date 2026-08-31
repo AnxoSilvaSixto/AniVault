@@ -1,0 +1,11 @@
+---
+Foundation: 2000-11-10
+Cover: https://cdn.myanimelist.net/s/common/company_logos/20be7c87-65ec-4db4-9754-4054c9a31293_600x600_i
+MAL: https://myanimelist.net/anime/producer/132
+---
+>[!tip] Information
+>A Japanese animation planning and production company. "PA" is an abbreviation for "Progressive Animation".
+>
+>On November 10, 2000, Kenji Horikawa, the company representative and producer of BEE TRAIN, established Etsuchu Animation Honpo Co., Ltd. in Jobata-cho, Higashi-Tonami-gun, Toyama Prefecture. On January 1, 2002, the company officially changed its name to PA Works (PA Works Co., Ltd.), and immediately moved the studio to its current location. The reason for its establishment is that Horikawa needs to return to the local area according to the family's agreement, and seeing that there is no mature animation studio in the local area, he decided to start a business. At the beginning of its establishment, due to limited funds, it was necessary to borrow an abandoned hospital for reconstruction, and to borrow the cable TV network to handle various administrative work. Since its establishment, the company has long been one of the cooperative partners of BEE TRAIN, [[Production I.G]] and [[BONES]]. With the development of the company's business, the company has not only established a branch in the capital, Tokyo, but also committed to improving the health and dormitory welfare of employees. At present, Toyama Head Office is mainly responsible for painting and 3D-CG production, while Tokyo office P-10 is responsible for performance and distribution production. In 2008, the company invested in the independent production of "true tears" for the first time, and used this to set a route for its early promotion of original animation and to maintain the high quality of the finished product. At the same time, the company also invested in the production of Q-style prints of "Professor Layton Series". As for the future outlook, the president has expressed the hope that one day he will be able to independently produce two films a year on average, with a total of more than 50 episodes of animation production throughout the year.
+>
+>![[Studio base.base#P.A. Works]]

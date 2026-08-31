@@ -1,0 +1,4 @@
+>[!Info] Definition
+>Shounen (literally "young boy") is the largest and arguably most globally recognized demographic, intended for an audience of adolescent boys, typically ranging from ages 10 to 18. These series are overwhelmingly characterized by [[Action|high-energy action]], [[Adventure|grand adventure]], and a strong focus on self-improvement and competition. Core thematic pillars, often summarized by slogans like "Friendship, Effort, Victory," drive the narratives, which usually follow a determined male protagonist on an arduous journey to achieve an ambitious goal. Shounen titles encompass diverse genres such as [[fantasy]], [[martial arts]], [[sports]], and [[sci-fi]], maintaining widespread appeal through engaging action sequences, training arcs, team dynamics, and the protagonist's unwavering will to overcome adversity.
+>
+>![[Demographic base.base#Shonen]]

@@ -1,0 +1,25 @@
+# Obsidian vault .gitignore
+
+# Plugin directories (installed via Obsidian UI, not version controlled)
+.obsidian/plugins/
+
+# Theme directories (installed via Obsidian UI)
+.obsidian/themes/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Logs
+*.log

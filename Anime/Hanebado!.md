@@ -1,0 +1,23 @@
+---
+ID: 37259
+Type: "[[TV]]"
+Episodes: 13
+Aired: 2018-07-02
+Finished: 2018-10-01
+Studio:
+  - "[[LIDENFILMS]]"
+Source: "[[Manga]]"
+Genre:
+  - "[[Sports]]"
+Themes:
+  - "[[School]]"
+Demographic:
+  - "[[Seinen]]"
+Cover: https://cdn.myanimelist.net/images/anime/1288/93432l.jpg
+MAL: https://myanimelist.net/anime/37259
+Rating: 7
+---
+>[!summary] Synopsis
+>After her crushing defeat of 21-0 at the National Junior Badminton Tournament, Nagisa Aragaki's love for her sport begins to distort. Unable to deal with the shame of loss, she starts to terrorize the members of her high school badminton club. Her grueling drills bring some to the verge of tears while others quit the club outright. With the team losing members and new prospects being too terrified to join, the future of the badminton club looks exceptionally grim.
+>
+>That is, until Kentarou Tachibana joins as the new head coach. Not only is he an Olympic-level player, but he also comes bearing a secret weapon: Ayano Hanesaki, the girl who defeated Nagisa six months ago. However, Ayano is not the rival Nagisa remembers, but a girl with conflicted feelings wanting to distance herself from badminton. With her future in sports now on the line, Nagisa must find a way to face her fears of inadequacy, heal her rival's troubled heart, and bring victory to Kitakomachi High School's badminton club.

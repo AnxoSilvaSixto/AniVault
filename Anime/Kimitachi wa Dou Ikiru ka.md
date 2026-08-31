@@ -1,0 +1,28 @@
+---
+ID: 36699
+Type: "[[Movie]]"
+Episodes: 1
+Aired: 2023-07-14
+Finished: 2023-07-14
+Studio:
+  - "[[Studio Ghibli]]"
+Source: "[[Original]]"
+Genre:
+  - "[[Adventure]]"
+  - "[[Award Winning]]"
+  - "[[Drama]]"
+  - "[[Fantasy]]"
+Themes:
+  - "[[Anthropomorphic]]"
+  - "[[Isekai]]"
+Demographic: []
+Cover: https://cdn.myanimelist.net/images/anime/1126/139654l.jpg
+MAL: https://myanimelist.net/anime/36699
+Rating: 3
+---
+>[!summary] Synopsis
+>Three years into the war, Mahito Maki loses his mother in a tragic fire at the hospital. Shortly thereafter, his father marries Natsuko, the younger sister of Mahito's mother. They take Mahito out of Tokyo to seek refuge in his late mother's rural family home. There, Mahito is constantly taunted by a strange gray heron, who seems to have taken an interest in him.
+>
+>Unable to come to terms with his loss and struggling to adjust to a new life in an unfamiliar place, the boy is shocked to discover that Natsuko is pregnant. To make matters worse, the pesky heron can speak—and claims that Mahito's mother is still alive. Luring him into a mysterious tower near the residence, the heron says that Mahito can save her from death, but the boy is not easily swayed.
+>
+>When Natsuko disappears one day, however, Mahito watches her walk into the tower and becomes compelled to venture in to rescue her. He soon finds himself falling into another world below his, where life and death seem to be entwined. As he navigates through this foreign realm to find Natsuko, Mahito must understand what it means to live if he wants to safely return home.

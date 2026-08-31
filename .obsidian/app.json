@@ -1,0 +1,28 @@
+{
+  "defaultViewMode": "preview",
+  "readableLineLength": true,
+  "strictLineBreaks": false,
+  "propertiesInDocument": "visible",
+  "promptDelete": false,
+  "showLineNumber": false,
+  "foldHeading": true,
+  "foldIndent": true,
+  "showIndentGuide": false,
+  "spellcheck": false,
+  "smartIndentList": true,
+  "autoPairMarkdown": false,
+  "autoPairBrackets": false,
+  "autoConvertHtml": false,
+  "newFileLocation": "current",
+  "attachmentFolderPath": "./",
+  "newLinkFormat": "shortest",
+  "alwaysUpdateLinks": true,
+  "showUnsupportedFiles": false,
+  "trashOption": "system",
+  "showInlineTitle": true,
+  "openBehavior": "file:Homepage.canvas",
+  "userIgnoreFilters": [
+    "Utilities/",
+    "To-do/"
+  ]
+}

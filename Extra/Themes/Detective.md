@@ -1,0 +1,4 @@
+>[!info] Definition
+>A theme within the [[Mystery]] genre, these stories feature either a detective or amateur investigator working to solve a crime or puzzling event. To classify as Detective, the character must either by employed as an investigator (e.g. police officer, private detective) or be sought out by enforcement/clients because of their case-solving reputation (e.g. Sherlock). If the character only seeks out mysteries as a hobby or becomes embroiled in them randomly, then the Detective theme does not apply. Anti-heroes being pursued by enforcement is not Detective.
+>
+>![[Themes base.base#Detective]]

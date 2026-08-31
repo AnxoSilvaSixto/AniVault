@@ -1,0 +1,1354 @@
+filters:
+  and:
+    - "!Rating.isEmpty()"
+views:
+  - type: table
+    name: A-1 Pictures
+    filters:
+      and:
+        - Studio.contains(link("A-1 Pictures"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Ajia-do
+    filters:
+      and:
+        - Studio.contains(link("Ajia-do"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Anima
+    filters:
+      and:
+        - Studio.contains(link("Aanima"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Animation Do
+    filters:
+      and:
+        - Studio.contains(link("Animation Do"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: APPP
+    filters:
+      and:
+        - Studio.contains(link("APPP"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Arms
+    filters:
+      and:
+        - Studio.contains(link("Arms"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Atelier Pontdarc
+    filters:
+      and:
+        - Studio.contains(link("Atelier Pontdarc"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Bibury Animation Studios
+    filters:
+      and:
+        - Studio.contains(link("Bibury Animation Studios"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Bones
+    filters:
+      and:
+        - Studio.contains(link("Bones"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Bones Film
+    filters:
+      and:
+        - Studio.contains(link("Bones Film"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Brain's Base
+    filters:
+      and:
+        - Studio.contains(link("Brain's Base"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Bridge
+    filters:
+      and:
+        - Studio.contains(link("Bridge"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: C2C
+    filters:
+      and:
+        - Studio.contains(link("C2C"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: CloverWorks
+    filters:
+      and:
+        - Studio.contains(link("CloverWorks"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: CoMix Wave Films
+    filters:
+      and:
+        - Studio.contains(link("CoMix Wave Films"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Connect
+    filters:
+      and:
+        - Studio.contains(link("Connect"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: C-Station
+    filters:
+      and:
+        - Studio.contains(link("C-Station"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: CygamesPictures
+    filters:
+      and:
+        - Studio.contains(link("CygamesPictures"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: David Production
+    filters:
+      and:
+        - Studio.contains(link("David Production"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Diomedéa
+    filters:
+      and:
+        - Studio.contains(link("Diomedéa"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Doga Kobo
+    filters:
+      and:
+        - Studio.contains(link("Doga Kobo"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Drive
+    filters:
+      and:
+        - Studio.contains(link("Drive"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Gainax
+    filters:
+      and:
+        - Studio.contains(link("Gainax"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Geno Studio
+    filters:
+      and:
+        - Studio.contains(link("Geno Studio"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: GoHands
+    filters:
+      and:
+        - Studio.contains(link("GoHands"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Graphinica
+    filters:
+      and:
+        - Studio.contains(link("Graphinica"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Hoods Entertainment
+    filters:
+      and:
+        - Studio.contains(link("Hoods Entertainment"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Hotline
+    filters:
+      and:
+        - Studio.contains(link("Hotline"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Idea Factory
+    filters:
+      and:
+        - Studio.contains(link("Idea Factory"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: J.C.Staff
+    filters:
+      and:
+        - Studio.contains(link("J.C.Staff"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Kamikaze Douga
+    filters:
+      and:
+        - Studio.contains(link("Kamikaze Douga"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Kinema Citrus
+    filters:
+      and:
+        - Studio.contains(link("Kinema Citrus"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Kyoto Animation
+    filters:
+      and:
+        - Studio.contains(link("Kyoto Animation"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Lapin Track
+    filters:
+      and:
+        - Studio.contains(link("Lapin Track"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Lay-duce
+    filters:
+      and:
+        - Studio.contains(link("Lay-duce"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Lerche
+    filters:
+      and:
+        - Studio.contains(link("Lerche"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: LIDENFILMS
+    filters:
+      and:
+        - Studio.contains(link("LIDENFILMS"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Madhouse
+    filters:
+      and:
+        - Studio.contains(link("Madhouse"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: MAPPA
+    filters:
+      and:
+        - Studio.contains(link("MAPPA"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Namu Animation
+    filters:
+      and:
+        - Studio.contains(link("Namu Animation"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Nexus
+    filters:
+      and:
+        - Studio.contains(link("Nexus"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: OLM
+    filters:
+      and:
+        - Studio.contains(link("OLM"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Orange
+    filters:
+      and:
+        - Studio.contains(link("Orange"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Pandanium
+    filters:
+      and:
+        - Studio.contains(link("Pandanium"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: P.A. Works
+    filters:
+      and:
+        - Studio.contains(link("P.A. Works"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: P.I.C.S.
+    filters:
+      and:
+        - Studio.contains(link("P.I.C.S."))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: PINE JAM
+    filters:
+      and:
+        - Studio.contains(link("PINE JAM"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Polygon Pictures
+    filters:
+      and:
+        - Studio.contains(link("Polygon Pictures"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Production I.G
+    filters:
+      and:
+        - Studio.contains(link("Production I.G"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Project No.9
+    filters:
+      and:
+        - Studio.contains(link("Project No.9"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Project Studio Q
+    filters:
+      and:
+        - Studio.contains(link("Project Studio Q"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Rock'n Roll Mountain
+    filters:
+      and:
+        - Studio.contains(link("Rock'n Roll Mountain"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Satelight
+    filters:
+      and:
+        - Studio.contains(link("Satelight"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Science SARU
+    filters:
+      and:
+        - Studio.contains(link("Science SARU"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Shaft
+    filters:
+      and:
+        - Studio.contains(link("Shaft"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Shin-Ei Animation
+    filters:
+      and:
+        - Studio.contains(link("Shin-Ei Animation"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Signal.MD
+    filters:
+      and:
+        - Studio.contains(link("Signal.MD"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Soigne
+    filters:
+      and:
+        - Studio.contains(link("Soigne"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Studio 3Hz
+    filters:
+      and:
+        - Studio.contains(link("Studio 3Hz"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Studio Bind
+    filters:
+      and:
+        - Studio.contains(link("Studio Bind"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Studio Chizu
+    filters:
+      and:
+        - Studio.contains(link("Studio Chizu"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Studio Chromato
+    filters:
+      and:
+        - Studio.contains(link("Studio Chromato"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Studio Colorido
+    filters:
+      and:
+        - Studio.contains(link("Studio Colorido"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Studio Comet
+    filters:
+      and:
+        - Studio.contains(link("Studio Comet"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Studio Deen
+    filters:
+      and:
+        - Studio.contains(link("Studio Deen"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Studio Ghibli
+    filters:
+      and:
+        - Studio.contains(link("Studio Ghibli"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Studio Gokumi
+    filters:
+      and:
+        - Studio.contains(link("Studio Gokumi"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Studio Kafka
+    filters:
+      and:
+        - Studio.contains(link("Studio Kafka"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Studio KAI
+    filters:
+      and:
+        - Studio.contains(link("Studio KAI"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Studio M2
+    filters:
+      and:
+        - Studio.contains(link("Studio M2"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Studio Pierrot
+    filters:
+      and:
+        - Studio.contains(link("Studio Pierrot"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Studio VOLN
+    filters:
+      and:
+        - Studio.contains(link("Studio VOLN"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Sublimation
+    filters:
+      and:
+        - Studio.contains(link("Sublimation"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Sunrise
+    filters:
+      and:
+        - Studio.contains(link("Sunrise"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: SynergySP
+    filters:
+      and:
+        - Studio.contains(link("SynergySP"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Tatsunoko Production
+    filters:
+      and:
+        - Studio.contains(link("Tatsunoko Production"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Telecom Animation Film
+    filters:
+      and:
+        - Studio.contains(link("Telecom Animation Film"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Tezuka Productions
+    filters:
+      and:
+        - Studio.contains(link("Tezuka Productions"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: TMS Entertainment
+    filters:
+      and:
+        - Studio.contains(link("TMS Entertainment"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Toei Animation
+    filters:
+      and:
+        - Studio.contains(link("Toei Animation"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: TOHO animation STUDIO
+    filters:
+      and:
+        - Studio.contains(link("TOHO animation STUDIO"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Tokyo Movie Shinsha
+    filters:
+      and:
+        - Studio.contains(link("Tokyo Movie Shinsha"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Topcraft
+    filters:
+      and:
+        - Studio.contains(link("Topcraft"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Trigger
+    filters:
+      and:
+        - Studio.contains(link("Trigger"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: TROYCA
+    filters:
+      and:
+        - Studio.contains(link("TROYCA"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: ufotable
+    filters:
+      and:
+        - Studio.contains(link("ufotable"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: White Fox
+    filters:
+      and:
+        - Studio.contains(link("White Fox"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Wit Studio
+    filters:
+      and:
+        - Studio.contains(link("Wit Studio"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Xebec
+    filters:
+      and:
+        - Studio.contains(link("Xebec"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Zero-G
+    filters:
+      and:
+        - Studio.contains(link("Zero-G"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75

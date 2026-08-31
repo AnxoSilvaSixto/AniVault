@@ -1,0 +1,368 @@
+/* ========================================
+   MEDIA GRID - PERFECTED INTERACTIONS
+   Optimized for Baseline theme
+   Built from scratch with performance & compatibility in mind
+   ======================================== */
+
+/* ========================================
+   GRID LAYOUT
+   ======================================== */
+
+.media-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin: 2em 0;
+    padding: 0 1rem;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.media-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* ========================================
+   COLUMN HEADERS
+   Nuclear reset to prevent theme conflicts
+   ======================================== */
+
+.media-grid .media-column h4,
+.media-grid .media-column h4::before,
+.media-grid .media-column h4::after {
+    all: unset !important;
+    display: block !important;
+    width: 100% !important;
+    margin: 0 0 1rem 0 !important;
+    padding: 0 0 0.5rem 0 !important;
+    color: var(--text-normal) !important;
+    border-bottom: 2px solid var(--background-modifier-border) !important;
+    font-size: 1.25em !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+}
+
+/* ========================================
+   LINK CONTAINERS
+   Keep display: block to preserve structure
+   ======================================== */
+
+.media-column a.internal-link {
+    display: block;
+    width: 100%;
+    max-width: 220px;
+    text-decoration: none;
+    position: relative; /* For pseudo-element positioning */
+}
+
+/* ========================================
+   POSTER IMAGES - BASE STATE
+   ======================================== */
+
+.media-grid .media-column .media-poster {
+    display: block; /* Critical: never change to inline */
+    width: 100%;
+    height: auto;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid var(--background-modifier-border);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    
+    /* Use Baseline's animation timing */
+    transition: 
+        transform 0.3s cubic-bezier(0.32, 0.72, 0, 1),
+        border-color 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ========================================
+   PERFORMANCE-OPTIMIZED SHADOW SYSTEM
+   Using ::after pseudo-element to avoid expensive box-shadow animations
+   ======================================== */
+
+.media-column a.internal-link::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    pointer-events: none; /* Don't interfere with clicks */
+    z-index: -1;
+    
+    /* Pre-render the enhanced shadow (hidden by default) */
+    box-shadow: 
+        0 0 30px rgba(var(--interactive-accent-rgb, 136, 57, 239), 0.4),
+        0 8px 24px rgba(0, 0, 0, 0.25);
+    
+    opacity: 0;
+    transition: opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ========================================
+   HOVER STATE
+   Smooth lift effect with enhanced shadow and accent border
+   ======================================== */
+
+.media-column a.internal-link:hover .media-poster {
+    transform: scale(1.05) translateY(-2px);
+    border-color: var(--interactive-accent);
+}
+
+/* Fade in the pre-rendered shadow (GPU-accelerated) */
+.media-column a.internal-link:hover::after {
+    opacity: 1;
+}
+
+/* ========================================
+   CLICK/ACTIVE STATE - TACTILE PRESS EFFECT
+   Quick, responsive feedback matching Baseline's speed modifier (0.5x)
+   ======================================== */
+
+.media-column a.internal-link:active .media-poster {
+    transform: scale(0.97) translateY(0) !important;
+    border-color: var(--interactive-accent) !important;
+    transition: 
+        transform 0.1s cubic-bezier(0.32, 0.72, 0, 1),
+        border-color 0.1s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+
+/* Reduce shadow during press (pressed into surface) */
+.media-column a.internal-link:active::after {
+    opacity: 0.3 !important;
+    transition: opacity 0.1s cubic-bezier(0.32, 0.72, 0, 1) !important;
+}
+
+/* ========================================
+   DISABLE BASELINE THEME IMAGE ZOOM
+   Override Minimal/Baseline's click-to-zoom feature
+   ======================================== */
+
+.media-grid .media-column a.internal-link:active,
+.media-grid .media-column a.internal-link:active .media-poster,
+.media-grid .media-poster:active {
+    /* Prevent zoom overlay */
+    position: relative !important;
+    z-index: auto !important;
+    display: block !important;
+    max-height: none !important;
+    max-width: 100% !important;
+    background: none !important;
+    cursor: pointer !important;
+    
+    /* Allow our transform to work */
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+}
+
+/* ========================================
+   CAPTION TEXT
+   ======================================== */
+
+.media-caption {
+    width: 100%;
+    max-width: 220px;
+    margin: 0.5rem 0 0 0;
+    font-size: 0.9em;
+    line-height: 1.4;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* ========================================
+   EMPTY STATE
+   ======================================== */
+
+.media-column:empty::after {
+    content: "No entries";
+    display: block;
+    padding: 3rem 1rem;
+    color: var(--text-faint);
+    font-size: 0.85em;
+    font-style: italic;
+    background: var(--background-secondary);
+    border: 1px dashed var(--background-modifier-border);
+    border-radius: 8px;
+    opacity: 0.6;
+}
+
+/* ========================================
+   RESPONSIVE LAYOUTS
+   ======================================== */
+
+/* Desktop: Three Columns (>900px) */
+@media (min-width: 901px) {
+    .media-column.prequels { grid-column: 1; }
+    .media-column.side-stories { grid-column: 2; }
+    .media-column.sequels { grid-column: 3; }
+}
+
+/* Tablet: Two Columns (601px - 900px) */
+@media (max-width: 900px) {
+    .media-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+    
+    .media-column.prequels {
+        grid-column: 1;
+        grid-row: 1;
+    }
+    
+    .media-column.side-stories {
+        grid-column: 1 / 3;
+        grid-row: 2;
+    }
+    
+    .media-column.sequels {
+        grid-column: 2;
+        grid-row: 1;
+    }
+}
+
+/* Mobile: Single Column (≤600px) */
+@media (max-width: 600px) {
+    .media-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    
+    .media-column.prequels,
+    .media-column.side-stories,
+    .media-column.sequels {
+        grid-column: 1;
+        grid-row: auto;
+    }
+    
+    .media-poster,
+    .media-caption {
+        max-width: 280px;
+    }
+}
+
+/* ========================================
+   ACCESSIBILITY
+   ======================================== */
+
+/* Keyboard Navigation Focus State */
+.media-column a.internal-link:focus {
+    outline: 2px solid var(--interactive-accent);
+    outline-offset: 4px;
+    border-radius: 8px;
+}
+
+/* Focus-visible (keyboard only, not mouse clicks) */
+.media-column a.internal-link:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Enhanced focus for poster when parent link is focused */
+.media-column a.internal-link:focus-visible .media-poster {
+    border-color: var(--interactive-accent);
+    box-shadow: 
+        0 0 0 3px var(--background-primary),
+        0 0 0 5px var(--interactive-accent);
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .media-poster,
+    .media-column a.internal-link::after {
+        transition: none !important;
+    }
+    
+    /* Still allow instant feedback, just no animation */
+    .media-column a.internal-link:hover .media-poster,
+    .media-column a.internal-link:active .media-poster {
+        transform: none !important;
+    }
+    
+    .media-column a.internal-link:hover::after {
+        opacity: 0.5 !important;
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .media-column h4 {
+        border-bottom-width: 3px !important;
+    }
+    
+    .media-poster {
+        border-width: 3px !important;
+    }
+    
+    .media-column a.internal-link:hover .media-poster,
+    .media-column a.internal-link:active .media-poster {
+        border-width: 4px !important;
+    }
+}
+
+/* ========================================
+   MOBILE TOUCH OPTIMIZATION
+   Better touch targets and feedback
+   ======================================== */
+
+@media (hover: none) and (pointer: coarse) {
+    /* Larger touch targets on mobile */
+    .media-column a.internal-link {
+        padding: 8px;
+        margin: -8px;
+    }
+    
+    /* Adjust hover effect to work with touch */
+    .media-column a.internal-link:active .media-poster {
+        transform: scale(0.95) !important;
+    }
+    
+    /* Instant feedback on touch (no delay) */
+    .media-poster,
+    .media-column a.internal-link::after {
+        transition-duration: 0.05s !important;
+    }
+}
+
+/* ========================================
+   PRINT STYLES
+   Clean output for printing
+   ======================================== */
+
+@media print {
+    .media-grid {
+        display: block !important;
+        page-break-inside: avoid;
+    }
+    
+    .media-column {
+        display: block !important;
+        page-break-inside: avoid;
+        margin-bottom: 2rem;
+    }
+    
+    .media-poster {
+        box-shadow: none !important;
+        border: 1px solid #000 !important;
+    }
+    
+    .media-column a.internal-link::after {
+        display: none !important;
+    }
+}
+
+/* ========================================
+   DEBUG MODE (uncomment to visualize structure)
+   ======================================== */
+
+/*
+.media-grid { outline: 2px solid red; }
+.media-column { outline: 2px solid blue; }
+.media-column a.internal-link { outline: 2px solid green; }
+.media-poster { outline: 2px solid yellow; }
+*/

@@ -1,0 +1,14 @@
+{
+  "cssTheme": "Baseline",
+  "theme": "obsidian",
+  "interfaceFontFamily": "",
+  "showViewHeader": true,
+  "showRibbon": true,
+  "nativeMenus": false,
+  "accentColor": "",
+  "enabledCssSnippets": [
+    "text-centered",
+    "obsidian-icons",
+    "media-grid"
+  ]
+}

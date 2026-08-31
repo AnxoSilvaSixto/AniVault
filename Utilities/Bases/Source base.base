@@ -1,0 +1,154 @@
+filters:
+  and:
+    - "!Rating.isEmpty()"
+views:
+  - type: table
+    name: Manga
+    filters:
+      and:
+        - Source == link("Manga")
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: 4-koma manga
+    filters:
+      and:
+        - Source == link("4-koma manga")
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Game
+    filters:
+      and:
+        - Source == link("Game")
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Light Novel
+    filters:
+      and:
+        - Source == link("Light novel")
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Mixed media
+    filters:
+      and:
+        - Source == link("Mixed media")
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Novel
+    filters:
+      and:
+        - Source == link("Novel")
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Original
+    filters:
+      and:
+        - Source == link("Original")
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Other
+    filters:
+      and:
+        - Source == link("Other")
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Visual novel
+    filters:
+      and:
+        - Source == link("Visual novel")
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Web manga
+    filters:
+      and:
+        - Source == link("Web manga")
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75

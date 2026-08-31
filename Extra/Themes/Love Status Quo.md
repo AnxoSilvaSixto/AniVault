@@ -1,0 +1,10 @@
+>[!info] Definition
+>A theme within the [[Romance]] genre, these stories feature a couple that experiences frequent cute, blushy, and/or fluffy moments in a daily-life setting, designed to make the reader go "aww" or experience butterflies in every chapter. Since the emphasis is on teasing a reaction from the audience, the cute interactions between the couple are prioritized over other story events that would otherwise deepen or develop the romantic relationship. Thus, the story starts with the characters already in a state of increased awareness of each other, and stays there in "status quo" for the majority of the story.
+>
+>Love Status Quo is most easily recognized by a higher than normal amount of blushing between the characters, a flirty/teasing protagonist, an episodic nature, and/or a lack of internal monologue or personal reflection that indicates to the audience that the characters' feelings are deepening or changing with each interaction. Note that relationship status is unrelated to Love Status Quo; in almost all cases, the couple will enter a relationship by the end of the story, and recently, the couple featured can also already be married.
+>
+>Not to be confused with slow-burn romance, where the story begins with no romantic interest between the main couple and grows slowly throughout the work as story events work to bring them together. Also not to be confused with lighthearted romance, where not much romantic drama exists, but starting and deepening the relationship is still the primary focus of the story, rather than teasing a reaction from the audience.
+>
+>Love Status Quo is incompatible with the [[Harem]], [[Reverse Harem]], and [[Love Polygon]] themes. While these stories may also feature frequent amounts of blushing and cute moments between the characters, their primary focus is on the main character deepening his/her relationships with multiple girls/boys, and ultimately developing feelings for one of them.
+>
+>![[Themes base.base#Love Status Quo]]

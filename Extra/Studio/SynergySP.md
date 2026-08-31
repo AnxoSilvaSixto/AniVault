@@ -1,0 +1,11 @@
+---
+Foundation: 1998-09-24
+Cover: https://cdn.myanimelist.net/s/common/company_logos/658e634e-161b-4e0d-8e7a-10a364a8ab96_600x600_i
+MAL: https://myanimelist.net/anime/producer/118
+---
+>[!tip] Information
+>SynergySP (SynergySP Co., Ltd.) is a Japanese animation studio which primarily produces animation content for children based in Kogenai, Tokyo, Japan. Former Studio Junio employees led by Minoru Okazaki, Minoru Maeda, and Hiroshi Wagatsuma established Synergy Japan (Synergy Japan Co., Ltd.) in September 1998. In 2005, Shogakukan-Shueisha Productions made the studio into an affiliate and renamed the studio to SynergySP (SynergySP Co., Ltd.). As a result, a joint-management system was formed with Shogakukan-Shueisha Productions and Shogakukan-Shueisha Productions' Toshihiro Nakazawa and Naohiko Furuichi were appointed to the company's board. In 2009, the studio relocated to its current headquarters in Kogenai. In 2011, Toshihiro Nakazawa and Yuriko Nanao succeeded Minoru Okazaki as the studio's representative director. In December 2013, the studio's photography department was transferred to the then-newly established HORNETS (founded by former SynergySP employees). In 2014, the studio became independent from Shogakukan-Shueisha Productions and Nakazawa resigned from his position at the studio. In 2017, the studio became a subsidiary of [[Shin-Ei Animation]].
+>
+>Since the studio's establishment, it focused on sub-contracting and gross-contracting work from other studios; mainly gross-contracts from Nippon Animation/Nippon Animedia (e.g., Bakuten Shoot Beyblade 2002, Bakuten Shoot Beyblade G Revolution). In 2003, the studio produced its first prime contract work Mermaid Melody Pichi Pichi Pitch (co-production with Actas). After becoming SynergySP in 2005, its focus changed to primarily focusing on contract work from Shogakukan-Shueisha Productions until 2014. The studio is notable for producing works for TV Tokyo's Sunday 10:00 a.m. animation block from 2005-2010 (MÄR, Hayate no Gotoku!, Zettai Karen Children, and Cross Game); with other notable works including: Metal Fight Beyblade: Baku - Metal Fight Beyblade Zero-G (2010-2013), Cross Fight B-Daman - Cross Fight B-Daman eS (2011-2013), and Major S4-S6 (2008-2010).
+>
+>![[Studio base.base#SynergySP]]

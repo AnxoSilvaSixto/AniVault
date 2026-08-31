@@ -1,0 +1,248 @@
+{
+  "main": {
+    "id": "5324373015726ba8",
+    "type": "split",
+    "children": [
+      {
+        "id": "b35a1e39c3173a0c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "0c40c3b9a864839b",
+            "type": "leaf",
+            "state": {
+              "type": "canvas",
+              "state": {
+                "file": "Homepage.canvas",
+                "viewState": {
+                  "x": -130,
+                  "y": -1290,
+                  "zoom": -0.24192141868059555
+                }
+              },
+              "icon": "lucide-layout-dashboard",
+              "title": "Homepage"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "679c7704d7fa4506",
+    "type": "split",
+    "children": [
+      {
+        "id": "6d1e90b3deec7d9a",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "ef9a00a0509a7e6c",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Explorador de archivos"
+            }
+          }
+        ]
+      },
+      {
+        "id": "369fb6ab50bd3c66",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "d63eae35b7909f8d",
+            "type": "leaf",
+            "state": {
+              "type": "localgraph",
+              "state": {
+                "file": "Homepage.canvas",
+                "options": {
+                  "collapse-filter": true,
+                  "search": "",
+                  "localJumps": 1,
+                  "localBacklinks": true,
+                  "localForelinks": true,
+                  "localInterlinks": false,
+                  "showTags": false,
+                  "showAttachments": false,
+                  "hideUnresolved": false,
+                  "collapse-color-groups": true,
+                  "colorGroups": [],
+                  "collapse-display": true,
+                  "showArrow": false,
+                  "textFadeMultiplier": 0,
+                  "nodeSizeMultiplier": 1,
+                  "lineSizeMultiplier": 1,
+                  "collapse-forces": true,
+                  "centerStrength": 0.518713248970312,
+                  "repelStrength": 10,
+                  "linkStrength": 1,
+                  "linkDistance": 250,
+                  "scale": 1,
+                  "close": true
+                }
+              },
+              "icon": "lucide-git-fork",
+              "title": "Gráfico local"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 417.5
+  },
+  "right": {
+    "id": "0a8a4aeb1939d4c9",
+    "type": "split",
+    "children": [
+      {
+        "id": "0c1a08e76dc22c9e",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "5ac85ca68adba133",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "Artland",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Buscar"
+            }
+          },
+          {
+            "id": "fe0fa371200fe8b7",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Todas las propiedades"
+            }
+          },
+          {
+            "id": "c02c3015435be345",
+            "type": "leaf",
+            "state": {
+              "type": "file-properties",
+              "state": {
+                "file": "Homepage.canvas"
+              },
+              "icon": "lucide-info",
+              "title": "Propiedades de los archivos para Homepage"
+            }
+          },
+          {
+            "id": "c3f7a0846957ead9",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "Anime/Uma Musume/Uma Musume Pretty Derby.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Enlaces salientes de Uma Musume Pretty Derby"
+            }
+          },
+          {
+            "id": "1c910da797021f89",
+            "type": "leaf",
+            "state": {
+              "type": "vault-inspector",
+              "state": {},
+              "icon": "shield-check",
+              "title": "Vault inspector"
+            }
+          }
+        ],
+        "currentTab": 4
+      }
+    ],
+    "direction": "horizontal",
+    "width": 515.5,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "canvas:Crear nuevo lienzo": true,
+      "graph:Abrir vista gráfica": false,
+      "command-palette:Abrir paleta de comandos": false,
+      "bases:Crear nueva base": true,
+      "custom-sort:Toggle custom sorting": false,
+      "vault-inspector:Run scan": false,
+      "random-note:Abrir nota al azar": false
+    }
+  },
+  "active": "0c40c3b9a864839b",
+  "lastOpenFiles": [
+    "Utilities/Graphs/Studio.md",
+    "Utilities/Graphs/Rating Distribution.md",
+    "Homepage.canvas",
+    "Utilities/Graphs/Genres.md",
+    "Anime/Code Geass.md",
+    "Anime/Code Geass/Code Geass Hangyaku no Lelouch.md",
+    "Anime/Aya to Majo.md",
+    "Anime/Another.md",
+    "Anime/Aho Girl.md",
+    "Utilities/Bases/Themes base.base",
+    "Extra/Studio/Artland.md",
+    "Pending/Mushishi.md",
+    "Anime/Made in Abyss/Made in Abyss Movie 3 Fukaki Tamashii no Reimei.md",
+    "Utilities/Templates/media-grid Template.md",
+    "Anime/_changes_report.md",
+    "Extra/Studio/Ajia-do.md",
+    "Extra/Studio/A-1 Pictures.md",
+    "Anime/Devilman Crybaby.md",
+    "Anime/Star Wars Visions/Star Wars Visions Volume 3.md",
+    "Anime/Star Wars Visions/Star Wars Visions.md",
+    "Anime/Kusuriya no Hitorigoto/Kusuriya no Hitorigoto.md",
+    "Anime/Kusuriya no Hitorigoto/Kusuriya no Hitorigoto 2nd Season.md",
+    "Anime/Kono Subarashii Sekai ni Shukufuku wo!/Kono Subarashii Sekai ni Shukufuku wo!.md",
+    "Anime/Kono Subarashii Sekai ni Shukufuku wo!/Kono Subarashii Sekai ni Bakuen wo!.md",
+    "Anime/Love Live! School Idol Project/Love Live! School Idol Project 2nd Season.md",
+    "Anime/Love Live! School Idol Project/Love Live! School Idol Project.md",
+    "Anime/Kusuriya no Hitorigoto",
+    "Pending/Sonny Boy.md",
+    "Utilities/Scripts/sync_studios.py",
+    "To-do/Missing score.base",
+    "Utilities/Scripts/data/Metadata_Updates",
+    "Utilities/Scripts/data/synopsis_synced.log",
+    "Utilities/Scripts/data/metadata_synced.log",
+    "Extra/Source/Nuevo Documento de texto.txt",
+    "Utilities/Scripts/data/Metadata_Updates/JoJo",
+    "Utilities/Scripts/data/Metadata_Updates/Haikyuu!!",
+    "Utilities/Images/Animes/Aho Girl.webp",
+    "Untitled.canvas",
+    "Utilities/Images/350x525.jpg",
+    "Utilities/Images/325x488.jpg",
+    "Utilities/Images/250x375.jpg",
+    "Anime/350x525.jpg",
+    "Anime/250x375.jpg",
+    "Utilities/Images/150x225.jpg",
+    "Utilities/Images/500x750.jpg",
+    "Utilities/Images/300x450.jpg",
+    "Utilities/Images/1080x1620.jpg"
+  ]
+}

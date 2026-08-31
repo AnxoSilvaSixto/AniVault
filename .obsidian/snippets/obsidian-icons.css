@@ -1,0 +1,147 @@
+/* ============================================
+   BASELINE THEME - CUSTOM FILE/FOLDER ICONS
+   Compatible with Colorful Folders feature
+   ============================================
+   
+   This snippet uses ::after instead of ::before
+   to avoid conflicts with Baseline's colorful-folders
+   feature, which uses ::before for colored indicators.
+   
+   Flexbox reordering makes icons appear before text
+   even though they're technically after in the DOM.
+   ============================================ */
+
+:root {
+    --custom-folder-icon-size: 15px;
+    --custom-file-icon-size: 14px;
+    --custom-icon-gap: 7px;
+    --custom-icon-opacity: 0.65;
+    --custom-icon-opacity-hover: 1;
+}
+
+/* ============================================
+   FLEXBOX REORDERING
+   ============================================
+   Make the content flex containers so we can
+   reverse the visual order (icon after text in DOM,
+   but shown before text visually)
+   ============================================ */
+
+.nav-folder-title-content,
+.nav-file-title-content {
+    display: inline-flex !important;
+    align-items: center;
+    flex-direction: row-reverse; /* Reverses visual order */
+}
+
+/* ============================================
+   FOLDER ICONS (CLOSED STATE)
+   ============================================ */
+
+.nav-files-container .tree-item.nav-folder > .tree-item-self .nav-folder-title-content::after {
+    content: "";
+    display: inline-block;
+    flex-shrink: 0; /* Prevent icon from shrinking */
+    width: var(--custom-folder-icon-size);
+    height: var(--custom-folder-icon-size);
+    margin-left: 0; /* Since we're using row-reverse */
+    margin-right: var(--custom-icon-gap); /* Icon is visually before text */
+    opacity: var(--custom-icon-opacity);
+    background-color: var(--text-muted, currentColor);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    
+    /* Folder icon - closed */
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z'/></svg>") center / contain no-repeat;
+    mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z'/></svg>") center / contain no-repeat;
+}
+
+/* ============================================
+   FOLDER ICONS (OPEN STATE)
+   ============================================ */
+
+.nav-files-container .tree-item.nav-folder:not(.is-collapsed) > .tree-item-self .nav-folder-title-content::after {
+    /* Folder icon - open (with horizontal line) */
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z'/><path d='M2 7h20'/></svg>") center / contain no-repeat;
+    mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z'/><path d='M2 7h20'/></svg>") center / contain no-repeat;
+}
+
+/* ============================================
+   FILE ICONS
+   ============================================ */
+
+.nav-files-container .tree-item.nav-file > .tree-item-self .nav-file-title-content::after {
+    content: "";
+    display: inline-block;
+    flex-shrink: 0;
+    width: var(--custom-file-icon-size);
+    height: var(--custom-file-icon-size);
+    margin-left: 0;
+    margin-right: var(--custom-icon-gap);
+    opacity: var(--custom-icon-opacity);
+    background-color: var(--text-muted, currentColor);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    
+    /* Document icon with visible text lines */
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z'/><polyline points='14 2 14 8 20 8'/><line x1='16' y1='13' x2='8' y2='13'/><line x1='16' y1='17' x2='8' y2='17'/><line x1='10' y1='9' x2='8' y2='9'/></svg>") center / contain no-repeat;
+    mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z'/><polyline points='14 2 14 8 20 8'/><line x1='16' y1='13' x2='8' y2='13'/><line x1='16' y1='17' x2='8' y2='17'/><line x1='10' y1='9' x2='8' y2='9'/></svg>") center / contain no-repeat;
+}
+
+/* ============================================
+   HOVER EFFECTS
+   ============================================ */
+
+.tree-item-self:hover .nav-folder-title-content::after,
+.tree-item-self:hover .nav-file-title-content::after {
+    opacity: var(--custom-icon-opacity-hover);
+    transform: scale(1.05);
+}
+
+/* ============================================
+   ACTIVE/SELECTED STATE
+   ============================================ */
+
+.tree-item-self.is-active .nav-folder-title-content::after,
+.tree-item-self.is-active .nav-file-title-content::after,
+.tree-item-self.is-selected .nav-folder-title-content::after,
+.tree-item-self.is-selected .nav-file-title-content::after {
+    opacity: 1;
+    background-color: var(--text-accent, currentColor);
+}
+
+/* ============================================
+   RESPONSIVE: COMPACT MODE SUPPORT
+   ============================================
+   Slightly smaller icons when Baseline's
+   density modifier is very low
+   ============================================ */
+
+body.is-mobile .nav-folder-title-content::after,
+body.is-mobile .nav-file-title-content::after {
+    width: calc(var(--custom-folder-icon-size) * 0.9);
+    height: calc(var(--custom-folder-icon-size) * 0.9);
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    .nav-folder-title-content::after,
+    .nav-file-title-content::after {
+        transition: none !important;
+    }
+}
+
+/* ============================================
+   OPTIONAL: DISABLE COLORFUL FOLDERS
+   ============================================
+   Uncomment this section if you want to disable
+   Baseline's colorful folders and use ONLY these
+   custom icons (not recommended - better to use both!)
+   ============================================ */
+
+/*
+.nav-folder-title-content::before {
+    display: none !important;
+}
+*/

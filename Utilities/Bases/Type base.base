@@ -1,0 +1,77 @@
+filters:
+  and:
+    - "!Rating.isEmpty()"
+views:
+  - type: table
+    name: Special
+    filters:
+      and:
+        - Type == link("Special")
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: TV
+    filters:
+      and:
+        - Type == link("TV")
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Movie
+    filters:
+      and:
+        - Type == link("Movie")
+    order:
+      - file.name
+      - Studio
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+  - type: table
+    name: ONA
+    filters:
+      and:
+        - Type == link("ONA")
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: OVA
+    filters:
+      and:
+        - Type == link("OVA")
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75

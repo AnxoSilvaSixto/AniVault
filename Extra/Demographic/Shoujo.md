@@ -1,0 +1,4 @@
+>[!Info] Definition
+>Shoujo (literally "young girl") is a demographic specifically marketed to an audience of adolescent girls, generally between the ages of 10 and 18. This category is defined by a strong emphasis on the protagonist's emotional and interior life, exploring themes of personal development, identity, and the intricate dynamics of interpersonal relationships, especially those concerning friendship and love. While the demographic can include [[action]], [[fantasy]], and [[comedy]] (e.g., [[Mahou Shoujo|Magical Girl]]), the conflict is often resolved through emotional growth and dialogue rather than physical confrontation. The characteristic art style frequently uses highly aesthetic designs, large expressive eyes, and decorative elements like sparkles or floral patterns to enhance the emotional atmosphere and highlight attractive characters (bishōnen and bishōjo).
+>
+>![[Demographic base.base#Shoujo]]

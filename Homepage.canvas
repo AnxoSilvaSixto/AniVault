@@ -1,0 +1,59 @@
+{
+	"nodes":[
+		{
+			"id":"261accff3f4823ba",
+			"type":"file",
+			"file":"Utilities/Graphs/Genres.md",
+			"styleAttributes":{
+				"border":null
+			},
+			"x":-720,
+			"y":-1340,
+			"width":496,
+			"height":540
+		},
+		{
+			"id":"1d703cba7c2ca1a4",
+			"type":"file",
+			"file":"Utilities/Graphs/Themes.md",
+			"styleAttributes":{
+				"border":null
+			},
+			"x":-200,
+			"y":-1340,
+			"width":496,
+			"height":540
+		},
+		{
+			"id":"2171b2f5b9247f75",
+			"type":"file",
+			"file":"Utilities/Bases/Anime tracker.base",
+			"styleAttributes":{
+				"border":null
+			},
+			"subpath":"#Hall of Fame",
+			"x":-1240,
+			"y":-1780,
+			"width":1536,
+			"height":420
+		},
+		{"id":"0d4eb13d709ad21b","type":"file","file":"Utilities/Graphs/Studio.md","x":-1240,"y":-1340,"width":500,"height":540},
+		{
+			"id":"9b21c2ff1f0072ca",
+			"type":"file",
+			"file":"Utilities/Bases/Anime tracker.base",
+			"styleAttributes":{
+				"border":null
+			},
+			"x":320,
+			"y":-1780,
+			"width":660,
+			"height":980
+		}
+	],
+	"edges":[],
+	"metadata":{
+		"version":"1.0-1.0",
+		"frontmatter":{}
+	}
+}

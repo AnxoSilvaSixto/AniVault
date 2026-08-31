@@ -1,0 +1,118 @@
+{
+  "main": {
+    "id": "5dde33c8c07e46b4",
+    "type": "split",
+    "children": [
+      {
+        "id": "5439f2e8847f8f37",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "62be5262fe234185",
+            "type": "leaf",
+            "state": {
+              "type": "canvas",
+              "state": {
+                "file": "Homepage.canvas",
+                "viewState": {
+                  "x": -452.5100248347069,
+                  "y": -1622.198097779079,
+                  "zoom": -2.6257422522531133
+                }
+              },
+              "icon": "lucide-layout-dashboard",
+              "title": "Homepage"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "f0c752986bdd42db",
+    "type": "mobile-drawer",
+    "children": [
+      {
+        "id": "1ed7a74d69328eeb",
+        "type": "leaf",
+        "state": {
+          "type": "file-explorer",
+          "state": {
+            "sortOrder": "alphabetical",
+            "autoReveal": false
+          },
+          "icon": "lucide-folder-closed",
+          "title": "Explorador de archivos"
+        }
+      },
+      {
+        "id": "b9a2f6299ae0b374",
+        "type": "leaf",
+        "state": {
+          "type": "search",
+          "state": {
+            "query": "",
+            "matchingCase": false,
+            "explainSearch": false,
+            "collapseAll": false,
+            "extraContext": false,
+            "sortOrder": "alphabetical"
+          },
+          "icon": "lucide-search",
+          "title": "Search"
+        }
+      },
+      {
+        "id": "c360aeebf1333dca",
+        "type": "leaf",
+        "state": {
+          "type": "all-properties",
+          "state": {
+            "sortOrder": "frequency",
+            "showSearch": false,
+            "searchQuery": ""
+          },
+          "icon": "lucide-archive",
+          "title": "All properties"
+        }
+      }
+    ],
+    "currentTab": 0
+  },
+  "right": {
+    "id": "27e31681fe3aa0ff",
+    "type": "mobile-drawer",
+    "children": [
+      {
+        "id": "997548afe99e372f",
+        "type": "leaf",
+        "state": {
+          "type": "outgoing-link",
+          "state": {
+            "file": "Utilities/Bases/Anime tracker.base",
+            "linksCollapsed": false,
+            "unlinkedCollapsed": true
+          },
+          "icon": "links-going-out",
+          "title": "Outgoing links"
+        }
+      }
+    ],
+    "currentTab": 0
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "graph:Abrir vista gráfica": false,
+      "canvas:Crear nuevo lienzo": false,
+      "command-palette:Abrir paleta de comandos": false,
+      "bases:Crear nueva base": false,
+      "custom-sort:Toggle custom sorting": false
+    }
+  },
+  "active": "62be5262fe234185",
+  "lastOpenFiles": [
+    "Utilities/Graphs/Rating Distribution.md",
+    "Homepage.canvas"
+  ]
+}

@@ -1,0 +1,79 @@
+filters:
+  and:
+    - "!Rating.isEmpty()"
+views:
+  - type: table
+    name: Shonen
+    filters:
+      and:
+        - Demographic == link("Shounen")
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Josei
+    filters:
+      and:
+        - Demographic == link("Josei")
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Kids
+    filters:
+      and:
+        - Demographic == link("Kids")
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Seinen
+    filters:
+      and:
+        - Demographic == link("Seinen")
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Shoujo
+    filters:
+      and:
+        - Demographic == link("Shoujo")
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75

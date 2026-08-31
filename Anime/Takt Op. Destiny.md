@@ -1,0 +1,28 @@
+---
+ID: 48556
+Type: "[[TV]]"
+Episodes: 12
+Aired: 2021-10-06
+Finished: 2021-12-22
+Studio:
+  - "[[Madhouse]]"
+  - "[[MAPPA]]"
+Source: "[[Mixed media]]"
+Genre:
+  - "[[Action]]"
+  - "[[Fantasy]]"
+  - "[[Sci-Fi]]"
+Themes:
+  - "[[Music]]"
+  - "[[Urban Fantasy]]"
+Demographic: []
+Cover: https://cdn.myanimelist.net/images/anime/1449/117797l.jpg
+MAL: https://myanimelist.net/anime/48556
+Rating: 6
+---
+>[!summary] Synopsis
+>The United States of America has been in chaos ever since the emergence of D2s, an invasive species originating from a black meteorite that fell to Earth. A public decree banned citizens from playing any melodies, to prevent further casualties caused by the D2s' hatred for music—even now, in 2047, this prohibition is still in effect. Humanity's only form of defense against the D2s are Musicarts, young women representing pieces of classical music; and Conductors, the ones controlling them.
+>
+>Takt Asahina, an aloof piano prodigy, finds himself transformed into a Conductor following a spontaneous D2 attack. The same incident kills Anna Schneider's younger sister, Cosette, and brings Takt into contact with his Musicart, Destiny. Searching for a means of stabilizing the pact between themselves, Takt and Destiny—alongside Anna—embark on a perilous journey to the Symphonica Headquarters in New York City.
+>
+>Takt is in a hurry to reach the city so that he can play the piano again, even though his passion attracts the creatures he has come to despise. Meanwhile, Destiny's sense of duty drags the group into trouble along the way. With a D2-infested path and many more arduous obstacles ahead of them, will the trio make it to New York City in one piece?

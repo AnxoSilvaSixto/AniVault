@@ -1,0 +1,319 @@
+filters:
+  and:
+    - "!Rating.isEmpty()"
+views:
+  - type: table
+    name: Action
+    filters:
+      and:
+        - Genre.contains(link("Action"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Adventure
+    filters:
+      and:
+        - Genre.contains(link("Adventure"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Avant Garde
+    filters:
+      and:
+        - Genre.contains(link("Avant Garde"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Award Winning
+    filters:
+      and:
+        - Genre.contains(link("Award Winning"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Boys Love
+    filters:
+      and:
+        - Genre.contains(link("Boys Love"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Comedy
+    filters:
+      and:
+        - Genre.contains(link("Comedy"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Drama
+    filters:
+      and:
+        - Genre.contains(link("Drama"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Ecchi
+    filters:
+      and:
+        - Genre.contains(link("Ecchi"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Erotica
+    filters:
+      and:
+        - Genre.contains(link("Erotica"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Fantasy
+    filters:
+      and:
+        - Genre.contains(link("Fantasy"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Girls Love
+    filters:
+      and:
+        - Genre.contains(link("Girls Love"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Gourmet
+    filters:
+      and:
+        - Genre.contains(link("Gourmet"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Hentai
+    filters:
+      and:
+        - Genre.contains(link("Hentai"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Horror
+    filters:
+      and:
+        - Genre.contains(link("Horror"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Mystery
+    filters:
+      and:
+        - Genre.contains(link("Mystery"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Romance
+    filters:
+      and:
+        - Genre.contains(link("Romance"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Sci-Fi
+    filters:
+      and:
+        - Genre.contains(link("Sci-Fi"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Slice of Life
+    filters:
+      and:
+        - Genre.contains(link("Slice of Life"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Sports
+    filters:
+      and:
+        - Genre.contains(link("Sports"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Supernatural
+    filters:
+      and:
+        - Genre.contains(link("Supernatural"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Suspense
+    filters:
+      and:
+        - Genre.contains(link("Suspense"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75

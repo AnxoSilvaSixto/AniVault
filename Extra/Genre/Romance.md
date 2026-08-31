@@ -1,0 +1,8 @@
+>[!info] Definition
+>Falling in love and struggling to progress towards—or maintain—a romantic relationship take priority, while other subplots either take backseat or are designed to develop the main love story. The narrative focuses on the thoughts and emotions of the characters, illustrating the connections between them and explaining their reactions to events or conflict. Almost always, the story ends happily and the couple is rewarded for their efforts with lasting love.  
+>
+>Romance stories require significant romantic development leading to some kind of conclusion: either to begin the relationship, continue it, or end it. Open-ended romantic endings are only acceptable when the work is an incomplete adaptation of a Romance source. "Teasing" stories which do not narrate significant romantic development but have a conclusion should be tagged Romantic Subplot.  
+>
+>A story can be simply Romance. Since they are plot-driven stories showing humans experiencing romantic struggle, most Romance has some [[Drama]] inherently. For both tags, the drama should be focused not only on the relationship but also on the side storylines; for example, one character overcoming the death of a loved one or a drug addiction. [[Comedy]] requires Romance narratives to be focused on eliciting laughter, not only using comedy for lightheartedness. [[Slice of Life]] and Romance are incompatible by definition.
+>
+>![[Genre base.base#Romance]]

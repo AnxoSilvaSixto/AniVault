@@ -1,0 +1,52 @@
+summaries:
+  Average: values.mean().round(2)
+  Unique: values.unique().length
+filters:
+  and:
+    - file.path.startsWith("Anime")
+views:
+  - type: list
+    name: Full list
+    order:
+      - file.name
+    sort: []
+    markers: number
+    indentProperties: false
+  - type: cards
+    name: Hall of Fame
+    order:
+      - file.name
+      - Rating
+    sort:
+      - property: Rating
+        direction: DESC
+    limit: 8
+    image: note.Cover
+    cardSize: 180
+    imageAspectRatio: 1.5
+  - type: cards
+    name: Top
+    filters:
+      and:
+        - Type == "ONA"
+    order:
+      - file.name
+      - Rating
+    sort:
+      - property: Rating
+        direction: DESC
+    image: note.Cover
+  - type: table
+    name: Searcher
+    filters:
+      and:
+        - Type == link("Special")
+    order:
+      - file.name
+      - Aired
+      - Demographic
+      - Genre
+      - Themes
+      - Studio
+      - Rating
+    sort: []

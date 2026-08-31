@@ -1,0 +1,4 @@
+>[!info] Definition
+>One or more human characters have superhuman or supernatural "powers" which are specific to them, and directly used to progress the plot. This power should not be magic or akin to magic; individual expressions of the same paranormal foundation; or exist solely to fight other unnatural creators or elements in the story. Set in modern or futuristic, industrialized societies, the general public is often aware that these super powers exist (although this is not a requirement). If the super powers are limited to only one or two characters, then they should be outside the realm of superstition or plausibility, and uniquely defined to that story (e.g. not simply one character who is stronger than average).
+>
+>![[Themes base.base#Super Power]]
