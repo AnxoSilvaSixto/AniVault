@@ -59,7 +59,7 @@ ID: <MAL ID>
 Type: <TV|Movie|OVA|ONA|Special>
 Episodes: <count>
 Aired: <YYYY-MM-DD>
-Finished: <YYYY-MM-DD or null>
+Finished: <YYYY-MM-DD>
 Studio: [[Studio Name]]
 Source: <Source type>
 Genre: [[Genre]]
