@@ -118,7 +118,7 @@ AniVault/
 
 ![Homepage — Hall of Fame, Studio, Genres, Themes](.github/assets/homepage.png)
 
-*`Homepage.canvas` — `Hall of Fame` (8 × Rating 10) + `Studio`/`Genres`/`Themes` doughnuts + `Full list` (368). Baseline theme, 6 nodes. Captured 2026-08-31.*
+*`Homepage.canvas` — `Hall of Fame` (8 × Rating 10) + `Studio`/`Genres`/`Themes` doughnuts + `Full list` (369). Baseline theme, 6 nodes. Captured 2026-08-31.*
 
 ### Rating Distribution
 
@@ -179,7 +179,7 @@ Location: `Utilities/Bases/` — native Obsidian Bases (1.9+), no Dataview neede
 
 | Base | Purpose |
 |------|---------|
-| `Anime tracker.base` | Main collection table — filter/sort all 368 entries |
+| `Anime tracker.base` | Main collection table — filter/sort all 369 entries |
 | `Genre base.base` | `Extra/Genre/` dimension |
 | `Themes base.base` | `Extra/Themes/` dimension |
 | `Studio base.base` | `Extra/Studio/` dimension |

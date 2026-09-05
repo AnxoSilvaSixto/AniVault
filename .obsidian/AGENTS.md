@@ -1,10 +1,10 @@
 # AniVault — Project Guidelines
 
-This file contains the rules, restrictions, and workflows for changes to the main Obsidian vault.
+**ALWAYS read `_vault_guidelines.md` before making ANY changes to the main Obsidian vault.**
 
 The main vault is located at: `C:\Users\Anxo\Documents\Obsidian\AniVault`
 
-Read this file before making changes. Never assume you can create files, modify Pending/, or change configuration in the main vault without checking these guidelines.
+All rules, restrictions, and workflows are documented in `_vault_guidelines.md`. Never assume you can create files, modify Pending/, or change configuration in the main vault without checking the guidelines first.
 
 ---
 
@@ -12,7 +12,7 @@ Read this file before making changes. Never assume you can create files, modify 
 
 ```
 C:\Users\Anxo\Documents\Obsidian\AniVault\
-├── Anime/              → 368 anime notes (standalone + 57 series subfolders)
+├── Anime/              → 369 anime notes (standalone + 57 series subfolders)
 ├── Extra/              → 183 reference pages (studios, genres, themes, etc.)
 │   ├── Demographic/    → 5 files
 │   ├── Genre/          → 21 files
@@ -150,7 +150,7 @@ Alternative Version: []
 ### `update_readme.py` (Utilities/Scripts/) — VAULT-FACING, MUST MAINTAIN
 
 - **Purpose:** Keeps `README.md` stats in sync with filesystem. Called by backup script and manually.
-- **Counts:** `Anime` (rglob `*.md` 368), `Extra` (183) + per-dimension `Studio 90 / Themes 52 / Genre 21 / Source 10 / Demographic 5 / Type 5`, `Pending 21`, `Bases 7`, `Graphs 4`, series folders `Anime/*/ is_dir()` (57).
+- **Counts:** `Anime` (rglob `*.md` 369), `Extra` (183) + per-dimension `Studio 90 / Themes 52 / Genre 21 / Source 10 / Demographic 5 / Type 5`, `Pending 21`, `Bases 7`, `Graphs 4`, series folders `Anime/*/ is_dir()` (57).
 - **Patches:** `## 📊 Collection Stats` table, `## 🏗️ Structure` tree comments, Quick Start verify line (`you should see N entries`), footer `*Last updated: YYYY-MM-DD · Vault: N anime · M refs · P pending*` + snapshot `> Snapshot as of`.
 - **Usage:**
   ```powershell
@@ -167,14 +167,14 @@ Alternative Version: []
 - Syncs anime metadata from Tenrai API (Jikan-compatible)
 - Handles: `ID, Type, Episodes, Aired, Finished, Studio, Source, Genre, Themes, Demographic, Cover, MAL, Synopsis`
 - `Rating` excluded (personal)
-- Flags: `--full` (full rescan vs incremental via `data/metadata_synced.log` / `synopsis_synced.log`), `--dry-run`, `--mode {info,synopsis,both}` (default `both`). Dry-run does not write update files or sync logs.
+- Flags: `--full` (full rescan vs incremental via `data/metadata_synced.log` / `synopsis_synced.log`), `--dry-run`, `--mode {info,synopsis,both}` (default `both`)
 - **Manual revision mode:** Never overwrites originals — writes to `Utilities/Scripts/data/Metadata_Updates/` (mirroring structure) + `_changes_report.md` for review
 
 ### `sync_studios.py` (Utilities/Scripts/) — HELPER
 
 - Syncs studio/producer fields: `Foundation`/`Established`, `Cover`, `MAL`
 - Handles alias collapse (`Foundation` vs `Established`, `Cover` vs `Image`)
-- Incremental via `data/studios_synced.log`, `--full` for rescan, `--dry-run` for a non-mutating preview, writes to `data/Studio_Updates/`
+- Incremental via `data/studios_synced.log`, `--full` for rescan, writes to `data/Studio_Updates/`
 
 ### `sync_menu.bat` (Utilities/Scripts/)
 
@@ -186,8 +186,8 @@ Alternative Version: []
 
 - Weekly on Windows login via Task Scheduler `AniVault Git Backup` (checks ` $env:APPDATA\AniVault-lastRun.txt` — skips if <7 days)
 - Now calls `python Utilities/Scripts/update_readme.py` before `git add -A` (with `python`/`py` fallback, try/catch)
-- Then stages, commits, and pushes the current branch after each successful backup run
-- `staging` is not automatically synchronized by the external backup script; sync it explicitly when required
+- Then `git add -A && git commit -m "auto: vault backup $timestamp" && git push` (also pushes `staging` via separate remote tracking)
+- Branch sync: `main` is primary, `staging` fast-forwarded to `main` (`git merge --ff-only main`)
 
 ### Pre-commit hook — `.githooks/pre-commit` (versioned) + `.git/hooks/pre-commit` (installed)
 
@@ -215,7 +215,7 @@ Embedded together in `Homepage.canvas` (4 file nodes at x:-720/-120 etc).
 
 **Location:** `Utilities/Bases/` (7 files, all tracked)
 
-1. `Anime tracker.base` — Main collection tracker (368 entries)
+1. `Anime tracker.base` — Main collection tracker (369 entries)
 2. `Genre base.base` — Genre dimension
 3. `Themes base.base` — Themes dimension
 4. `Studio base.base` — Studio dimension
@@ -282,7 +282,7 @@ git push origin staging  # if on main and need to sync staging
 ## 10. README MAINTENANCE
 
 - **Source of truth:** Filesystem counts, not README hardcodes. `README.md:30-52` table, tree `README.md:99-122`, and footer `*Last updated: ...*` are auto-patched.
-- **Script:** `Utilities/Scripts/update_readme.py:1` — idempotent, patches table rows `**368**` etc, tree `368 notes — 57 series folders`, `183 reference pages`, per-dimension counts, footer + snapshot date.
+- **Script:** `Utilities/Scripts/update_readme.py:1` — idempotent, patches table rows `**369**` etc, tree `369 notes — 57 series folders`, `183 reference pages`, per-dimension counts, footer + snapshot date.
 - **When to run:** Before every commit that changes `Anime/`, `Extra/`, `Pending/`, `Utilities/Bases/`, `Utilities/Graphs/` or weekly via backup. Also in CI with `--check`.
 - **What NOT to do:** Don't manually edit numbers in README — they'll be overwritten. Don't document sync scripts in README — they are helpers (`README.md` should only mention `update_readme.py`).
 

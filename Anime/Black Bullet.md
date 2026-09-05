@@ -6,7 +6,7 @@ Aired: 2014-04-08
 Finished: 2014-07-01
 Studio:
   - "[[Kinema Citrus]]"
-  - "[[Extra/Studio/Orange]]"
+  - "[[Orange]]"
 Source: "[[Light novel]]"
 Genre:
   - "[[Action]]"

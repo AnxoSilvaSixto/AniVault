@@ -5,7 +5,7 @@ Episodes: 12
 Aired: 2021-01-07
 Finished: 2021-03-25
 Studio:
-  - "[[Extra/Studio/Orange]]"
+  - "[[Orange]]"
 Source: "[[Manga]]"
 Genre:
   - "[[Drama]]"

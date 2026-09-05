@@ -37,8 +37,5 @@ Utilities/Scripts/data/Studio_Updates/
 *.tmp
 *.bak
 
-# Local MCP state
-.obsidian-mcp/
-
 # opencode leftover (should live at .opencode/ or ~/.config/opencode, not inside .git/)
 .git/opencode
