@@ -5,7 +5,7 @@ Episodes: 12
 Aired: 2019-10-10
 Finished: 2019-12-26
 Studio:
-  - "[[Orange]]"
+  - "[[Extra/Studio/Orange]]"
 Source: "[[Manga]]"
 Genre:
   - "[[Drama]]"

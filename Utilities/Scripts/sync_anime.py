@@ -622,8 +622,10 @@ def main():
             break
         time.sleep(REQUEST_DELAY)  # Always pace â€” even after a failure â€” so one error can't cascade
 
-    if args.mode in ("info", "both"): write_log(INFO_LOG_PATH, info_synced)
-    if args.mode in ("synopsis", "both"): write_log(SYNOPSIS_LOG_PATH, synopsis_synced)
+    # A dry run must not advance incremental-sync state.
+    if not args.dry_run:
+        if args.mode in ("info", "both"): write_log(INFO_LOG_PATH, info_synced)
+        if args.mode in ("synopsis", "both"): write_log(SYNOPSIS_LOG_PATH, synopsis_synced)
     print("=" * 65)
     if all_changes:
         if args.dry_run:

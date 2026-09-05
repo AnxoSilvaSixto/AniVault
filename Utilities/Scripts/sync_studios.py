@@ -300,7 +300,7 @@ def compute_changes(current_meta: dict, api_data: dict) -> tuple[dict, list[Chan
     return target, changes
 
 
-def process_file(path: Path, api_data: dict) -> list[Change]:
+def process_file(path: Path, api_data: dict, dry_run: bool = False) -> list[Change]:
     content = load_file(path)
     split = split_frontmatter(content)
     if split is None:
@@ -328,9 +328,10 @@ def process_file(path: Path, api_data: dict) -> list[Change]:
             merged[key] = value
 
     new_content = f"{dump_yaml_frontmatter(merged)}{body}"
-    out_path = UPDATES_DIR / path.relative_to(STUDIO_DIR)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    write_text_preserving_line_ending(out_path, new_content, detect_line_ending(path))
+    if not dry_run:
+        out_path = UPDATES_DIR / path.relative_to(STUDIO_DIR)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        write_text_preserving_line_ending(out_path, new_content, detect_line_ending(path))
     return changes
 
 
@@ -358,6 +359,7 @@ def main() -> None:
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--full", action="store_true", help="Recheck all files")
+    parser.add_argument("--dry-run", action="store_true", help="Show what would change without writing files")
     args = parser.parse_args()
 
     if not STUDIO_DIR.exists():
@@ -376,7 +378,7 @@ def main() -> None:
 
     print("Studio Metadata Sync — Tenrai API")
     print("=" * 50)
-    print(f"Mode    : {'FULL RESCAN' if args.full else 'Incremental'}")
+    print(f"Mode    : {'FULL RESCAN' if args.full else 'Incremental'}{' (DRY RUN)' if args.dry_run else ''}")
     print(f"Pending : {len(pending)} files")
 
     if not pending:
@@ -408,9 +410,9 @@ def main() -> None:
                 raw = resp.json()
                 data = raw.get("data", raw)  # auto-detect nested vs. flat response
 
-                changes = process_file(fp, data)
+                changes = process_file(fp, data, args.dry_run)
                 if changes:
-                    print("UPDATED")
+                    print("WOULD UPDATE" if args.dry_run else "UPDATED")
                     all_changes.append((key, changes))
                 else:
                     print("OK")
@@ -427,14 +429,18 @@ def main() -> None:
             break
         time.sleep(REQUEST_DELAY)
 
-    write_log(LOG_PATH, updated)
+    if not args.dry_run:
+        write_log(LOG_PATH, updated)
 
     print("=" * 50)
     if all_changes:
-        report = write_changes_report(all_changes)
-        print(f"Finished. {len(all_changes)} entries changed.")
-        print(f"Report: {report}")
-        print(f"Outputs: {UPDATES_DIR}")
+        if args.dry_run:
+            print(f"Dry run complete. {len(all_changes)} entries would change.")
+        else:
+            report = write_changes_report(all_changes)
+            print(f"Finished. {len(all_changes)} entries changed.")
+            print(f"Report: {report}")
+            print(f"Outputs: {UPDATES_DIR}")
     else:
         print("Finished. No changes found.")
 

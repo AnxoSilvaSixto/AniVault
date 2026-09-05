@@ -7,13 +7,18 @@ cd /d "%~dp0"
 for %%I in ("%~dp0..\..") do set "VAULT_ROOT=%%~fI"
 
 where python >nul 2>nul
-if errorlevel 1 (
-    echo [ERROR] "python" was not found on PATH.
-    echo Install it from https://python.org and check "Add python.exe to PATH" during setup.
-    echo If Python IS installed, try replacing "python" with "py" in this file instead.
-    echo.
-    pause
-    exit /b 1
+if not errorlevel 1 (
+    set "PY_CMD=python"
+) else (
+    where py >nul 2>nul
+    if errorlevel 1 (
+        echo [ERROR] Neither "python" nor "py" was found on PATH.
+        echo Install Python from https://python.org and try again.
+        echo.
+        pause
+        exit /b 1
+    )
+    set "PY_CMD=py"
 )
 
 :menu
@@ -30,14 +35,16 @@ echo.
 echo Studios
 echo   4. Full sync
 echo   5. Sync new information
+echo   6. Preview new information
 echo.
 echo Utilities
-echo   6. Exit
+echo   7. Exit
 echo.
 
-choice /c 123456 /n /m "Select an option (1-6): "
+choice /c 1234567 /n /m "Select an option (1-7): "
 
-if errorlevel 6 goto end
+if errorlevel 7 goto end
+if errorlevel 6 goto studios_dry_run
 if errorlevel 5 goto studios_metadata
 if errorlevel 4 goto studios_full
 if errorlevel 3 goto anime_metadata
@@ -48,35 +55,42 @@ if errorlevel 1 goto anime_full
 echo.
 echo Running a FULL anime rescan...
 echo.
-python sync_anime.py --full --mode both
+%PY_CMD% sync_anime.py --full --mode both
 goto afterrun
 
 :anime_synopsis
 echo.
 echo Syncing anime synopsis for new/pending files only...
 echo.
-python sync_anime.py --mode synopsis
+%PY_CMD% sync_anime.py --mode synopsis
 goto afterrun
 
 :anime_metadata
 echo.
 echo Syncing anime metadata for new/pending files only...
 echo.
-python sync_anime.py --mode info
+%PY_CMD% sync_anime.py --mode info
 goto afterrun
 
 :studios_full
 echo.
 echo Running a FULL studio rescan...
 echo.
-python sync_studios.py --full
+%PY_CMD% sync_studios.py --full
 goto afterrun
 
 :studios_metadata
 echo.
 echo Syncing studio information for new/pending files only...
 echo.
-python sync_studios.py
+%PY_CMD% sync_studios.py
+goto afterrun
+
+:studios_dry_run
+echo.
+echo Previewing studio information for new/pending files only...
+echo.
+%PY_CMD% sync_studios.py --dry-run
 goto afterrun
 
 :afterrun
