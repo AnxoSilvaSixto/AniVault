@@ -17,7 +17,7 @@ Genre:
 Themes:
   - "[[Urban Fantasy]]"
 Demographic: []
-Cover: https://cdn.myanimelist.net/images/anime/4/75851l.jpg
+Cover: https://cdn.myanimelist.net/images/anime/1574/112838l.jpg
 MAL: https://myanimelist.net/anime/4282
 Rating: 7
 Prequels:

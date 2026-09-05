@@ -126,6 +126,17 @@ function buildIssueFilterView(issues, filters, statuses = /* @__PURE__ */ new Ma
     classificationFacets
   };
 }
+function countNewConfirmedFindings(issues, statuses) {
+  let errors = 0;
+  let warnings = 0;
+  for (const issue of issues) {
+    if (statuses.get(issue.fingerprint) !== "new") continue;
+    if (issue.classification !== "confirmed") continue;
+    if (issue.severity === "error") errors += 1;
+    else if (issue.severity === "warning") warnings += 1;
+  }
+  return { errors, warnings };
+}
 function compareIssues(left, right, statuses) {
   var _a, _b;
   const rankDifference = issueRank(left, statuses) - issueRank(right, statuses);
@@ -172,37 +183,56 @@ function formatDuration(ms) {
 
 // src/report/render-summary.ts
 function renderSummary(container, result, options) {
-  var _a;
   const duration = formatDuration(result.finishedAt - result.startedAt);
   const summary = container.createDiv({ cls: "vi-summary" });
   summary.createEl("h2", { text: "Scan results" });
+  renderChanges(summary, result, options);
   const stats = summary.createDiv({ cls: "vi-stats" });
-  const items = [{
-    label: "Active",
-    value: result.issues.length,
-    cls: "vi-stat-active"
-  }];
-  if (options.comparison.available) {
-    items.push(
-      {
-        label: "New",
-        value: countStatus(result, options.comparison, "new"),
-        cls: "vi-stat-new",
-        status: "new"
-      },
-      {
-        label: "Persisting",
-        value: countStatus(result, options.comparison, "persisting"),
-        cls: "vi-stat-persisting",
-        status: "persisting"
-      },
-      {
-        label: "Resolved",
-        value: options.comparison.resolvedIssues.filter((issue) => !issue.ignored).length,
-        cls: "vi-stat-resolved"
-      }
-    );
+  const active = stats.createDiv({ cls: "vi-stat vi-stat-active" });
+  active.createSpan({ cls: "vi-stat-label", text: "Active" });
+  active.createSpan({ cls: "vi-stat-value", text: String(result.issues.length) });
+  const meta = summary.createDiv({ cls: "vi-meta" });
+  meta.createSpan({ text: `${result.filesScanned} files scanned` });
+  meta.createSpan({ text: duration });
+  meta.createSpan({ text: `${result.scannersRun.length} scanners` });
+  meta.createSpan({ text: `Ignored ${result.ignoredIssues.length}` });
+}
+function renderChanges(summary, result, options) {
+  var _a;
+  const comparison = options.comparison;
+  const changes = summary.createDiv({ cls: "vi-changes" });
+  changes.createDiv({ cls: "vi-changes-title", text: "What changed" });
+  if (!comparison.available) {
+    changes.createDiv({
+      cls: "vi-comparison-note",
+      text: unavailableMessage(
+        (_a = comparison.reason) != null ? _a : "first-scan",
+        comparison.previousScanAt
+      )
+    });
+    return;
   }
+  changes.createDiv({
+    cls: "vi-changes-meta",
+    text: comparison.previousScanAt === void 0 ? "Compared with the previous successful scan" : `Compared with the scan from ${formatScanTime(comparison.previousScanAt)}`
+  });
+  const newConfirmed = countNewConfirmedFindings(result.issues, comparison.statuses);
+  const stats = changes.createDiv({ cls: "vi-changes-stats" });
+  const items = [
+    { label: "New errors", value: newConfirmed.errors, cls: "vi-stat-new vi-stat-error" },
+    { label: "New warnings", value: newConfirmed.warnings, cls: "vi-stat-new vi-stat-warning" },
+    {
+      label: "Persisting",
+      value: countStatus(result, comparison, "persisting"),
+      cls: "vi-stat-persisting",
+      status: "persisting"
+    },
+    {
+      label: "Resolved",
+      value: comparison.resolvedIssues.filter((issue) => !issue.ignored).length,
+      cls: "vi-stat-resolved"
+    }
+  ];
   for (const item of items) {
     const status = item.status;
     const onFilterStatus = options.onFilterStatus;
@@ -215,24 +245,28 @@ function renderSummary(container, result, options) {
       stat.addEventListener("click", () => onFilterStatus(status));
     }
   }
-  if (!options.comparison.available) {
-    summary.createDiv({
-      cls: "vi-comparison-note",
-      text: unavailableMessage((_a = options.comparison.reason) != null ? _a : "first-scan")
+  const reviewable = newConfirmed.errors + newConfirmed.warnings;
+  const onReviewNewFindings = options.onReviewNewFindings;
+  if (reviewable > 0 && onReviewNewFindings) {
+    const button = changes.createEl("button", {
+      cls: "vi-review-new-btn",
+      text: `Review new findings (${reviewable})`,
+      attr: { type: "button" }
     });
+    button.addEventListener("click", () => onReviewNewFindings());
   }
-  const meta = summary.createDiv({ cls: "vi-meta" });
-  meta.createSpan({ text: `${result.filesScanned} files scanned` });
-  meta.createSpan({ text: duration });
-  meta.createSpan({ text: `${result.scannersRun.length} scanners` });
-  meta.createSpan({ text: `Ignored ${result.ignoredIssues.length}` });
 }
 function countStatus(result, comparison, status) {
   return result.issues.filter(
     (issue) => comparison.statuses.get(issue.fingerprint) === status
   ).length;
 }
-function unavailableMessage(reason) {
+function unavailableMessage(reason, previousScanAt) {
+  const base = baseUnavailableMessage(reason);
+  if (previousScanAt === void 0) return base;
+  return `${base} (previous successful scan: ${formatScanTime(previousScanAt)})`;
+}
+function baseUnavailableMessage(reason) {
   if (reason === "settings-changed") {
     return "Scan settings changed; this scan starts a new comparison baseline";
   }
@@ -240,6 +274,9 @@ function unavailableMessage(reason) {
     return "Scanner behavior changed; this scan starts a new comparison baseline";
   }
   return "No previous successful scan for these settings";
+}
+function formatScanTime(ms) {
+  return new Date(ms).toLocaleString();
 }
 
 // src/report/render-evidence.ts
@@ -269,7 +306,7 @@ function renderRow(container, label, value) {
 }
 
 // src/report/render-issues.ts
-var import_obsidian = require("obsidian");
+var import_obsidian2 = require("obsidian");
 
 // src/utils/paths.ts
 function normalizePath(path) {
@@ -310,7 +347,390 @@ function matchesGlob(path, glob) {
   return new RegExp(`^${pattern}$`).test(path);
 }
 
+// src/fix/confirm-modal.ts
+var import_obsidian = require("obsidian");
+
+// src/fix/fix-decisions.ts
+function isBlockedFromExecution(issue) {
+  return issue.fixAction !== void 0 && issue.eligibility === "blocked";
+}
+function buildFixDecisionState(issues, mode, selectedKeeps) {
+  const decisions = [];
+  let complete = true;
+  for (const issue of issues) {
+    const action = issue.fixAction;
+    if (!action) continue;
+    const selection = action.selection;
+    if (!selection) {
+      decisions.push({ fingerprint: issue.fingerprint });
+      continue;
+    }
+    const keepPath = mode === "automatic" && !selection.requiresReview ? selection.automaticKeepPath : selectedKeeps.get(issue.fingerprint);
+    if (!keepPath || !selection.candidatePaths.includes(keepPath)) {
+      complete = false;
+      continue;
+    }
+    decisions.push({ fingerprint: issue.fingerprint, keepPath });
+  }
+  return { complete, decisions };
+}
+function resolveDecisionAction(issue, decision) {
+  const action = issue.fixAction;
+  if (!action || decision.fingerprint !== issue.fingerprint) return null;
+  const selection = action.selection;
+  if (!selection) return decision.keepPath === void 0 ? action : null;
+  if (!decision.keepPath || !selection.candidatePaths.includes(decision.keepPath)) {
+    return null;
+  }
+  const targetPaths = selection.candidatePaths.filter(
+    (path) => path !== decision.keepPath
+  );
+  return {
+    ...action,
+    description: `Keep "${decision.keepPath}" and move ${targetPaths.length} duplicate(s) to trash`,
+    targetPaths
+  };
+}
+function getFreshFixAction(requestedIssue, freshIssue, decision) {
+  var _a, _b;
+  const requested = requestedIssue.fixAction;
+  const fresh = freshIssue == null ? void 0 : freshIssue.fixAction;
+  if (decision.fingerprint !== requestedIssue.fingerprint || (freshIssue == null ? void 0 : freshIssue.fingerprint) !== requestedIssue.fingerprint || !requested || !fresh || isBlockedFromExecution(freshIssue)) {
+    return null;
+  }
+  if (requested.selection || fresh.selection) {
+    if (!requested.selection || !fresh.selection || requested.kind !== fresh.kind || requested.label !== fresh.label || requested.selection.requiresReview !== fresh.selection.requiresReview || requested.selection.automaticKeepPath !== fresh.selection.automaticKeepPath || !samePaths(
+      (_a = requested.selection.referencedPaths) != null ? _a : [],
+      (_b = fresh.selection.referencedPaths) != null ? _b : []
+    ) || !samePaths(
+      requested.selection.candidatePaths,
+      fresh.selection.candidatePaths
+    )) {
+      return null;
+    }
+    return resolveDecisionAction(freshIssue, decision);
+  }
+  return fixActionsMatch(requested, fresh) ? fresh : null;
+}
+function samePaths(left, right) {
+  const sortedLeft = left.slice().sort();
+  const sortedRight = right.slice().sort();
+  return sortedLeft.length === sortedRight.length && sortedRight.every((path, index) => path === sortedLeft[index]);
+}
+function fixActionsMatch(left, right) {
+  return left.kind === right.kind && left.label === right.label && left.description === right.description && left.linkText === right.linkText && left.targetPaths.length === right.targetPaths.length && left.targetPaths.every(
+    (path, index) => path === right.targetPaths[index]
+  );
+}
+
+// src/fix/confirm-modal.ts
+function describeFixActions(actions) {
+  const modifiedNotes = new Set(
+    actions.filter((action) => action.kind === "remove-link-text").flatMap((action) => action.targetPaths)
+  );
+  const trashedFiles = new Set(
+    actions.filter((action) => action.kind === "trash-file").flatMap((action) => action.targetPaths)
+  );
+  const parts = [];
+  if (modifiedNotes.size > 0) {
+    parts.push(`modify ${modifiedNotes.size} ${pluralize("note", modifiedNotes.size)}`);
+  }
+  if (trashedFiles.size > 0) {
+    parts.push(`move ${trashedFiles.size} ${pluralize("file", trashedFiles.size)} to trash`);
+  }
+  const description = parts.join(" and ");
+  return description.length > 0 ? description.charAt(0).toUpperCase() + description.slice(1) : "Apply selected fixes";
+}
+function summarizeFixActions(actions) {
+  var _a, _b;
+  const isBatch = actions.length > 1;
+  const impact = describeFixActions(actions);
+  return {
+    title: isBatch ? `Confirm batch fix (${actions.length} actions)` : "Confirm fix",
+    description: isBatch ? `This will ${impact.charAt(0).toLowerCase()}${impact.slice(1)}.` : (_b = (_a = actions[0]) == null ? void 0 : _a.description) != null ? _b : "No fix action selected.",
+    paths: [...new Set(actions.flatMap((action) => action.targetPaths))]
+  };
+}
+function pluralize(noun, count) {
+  return count === 1 ? noun : `${noun}s`;
+}
+function createSingleUseResolver(resolve) {
+  let settled = false;
+  return (value) => {
+    if (settled) return false;
+    settled = true;
+    resolve(value);
+    return true;
+  };
+}
+function showConfirmModal(app, issues, mode) {
+  return new Promise((resolve) => {
+    new ConfirmFixModal(app, issues, mode, resolve).open();
+  });
+}
+function shouldAskForKeep(mode, selection) {
+  return mode === "always-ask" || selection.requiresReview === true;
+}
+function resolveEligibility(issue) {
+  var _a;
+  return (_a = issue.eligibility) != null ? _a : "review-required";
+}
+function describeEligibility(issue) {
+  var _a, _b;
+  const action = issue.fixAction;
+  if (!action) {
+    return { status: "No fix action", reason: "This finding has no fix action." };
+  }
+  const eligibility = resolveEligibility(issue);
+  const status = eligibility === "blocked" ? "Blocked" : eligibility === "review-required" ? "Review required" : "Eligible";
+  let reason;
+  if (issue.classification === "unverified") {
+    reason = "The finding is unverified, so its fix cannot run.";
+  } else if (action.kind === "trash-file" && ((_a = issue.impact) == null ? void 0 : _a.coverageComplete) === false) {
+    reason = "Reference coverage is incomplete, so files cannot be moved to trash safely.";
+  } else if (((_b = action.selection) == null ? void 0 : _b.requiresReview) === true) {
+    reason = "Several copies are referenced, so an explicit keep choice is required.";
+  } else if (issue.classification !== "confirmed") {
+    reason = "The finding needs review before its fix can run.";
+  } else if (action.kind === "remove-link-text" && (action.original === void 0 || action.replacement === void 0)) {
+    reason = "The replacement text is not fully specified.";
+  } else if (eligibility === "blocked") {
+    reason = "The finding cannot be fixed in this state.";
+  } else {
+    reason = eligibility === "review-required" ? "The finding needs review before its fix can run." : "The fix is confirmed and its evidence is complete.";
+  }
+  return { status, reason };
+}
+function groupByEligibility(issues) {
+  const groups = {
+    eligible: [],
+    reviewRequired: [],
+    blocked: []
+  };
+  for (const issue of issues) {
+    if (!issue.fixAction) continue;
+    const eligibility = resolveEligibility(issue);
+    if (eligibility === "eligible") groups.eligible.push(issue);
+    else if (eligibility === "blocked") groups.blocked.push(issue);
+    else groups.reviewRequired.push(issue);
+  }
+  return groups;
+}
+function isReviewApproved(issue, mode, selectedKeeps, approvedReviews) {
+  var _a;
+  const selection = (_a = issue.fixAction) == null ? void 0 : _a.selection;
+  if (selection && shouldAskForKeep(mode, selection)) {
+    const keepPath = selectedKeeps.get(issue.fingerprint);
+    return keepPath !== void 0 && selection.candidatePaths.includes(keepPath);
+  }
+  return approvedReviews.has(issue.fingerprint);
+}
+function buildConfirmationPlan(issues, mode, selectedKeeps, approvedReviews) {
+  const groups = groupByEligibility(issues);
+  const actionable = [
+    ...groups.eligible,
+    ...groups.reviewRequired.filter((issue) => isReviewApproved(issue, mode, selectedKeeps, approvedReviews))
+  ];
+  const state = buildFixDecisionState(actionable, mode, selectedKeeps);
+  return {
+    groups,
+    actionable,
+    complete: actionable.length > 0 && state.complete
+  };
+}
+function buildImpactRows(paths, stats) {
+  return paths.map((path) => {
+    const stat = stats.get(path);
+    return {
+      path,
+      size: stat ? formatSize(stat.size) : "Size unknown",
+      mtime: stat ? new Date(stat.mtime).toLocaleDateString() : "Modified date unknown"
+    };
+  });
+}
+var ConfirmFixModal = class extends import_obsidian.Modal {
+  constructor(app, issues, mode, resolve) {
+    super(app);
+    this.selectedKeeps = /* @__PURE__ */ new Map();
+    this.approvedReviews = /* @__PURE__ */ new Set();
+    this.issues = issues;
+    this.mode = mode;
+    this.settle = createSingleUseResolver(resolve);
+  }
+  onOpen() {
+    this.contentEl.addClass("vi-confirm-modal");
+    this.renderContent();
+  }
+  onClose() {
+    this.contentEl.empty();
+    this.settle(null);
+  }
+  finish(result) {
+    if (this.settle(result)) this.close();
+  }
+  collectStats(paths) {
+    const stats = /* @__PURE__ */ new Map();
+    for (const path of paths) {
+      const file = this.app.vault.getAbstractFileByPath(path);
+      if (file instanceof import_obsidian.TFile) {
+        stats.set(path, { size: file.stat.size, mtime: file.stat.mtime });
+      }
+    }
+    return stats;
+  }
+  renderContent() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.addClass("vi-confirm-modal");
+    const plan = buildConfirmationPlan(
+      this.issues,
+      this.mode,
+      this.selectedKeeps,
+      this.approvedReviews
+    );
+    const state = buildFixDecisionState(
+      plan.actionable,
+      this.mode,
+      this.selectedKeeps
+    );
+    const actions = plan.actionable.flatMap((issue) => {
+      const decision = state.decisions.find(
+        (candidate) => candidate.fingerprint === issue.fingerprint
+      );
+      if (!decision) return [];
+      const action = resolveDecisionAction(issue, decision);
+      return action ? [action] : [];
+    });
+    const summary = summarizeFixActions(actions);
+    contentEl.createEl("h3", {
+      text: this.issues.length > 1 ? `Confirm batch fix (${this.issues.length} actions)` : "Confirm fix"
+    });
+    contentEl.createEl("p", {
+      text: plan.complete ? summary.description : "Approve at least one fix and choose one file to keep in every duplicate group."
+    });
+    const stats = this.collectStats([
+      ...new Set(
+        this.issues.flatMap((issue) => {
+          var _a, _b;
+          return (_b = (_a = issue.fixAction) == null ? void 0 : _a.targetPaths) != null ? _b : [];
+        })
+      )
+    ]);
+    for (const issue of this.issues) {
+      this.renderImpactCard(contentEl, issue, stats);
+    }
+    const btnRow = contentEl.createDiv({ cls: "vi-confirm-buttons" });
+    btnRow.createEl("button", { text: "Cancel" }).addEventListener("click", () => this.finish(null));
+    const confirmBtn = btnRow.createEl("button", {
+      cls: "vi-confirm-destructive",
+      text: "Confirm"
+    });
+    confirmBtn.disabled = !plan.complete;
+    confirmBtn.addEventListener("click", () => {
+      if (plan.complete) this.finish(state.decisions);
+    });
+  }
+  renderImpactCard(container, issue, stats) {
+    var _a, _b;
+    const action = issue.fixAction;
+    if (!action) return;
+    const eligibility = resolveEligibility(issue);
+    const explanation = describeEligibility(issue);
+    const approved = eligibility === "eligible" || isReviewApproved(
+      issue,
+      this.mode,
+      this.selectedKeeps,
+      this.approvedReviews
+    );
+    const card = container.createDiv({
+      cls: eligibility === "review-required" && !approved ? "vi-impact-card vi-impact-card-muted" : "vi-impact-card"
+    });
+    const titleRow = card.createDiv({ cls: "vi-impact-card-title-row" });
+    titleRow.createSpan({ cls: "vi-impact-card-title", text: issue.title });
+    titleRow.createSpan({
+      cls: `vi-eligibility-badge vi-eligibility-${eligibility}`,
+      text: explanation.status
+    });
+    card.createDiv({ cls: "vi-impact-reason", text: explanation.reason });
+    const rows = card.createDiv({ cls: "vi-impact-rows" });
+    for (const row of buildImpactRows(action.targetPaths, stats)) {
+      const rowEl = rows.createDiv({ cls: "vi-impact-row" });
+      rowEl.createSpan({
+        cls: "vi-impact-row-path",
+        text: row.path
+      });
+      rowEl.createSpan({
+        cls: "vi-impact-row-meta",
+        text: `${row.size} \xB7 modified ${row.mtime}`
+      });
+    }
+    if (issue.impact) {
+      card.createDiv({
+        cls: "vi-impact-coverage",
+        text: `Inbound references: ${issue.impact.inboundReferences} \xB7 Reference coverage: ${issue.impact.coverageComplete ? "complete" : "incomplete"}`
+      });
+    }
+    const selection = action.selection;
+    if (selection) {
+      const keepPath = (_a = this.selectedKeeps.get(issue.fingerprint)) != null ? _a : selection.automaticKeepPath;
+      card.createDiv({ cls: "vi-impact-keep", text: `Keep: ${keepPath}` });
+    }
+    if (selection && shouldAskForKeep(this.mode, selection)) {
+      const group = card.createDiv({ cls: "vi-keep-group" });
+      group.createDiv({
+        cls: "vi-keep-group-title",
+        text: "Choose one file to keep"
+      });
+      const referencedPaths = (_b = selection.referencedPaths) != null ? _b : [];
+      if (referencedPaths.length >= 2) {
+        group.createDiv({
+          cls: "vi-keep-group-impact",
+          text: `${referencedPaths.length} of ${selection.candidatePaths.length} files are referenced by notes: ${referencedPaths.join(", ")}. Choose which location to keep \u2014 references are never rewritten.`
+        });
+      }
+      for (const path of selection.candidatePaths) {
+        const option = group.createEl("label", { cls: "vi-keep-option" });
+        const radio = option.createEl("input", { type: "radio" });
+        radio.name = `keep-${issue.fingerprint}`;
+        radio.checked = this.selectedKeeps.get(issue.fingerprint) === path;
+        radio.addEventListener("change", () => {
+          this.selectedKeeps.set(issue.fingerprint, path);
+          this.renderContent();
+        });
+        option.createSpan({ cls: "vi-keep-option-path", text: path });
+      }
+    }
+    if (eligibility === "review-required" && !selection) {
+      const label = card.createEl("label", { cls: "vi-review-checkbox" });
+      const checkbox = label.createEl("input", { type: "checkbox" });
+      checkbox.checked = this.approvedReviews.has(issue.fingerprint);
+      checkbox.addEventListener("change", () => {
+        if (checkbox.checked) {
+          this.approvedReviews.add(issue.fingerprint);
+        } else {
+          this.approvedReviews.delete(issue.fingerprint);
+        }
+        this.renderContent();
+      });
+      label.createSpan({ text: "I reviewed this file" });
+    }
+  }
+};
+
 // src/report/render-issues.ts
+function selectBulkFixable(selected) {
+  const bulk = [];
+  let reviewRequired = 0;
+  let blocked = 0;
+  for (const issue of selected) {
+    if (!issue.fixAction) continue;
+    const eligibility = resolveEligibility(issue);
+    if (eligibility === "eligible") bulk.push(issue);
+    else if (eligibility === "blocked") blocked += 1;
+    else reviewRequired += 1;
+  }
+  return { bulk, reviewRequired, blocked };
+}
 function renderIssueList(container, config) {
   var _a, _b;
   const grouped = groupByScanner(config.issues);
@@ -359,7 +779,7 @@ function renderIssueList(container, config) {
           cls: "vi-issue-path",
           text: issuePath2
         });
-        (0, import_obsidian.setTooltip)(pathEl, "Click to open issue location");
+        (0, import_obsidian2.setTooltip)(pathEl, "Click to open issue location");
         pathEl.addEventListener("click", (e) => {
           e.stopPropagation();
           if (hasActiveTextSelection()) return;
@@ -393,7 +813,7 @@ function renderIssueDetails(container, issue, config) {
         });
         if (!item.issue) continue;
         itemEl.addClass("vi-issue-value-clickable");
-        (0, import_obsidian.setTooltip)(itemEl, "Click to open issue location");
+        (0, import_obsidian2.setTooltip)(itemEl, "Click to open issue location");
         itemEl.addEventListener("click", (event) => {
           event.stopPropagation();
           if (hasActiveTextSelection()) return;
@@ -402,21 +822,41 @@ function renderIssueDetails(container, issue, config) {
       }
     }
   }
+  if (issue.fixAction) {
+    details.createDiv({
+      cls: "vi-issue-fix-reason",
+      text: describeEligibility(issue).reason
+    });
+  }
   renderFindingEvidence(details, issue);
   renderIssueActions(details, issue, config);
 }
 function renderIssueActions(container, issue, config) {
   const issuePath2 = getIssuePath(issue);
+  const eligibility = issue.fixAction ? resolveEligibility(issue) : null;
+  const canFixIssue = Boolean(
+    config.onFixIssue && issue.fixAction && eligibility !== "blocked"
+  );
   const canExcludeFolder = Boolean(
     config.onExcludeFolder && issuePath2 && getParentFolder(issuePath2)
   );
-  if (!config.onIgnoreIssue && !canExcludeFolder && !config.onOpenScannerSettings) {
+  if (!canFixIssue && !config.onIgnoreIssue && !canExcludeFolder && !config.onOpenScannerSettings) {
     return;
   }
   const disclosure = container.createEl("details", { cls: "vi-actions-disclosure" });
   disclosure.addEventListener("click", (event) => event.stopPropagation());
   disclosure.createEl("summary", { text: "Actions" });
   const actions = disclosure.createDiv({ cls: "vi-context-actions" });
+  if (canFixIssue) {
+    createActionButton(
+      actions,
+      eligibility === "review-required" ? "Review fix" : "Fix this issue",
+      () => {
+        var _a;
+        void ((_a = config.onFixIssue) == null ? void 0 : _a.call(config, issue));
+      }
+    );
+  }
   if (config.onIgnoreIssue) {
     createActionButton(actions, "Ignore this issue", () => {
       var _a;
@@ -561,6 +1001,16 @@ function getIssueDetailRows(issue) {
     const type = issue.evidence.type;
     if (typeof type === "string") rows.push({ label: "Type", value: type });
   }
+  if (issue.fixAction) {
+    const eligibility = resolveEligibility(issue);
+    rows.push({
+      label: "Fix",
+      items: [{
+        text: describeEligibility(issue).status,
+        className: `vi-eligibility-badge vi-eligibility-${eligibility}`
+      }]
+    });
+  }
   return rows;
 }
 function makePathIssue(issue, path) {
@@ -693,6 +1143,13 @@ var OUTCOME_LABELS = {
   skipped: "Skipped",
   failed: "Failed"
 };
+function describeOutcomeLabel(outcome) {
+  if (outcome.outcome === "failed" && "phase" in outcome) {
+    if (outcome.phase === "verification") return "Verification failed";
+    if (outcome.phase === "execution") return "Execution failed";
+  }
+  return OUTCOME_LABELS[outcome.outcome];
+}
 function renderOperationOutcomes(container, outcomes, onDismiss) {
   if (outcomes.length === 0) return;
   const panel = container.createDiv({ cls: "vi-outcomes" });
@@ -725,10 +1182,10 @@ function renderOperationOutcomes(container, outcomes, onDismiss) {
     const item = list.createEl("li", { cls: "vi-outcome-item" });
     item.createSpan({
       cls: `vi-outcome-label vi-outcome-${outcome.outcome}`,
-      text: OUTCOME_LABELS[outcome.outcome]
+      text: describeOutcomeLabel(outcome)
     });
     item.createDiv({ cls: "vi-outcome-message", text: outcome.message });
-    if ("phase" in outcome && outcome.phase) {
+    if ("phase" in outcome && outcome.phase && outcome.outcome !== "failed") {
       item.createDiv({
         cls: "vi-outcome-phase",
         text: `Phase: ${outcome.phase}`
@@ -745,206 +1202,6 @@ function renderOperationOutcomes(container, outcomes, onDismiss) {
 
 // src/report/InspectorView.ts
 var import_obsidian5 = require("obsidian");
-
-// src/fix/confirm-modal.ts
-var import_obsidian2 = require("obsidian");
-
-// src/fix/fix-decisions.ts
-function buildFixDecisionState(issues, mode, selectedKeeps) {
-  const decisions = [];
-  let complete = true;
-  for (const issue of issues) {
-    const action = issue.fixAction;
-    if (!action) continue;
-    const selection = action.selection;
-    if (!selection) {
-      decisions.push({ fingerprint: issue.fingerprint });
-      continue;
-    }
-    const keepPath = mode === "automatic" ? selection.automaticKeepPath : selectedKeeps.get(issue.fingerprint);
-    if (!keepPath || !selection.candidatePaths.includes(keepPath)) {
-      complete = false;
-      continue;
-    }
-    decisions.push({ fingerprint: issue.fingerprint, keepPath });
-  }
-  return { complete, decisions };
-}
-function resolveDecisionAction(issue, decision) {
-  const action = issue.fixAction;
-  if (!action || decision.fingerprint !== issue.fingerprint) return null;
-  const selection = action.selection;
-  if (!selection) return decision.keepPath === void 0 ? action : null;
-  if (!decision.keepPath || !selection.candidatePaths.includes(decision.keepPath)) {
-    return null;
-  }
-  const targetPaths = selection.candidatePaths.filter(
-    (path) => path !== decision.keepPath
-  );
-  return {
-    ...action,
-    description: `Keep "${decision.keepPath}" and move ${targetPaths.length} duplicate(s) to trash`,
-    targetPaths
-  };
-}
-function getFreshFixAction(requestedIssue, freshIssue, decision) {
-  const requested = requestedIssue.fixAction;
-  const fresh = freshIssue == null ? void 0 : freshIssue.fixAction;
-  if (decision.fingerprint !== requestedIssue.fingerprint || (freshIssue == null ? void 0 : freshIssue.fingerprint) !== requestedIssue.fingerprint || !requested || !fresh) {
-    return null;
-  }
-  if (requested.selection || fresh.selection) {
-    if (!requested.selection || !fresh.selection || requested.kind !== fresh.kind || requested.label !== fresh.label || !samePaths(
-      requested.selection.candidatePaths,
-      fresh.selection.candidatePaths
-    )) {
-      return null;
-    }
-    return resolveDecisionAction(freshIssue, decision);
-  }
-  return fixActionsMatch(requested, fresh) ? fresh : null;
-}
-function samePaths(left, right) {
-  const sortedLeft = left.slice().sort();
-  const sortedRight = right.slice().sort();
-  return sortedLeft.length === sortedRight.length && sortedRight.every((path, index) => path === sortedLeft[index]);
-}
-function fixActionsMatch(left, right) {
-  return left.kind === right.kind && left.label === right.label && left.description === right.description && left.linkText === right.linkText && left.targetPaths.length === right.targetPaths.length && left.targetPaths.every(
-    (path, index) => path === right.targetPaths[index]
-  );
-}
-
-// src/fix/confirm-modal.ts
-function describeFixActions(actions) {
-  const modifiedNotes = new Set(
-    actions.filter((action) => action.kind === "remove-link-text").flatMap((action) => action.targetPaths)
-  );
-  const trashedFiles = new Set(
-    actions.filter((action) => action.kind === "trash-file").flatMap((action) => action.targetPaths)
-  );
-  const parts = [];
-  if (modifiedNotes.size > 0) {
-    parts.push(`modify ${modifiedNotes.size} ${pluralize("note", modifiedNotes.size)}`);
-  }
-  if (trashedFiles.size > 0) {
-    parts.push(`move ${trashedFiles.size} ${pluralize("file", trashedFiles.size)} to trash`);
-  }
-  const description = parts.join(" and ");
-  return description.length > 0 ? description.charAt(0).toUpperCase() + description.slice(1) : "Apply selected fixes";
-}
-function summarizeFixActions(actions) {
-  var _a, _b;
-  const isBatch = actions.length > 1;
-  const impact = describeFixActions(actions);
-  return {
-    title: isBatch ? `Confirm batch fix (${actions.length} actions)` : "Confirm fix",
-    description: isBatch ? `This will ${impact.charAt(0).toLowerCase()}${impact.slice(1)}.` : (_b = (_a = actions[0]) == null ? void 0 : _a.description) != null ? _b : "No fix action selected.",
-    paths: [...new Set(actions.flatMap((action) => action.targetPaths))]
-  };
-}
-function pluralize(noun, count) {
-  return count === 1 ? noun : `${noun}s`;
-}
-function createSingleUseResolver(resolve) {
-  let settled = false;
-  return (value) => {
-    if (settled) return false;
-    settled = true;
-    resolve(value);
-    return true;
-  };
-}
-function showConfirmModal(app, issues, mode) {
-  return new Promise((resolve) => {
-    new ConfirmFixModal(app, issues, mode, resolve).open();
-  });
-}
-var ConfirmFixModal = class extends import_obsidian2.Modal {
-  constructor(app, issues, mode, resolve) {
-    super(app);
-    this.selectedKeeps = /* @__PURE__ */ new Map();
-    this.issues = issues;
-    this.mode = mode;
-    this.settle = createSingleUseResolver(resolve);
-  }
-  onOpen() {
-    this.contentEl.addClass("vi-confirm-modal");
-    this.renderContent();
-  }
-  onClose() {
-    this.contentEl.empty();
-    this.settle(null);
-  }
-  finish(result) {
-    if (this.settle(result)) this.close();
-  }
-  renderContent() {
-    var _a;
-    const { contentEl } = this;
-    contentEl.empty();
-    contentEl.addClass("vi-confirm-modal");
-    const state = buildFixDecisionState(
-      this.issues,
-      this.mode,
-      this.selectedKeeps
-    );
-    const decisionsByFingerprint = new Map(
-      state.decisions.map((decision) => [decision.fingerprint, decision])
-    );
-    const actions = this.issues.flatMap((issue) => {
-      const decision = decisionsByFingerprint.get(issue.fingerprint);
-      if (!decision) return [];
-      const action = resolveDecisionAction(issue, decision);
-      return action ? [action] : [];
-    });
-    const summary = summarizeFixActions(actions);
-    contentEl.createEl("h3", {
-      text: this.issues.length > 1 ? `Confirm batch fix (${this.issues.length} actions)` : "Confirm fix"
-    });
-    contentEl.createEl("p", {
-      text: state.complete ? summary.description : "Choose one file to keep in every duplicate group."
-    });
-    if (this.mode === "always-ask") {
-      for (const issue of this.issues) {
-        const selection = (_a = issue.fixAction) == null ? void 0 : _a.selection;
-        if (!selection) continue;
-        const group = contentEl.createDiv({ cls: "vi-keep-group" });
-        group.createDiv({
-          cls: "vi-keep-group-title",
-          text: "Choose one file to keep"
-        });
-        for (const path of selection.candidatePaths) {
-          const option = group.createEl("label", { cls: "vi-keep-option" });
-          const radio = option.createEl("input", { type: "radio" });
-          radio.name = `keep-${issue.fingerprint}`;
-          radio.checked = this.selectedKeeps.get(issue.fingerprint) === path;
-          radio.addEventListener("change", () => {
-            this.selectedKeeps.set(issue.fingerprint, path);
-            this.renderContent();
-          });
-          option.createSpan({ cls: "vi-keep-option-path", text: path });
-        }
-      }
-    }
-    if (this.issues.length > 1 || actions.length > 1) {
-      const list = contentEl.createDiv({ cls: "vi-file-list" });
-      for (const path of summary.paths) {
-        list.createDiv({ cls: "vi-file-list-item", text: path });
-      }
-    }
-    const btnRow = contentEl.createDiv({ cls: "vi-confirm-buttons" });
-    btnRow.createEl("button", { text: "Cancel" }).addEventListener("click", () => this.finish(null));
-    const confirmBtn = btnRow.createEl("button", {
-      cls: "vi-confirm-destructive",
-      text: "Confirm"
-    });
-    confirmBtn.disabled = !state.complete;
-    confirmBtn.addEventListener("click", () => {
-      if (state.complete) this.finish(state.decisions);
-    });
-  }
-};
 
 // src/report/exclude-folder-modal.ts
 var import_obsidian3 = require("obsidian");
@@ -1208,6 +1465,17 @@ var InspectorView = class extends import_obsidian4.ItemView {
       onFilterStatus: (status) => {
         this.model.filterStatus = this.model.filterStatus === status ? null : status;
         this.render();
+      },
+      onReviewNewFindings: () => {
+        if (this.model.filterStatus === "new" && this.model.filterClassification === "confirmed") {
+          this.model.filterStatus = null;
+          this.model.filterClassification = null;
+        } else {
+          this.model.filterStatus = "new";
+          this.model.filterClassification = "confirmed";
+          this.model.filterSeverity = null;
+        }
+        this.render();
       }
     });
     renderOperationOutcomes(
@@ -1238,7 +1506,14 @@ var InspectorView = class extends import_obsidian4.ItemView {
       onOpenScannerSettings: (scannerId) => {
         var _a;
         (_a = this.onOpenScannerSettings) == null ? void 0 : _a.call(this, scannerId);
-      }
+      },
+      ...this.model.enableFixActions ? {
+        onFixIssue: (issue) => this.handleBatchAction(
+          this.onFixAllIssues,
+          [issue],
+          "Fixing issue"
+        )
+      } : {}
     });
     this.renderResolvedSection(container);
     this.renderIgnoredSection(container);
@@ -1393,7 +1668,8 @@ var InspectorView = class extends import_obsidian4.ItemView {
     if (!this.model.result) return;
     const visibleIssues = this.getVisibleIssues();
     const selectedIssues = visibleIssues.filter((i) => this.model.selectedFingerprints.has(i.fingerprint));
-    const selectedFixable = selectedIssues.filter((i) => i.fixAction);
+    const bulkSelection = selectBulkFixable(selectedIssues);
+    const selectedFixable = bulkSelection.bulk;
     const bar = container.createDiv({ cls: "vi-action-bar" });
     const left = bar.createDiv({ cls: "vi-action-bar-left" });
     const right = bar.createDiv({ cls: "vi-action-bar-right" });
@@ -1428,6 +1704,19 @@ var InspectorView = class extends import_obsidian4.ItemView {
           "Fixing issues"
         );
       });
+    }
+    if (this.model.enableFixActions) {
+      const excluded = bulkSelection.reviewRequired + bulkSelection.blocked;
+      if (excluded > 0) {
+        const note = right.createSpan({
+          cls: "vi-bulk-excluded-note",
+          text: `${excluded} ${excluded === 1 ? "needs" : "need"} review`
+        });
+        (0, import_obsidian4.setTooltip)(
+          note,
+          "Review-required and blocked findings are excluded from this batch. Fix them one at a time."
+        );
+      }
     }
     if (selectedIssues.length > 0) {
       const ignoreBtn = right.createEl("button", { cls: "vi-action-btn vi-action-ignore" });
@@ -1664,141 +1953,6 @@ var InspectorView = class extends import_obsidian4.ItemView {
   }
 };
 
-// src/scanner/ScanRunner.ts
-function getEffectiveIgnoredFolders(globalFolders, scannerFolders) {
-  return [.../* @__PURE__ */ new Set([...globalFolders, ...scannerFolders])];
-}
-var ScanRunner = class {
-  constructor(requestUrl2, timers) {
-    this.requestUrl = requestUrl2;
-    this.timers = timers;
-    this.scanners = [];
-  }
-  register(scanner) {
-    this.scanners.push(scanner);
-  }
-  async run(app, settings, options = {}) {
-    var _a, _b, _c;
-    const startedAt = Date.now();
-    const markdownFiles = app.vault.getMarkdownFiles();
-    const allFiles = app.vault.getFiles();
-    const filePathIndex = new Set(allFiles.map((f) => f.path));
-    const ctx = {
-      app,
-      metadataCache: app.metadataCache,
-      vault: app.vault,
-      requestUrl: this.requestUrl,
-      setTimeout: (_a = this.timers) == null ? void 0 : _a.setTimeout,
-      clearTimeout: (_b = this.timers) == null ? void 0 : _b.clearTimeout,
-      markdownFiles,
-      allFiles,
-      filePathIndex,
-      enabledScanners: new Set(
-        Object.entries(settings.enabledScanners).filter(([, enabled]) => enabled).map(([id]) => id)
-      ),
-      ignoredFingerprints: new Set(settings.ignoredIssueFingerprints),
-      largeMarkdownBytes: settings.largeMarkdownBytes,
-      largeAttachmentBytes: settings.largeAttachmentBytes,
-      ignoredLargeMarkdownFrontmatterKeys: settings.ignoredLargeMarkdownFrontmatterKeys,
-      ignoredLargeMarkdownPathPatterns: settings.ignoredLargeMarkdownPathPatterns,
-      duplicateHashMaxBytes: settings.duplicateHashMaxBytes,
-      lowUsageTagThreshold: settings.lowUsageTagThreshold,
-      watchedTags: settings.watchedTags,
-      ignoredFolders: settings.ignoredFolders,
-      ignoreUnresolvedNoteLinks: settings.ignoreUnresolvedNoteLinks,
-      ignoredProperties: settings.ignoredProperties,
-      emptyNoteWordThreshold: settings.emptyNoteWordThreshold
-    };
-    const scannersRun = [];
-    const issues = [];
-    const ignoredIssues = [];
-    for (let index = 0; index < this.scanners.length; index++) {
-      const scanner = this.scanners[index];
-      const scannerIndex = index + 1;
-      const scannerTotal = this.scanners.length;
-      const emitProgress = (type, message) => {
-        var _a2;
-        (_a2 = options.onProgress) == null ? void 0 : _a2.call(options, {
-          type,
-          scannerId: scanner.id,
-          scannerIndex,
-          scannerTotal,
-          message,
-          elapsedMs: Date.now() - startedAt
-        });
-      };
-      if (!ctx.enabledScanners.has(scanner.id)) {
-        emitProgress("scanner-skipped", "disabled");
-        continue;
-      }
-      scannersRun.push(scanner.id);
-      emitProgress("scanner-start");
-      const scannerContext = {
-        ...ctx,
-        ignoredFolders: getEffectiveIgnoredFolders(
-          settings.ignoredFolders,
-          (_c = settings.ignoredFoldersByScanner[scanner.id]) != null ? _c : []
-        )
-      };
-      const result = await scanner.scan(scannerContext, (progress) => {
-        var _a2;
-        (_a2 = options.onProgress) == null ? void 0 : _a2.call(options, {
-          ...progress,
-          scannerId: scanner.id,
-          scannerIndex,
-          scannerTotal,
-          elapsedMs: Date.now() - startedAt
-        });
-      });
-      for (const issue of result) {
-        if (ctx.ignoredFingerprints.has(issue.fingerprint)) {
-          ignoredIssues.push(issue);
-        } else {
-          issues.push(issue);
-        }
-      }
-      emitProgress("scanner-complete");
-    }
-    return {
-      startedAt,
-      finishedAt: Date.now(),
-      issues,
-      ignoredIssues,
-      filesScanned: allFiles.length,
-      scannersRun
-    };
-  }
-};
-
-// src/scanner/finding-presentation.ts
-function describeFinding(classification, why, nextStep, caveat) {
-  return {
-    classification,
-    explanation: {
-      why,
-      ...caveat === void 0 ? {} : { caveat },
-      nextStep
-    }
-  };
-}
-
-// src/scanner/issue-fingerprint.ts
-function generateFingerprint(scannerId, primaryPath, evidence) {
-  const stableEvidence = Object.keys(evidence).sort().map((k) => `${k}=${evidence[k]}`).join("&");
-  const raw = `${scannerId}:${primaryPath != null ? primaryPath : ""}:${stableEvidence}`;
-  return hashString(raw);
-}
-function hashString(str) {
-  let h1 = 2166136261;
-  let h2 = 16777619;
-  for (let i = 0; i < str.length; i++) {
-    const c = str.charCodeAt(i);
-    h1 = (h1 << 5) - h1 + c | 0;
-    h2 = (h2 << 5) - h2 + c | 0;
-  }
-  return (h1 >>> 0).toString(36) + (h2 >>> 0).toString(36);
-}
-
 // src/utils/vault-links.ts
 var indexCache = /* @__PURE__ */ new WeakMap();
 function getLinkTarget(linkText) {
@@ -1868,6 +2022,314 @@ function getLinkIndexes(ctx) {
   return indexes;
 }
 
+// src/scanner/reference-index.ts
+function getInboundReference(index, path) {
+  return index.inboundByPath.get(path);
+}
+function isReferenced(index, path) {
+  return index.inboundByPath.has(path);
+}
+async function buildReferenceIndex(ctx) {
+  var _a, _b, _c;
+  const mutableInboundByPath = /* @__PURE__ */ new Map();
+  const coverageFailures = [];
+  const canvasFiles = [];
+  const addReference = (targetPath, sourcePath, kind) => {
+    var _a2;
+    const entry = (_a2 = mutableInboundByPath.get(targetPath)) != null ? _a2 : {
+      count: 0,
+      kinds: /* @__PURE__ */ new Set(),
+      sources: /* @__PURE__ */ new Set()
+    };
+    entry.count += 1;
+    entry.kinds.add(kind);
+    entry.sources.add(sourcePath);
+    mutableInboundByPath.set(targetPath, entry);
+  };
+  const resolveTarget = (link, sourcePath) => {
+    var _a2, _b2, _c2;
+    if (!link || hasUriScheme(link)) return null;
+    if (typeof ctx.metadataCache.getFirstLinkpathDest === "function") {
+      return (_b2 = (_a2 = ctx.metadataCache.getFirstLinkpathDest(link, sourcePath)) == null ? void 0 : _a2.path) != null ? _b2 : null;
+    }
+    return (_c2 = resolveVaultLinkTargets(ctx, link, sourcePath)[0]) != null ? _c2 : null;
+  };
+  for (const file of ctx.markdownFiles) {
+    const cache = ctx.metadataCache.getFileCache(file);
+    if (!cache) {
+      coverageFailures.push({
+        path: file.path,
+        reason: "metadata-cache-missing"
+      });
+      continue;
+    }
+    for (const link of (_a = cache.links) != null ? _a : []) {
+      const resolved = resolveTarget(link.link, file.path);
+      if (resolved) addReference(resolved, file.path, "note-link");
+    }
+    for (const embed of (_b = cache.embeds) != null ? _b : []) {
+      const resolved = resolveTarget(embed.link, file.path);
+      if (resolved) addReference(resolved, file.path, "embed");
+    }
+    for (const link of (_c = cache.frontmatterLinks) != null ? _c : []) {
+      const resolved = resolveTarget(link.link, file.path);
+      if (resolved) addReference(resolved, file.path, "frontmatter");
+    }
+  }
+  for (const file of ctx.allFiles) {
+    if (file.extension !== "canvas") continue;
+    canvasFiles.push(file.path);
+    let content;
+    try {
+      content = await ctx.vault.cachedRead(file);
+    } catch (error) {
+      coverageFailures.push({
+        path: file.path,
+        reason: "read-failed",
+        detail: error instanceof Error ? error.message : String(error)
+      });
+      continue;
+    }
+    let parsed;
+    try {
+      parsed = JSON.parse(content);
+    } catch (error) {
+      coverageFailures.push({
+        path: file.path,
+        reason: "malformed-json",
+        detail: error instanceof Error ? error.message : String(error)
+      });
+      continue;
+    }
+    const nodes = isCanvasDocument(parsed) ? parsed.nodes : null;
+    if (nodes === null) {
+      coverageFailures.push({ path: file.path, reason: "unexpected-shape" });
+      continue;
+    }
+    for (const node of nodes) {
+      const canvasNode = node;
+      if (canvasNode === null) continue;
+      const target = canvasNode.type === "file" ? canvasNode.file : canvasNode.type === "group" ? canvasNode.background : void 0;
+      if (typeof target !== "string" || target === "") continue;
+      const resolved = resolveTarget(target, file.path);
+      if (resolved) addReference(resolved, file.path, "canvas");
+    }
+  }
+  const inboundByPath = /* @__PURE__ */ new Map();
+  for (const [path, entry] of mutableInboundByPath) {
+    inboundByPath.set(path, {
+      count: entry.count,
+      kinds: [...entry.kinds].sort(),
+      sources: [...entry.sources].sort()
+    });
+  }
+  return {
+    inboundByPath,
+    canvasFiles,
+    coverageFailures,
+    coverageComplete: coverageFailures.length === 0
+  };
+}
+function isCanvasDocument(value) {
+  return typeof value === "object" && value !== null && Array.isArray(value.nodes);
+}
+
+// src/fix/action-policy.ts
+function deriveActionPolicy(issue, index) {
+  const action = issue.fixAction;
+  if (!action) return null;
+  const impact = computeImpact(action, index);
+  let eligibility;
+  if (issue.classification === "unverified") {
+    eligibility = "blocked";
+  } else if (action.kind === "trash-file" && !impact.coverageComplete) {
+    eligibility = "blocked";
+  } else if (issue.classification !== "confirmed") {
+    eligibility = "review-required";
+  } else if (!actionEvidenceComplete(action)) {
+    eligibility = "review-required";
+  } else {
+    eligibility = "eligible";
+  }
+  return { eligibility, impact };
+}
+function withActionPolicy(issue, index) {
+  const policy = deriveActionPolicy(issue, index);
+  if (!policy) return issue;
+  return {
+    ...issue,
+    eligibility: policy.eligibility,
+    impact: policy.impact
+  };
+}
+function actionEvidenceComplete(action) {
+  var _a;
+  if (action.kind === "remove-link-text") {
+    return action.original !== void 0 && action.replacement !== void 0;
+  }
+  return ((_a = action.selection) == null ? void 0 : _a.requiresReview) !== true;
+}
+function computeImpact(action, index) {
+  const trashing = action.kind === "trash-file";
+  const inboundReferences = action.targetPaths.reduce(
+    (total, path) => {
+      var _a, _b;
+      return total + ((_b = (_a = getInboundReference(index, path)) == null ? void 0 : _a.count) != null ? _b : 0);
+    },
+    0
+  );
+  return {
+    filesChanged: trashing ? 0 : action.targetPaths.length,
+    filesTrashed: trashing ? action.targetPaths.length : 0,
+    inboundReferences,
+    coverageComplete: index.coverageComplete
+  };
+}
+
+// src/scanner/ScanRunner.ts
+function getEffectiveIgnoredFolders(globalFolders, scannerFolders) {
+  return [.../* @__PURE__ */ new Set([...globalFolders, ...scannerFolders])];
+}
+var ScanRunner = class {
+  constructor(requestUrl2, timers) {
+    this.requestUrl = requestUrl2;
+    this.timers = timers;
+    this.scanners = [];
+  }
+  register(scanner) {
+    this.scanners.push(scanner);
+  }
+  async run(app, settings, options = {}) {
+    var _a, _b, _c;
+    const startedAt = Date.now();
+    const markdownFiles = app.vault.getMarkdownFiles();
+    const allFiles = app.vault.getFiles();
+    const filePathIndex = new Set(allFiles.map((f) => f.path));
+    const referenceIndex = await buildReferenceIndex({
+      metadataCache: app.metadataCache,
+      vault: app.vault,
+      markdownFiles,
+      allFiles,
+      filePathIndex
+    });
+    const ctx = {
+      app,
+      metadataCache: app.metadataCache,
+      vault: app.vault,
+      requestUrl: this.requestUrl,
+      setTimeout: (_a = this.timers) == null ? void 0 : _a.setTimeout,
+      clearTimeout: (_b = this.timers) == null ? void 0 : _b.clearTimeout,
+      markdownFiles,
+      allFiles,
+      filePathIndex,
+      enabledScanners: new Set(
+        Object.entries(settings.enabledScanners).filter(([, enabled]) => enabled).map(([id]) => id)
+      ),
+      ignoredFingerprints: new Set(settings.ignoredIssueFingerprints),
+      largeMarkdownBytes: settings.largeMarkdownBytes,
+      largeAttachmentBytes: settings.largeAttachmentBytes,
+      ignoredLargeMarkdownFrontmatterKeys: settings.ignoredLargeMarkdownFrontmatterKeys,
+      ignoredLargeMarkdownPathPatterns: settings.ignoredLargeMarkdownPathPatterns,
+      duplicateHashMaxBytes: settings.duplicateHashMaxBytes,
+      lowUsageTagThreshold: settings.lowUsageTagThreshold,
+      watchedTags: settings.watchedTags,
+      ignoredFolders: settings.ignoredFolders,
+      ignoreUnresolvedNoteLinks: settings.ignoreUnresolvedNoteLinks,
+      ignoredProperties: settings.ignoredProperties,
+      emptyNoteWordThreshold: settings.emptyNoteWordThreshold,
+      referenceIndex
+    };
+    const scannersRun = [];
+    const issues = [];
+    const ignoredIssues = [];
+    for (let index = 0; index < this.scanners.length; index++) {
+      const scanner = this.scanners[index];
+      const scannerIndex = index + 1;
+      const scannerTotal = this.scanners.length;
+      const emitProgress = (type, message) => {
+        var _a2;
+        (_a2 = options.onProgress) == null ? void 0 : _a2.call(options, {
+          type,
+          scannerId: scanner.id,
+          scannerIndex,
+          scannerTotal,
+          message,
+          elapsedMs: Date.now() - startedAt
+        });
+      };
+      if (!ctx.enabledScanners.has(scanner.id)) {
+        emitProgress("scanner-skipped", "disabled");
+        continue;
+      }
+      scannersRun.push(scanner.id);
+      emitProgress("scanner-start");
+      const scannerContext = {
+        ...ctx,
+        ignoredFolders: getEffectiveIgnoredFolders(
+          settings.ignoredFolders,
+          (_c = settings.ignoredFoldersByScanner[scanner.id]) != null ? _c : []
+        )
+      };
+      const result = await scanner.scan(scannerContext, (progress) => {
+        var _a2;
+        (_a2 = options.onProgress) == null ? void 0 : _a2.call(options, {
+          ...progress,
+          scannerId: scanner.id,
+          scannerIndex,
+          scannerTotal,
+          elapsedMs: Date.now() - startedAt
+        });
+      });
+      for (const issue of result) {
+        const annotated = withActionPolicy(issue, referenceIndex);
+        if (ctx.ignoredFingerprints.has(annotated.fingerprint)) {
+          ignoredIssues.push(annotated);
+        } else {
+          issues.push(annotated);
+        }
+      }
+      emitProgress("scanner-complete");
+    }
+    return {
+      startedAt,
+      finishedAt: Date.now(),
+      issues,
+      ignoredIssues,
+      filesScanned: allFiles.length,
+      scannersRun
+    };
+  }
+};
+
+// src/scanner/finding-presentation.ts
+function describeFinding(classification, why, nextStep, caveat) {
+  return {
+    classification,
+    explanation: {
+      why,
+      ...caveat === void 0 ? {} : { caveat },
+      nextStep
+    }
+  };
+}
+
+// src/scanner/issue-fingerprint.ts
+function generateFingerprint(scannerId, primaryPath, evidence) {
+  const stableEvidence = Object.keys(evidence).sort().map((k) => `${k}=${evidence[k]}`).join("&");
+  const raw = `${scannerId}:${primaryPath != null ? primaryPath : ""}:${stableEvidence}`;
+  return hashString(raw);
+}
+function hashString(str) {
+  let h1 = 2166136261;
+  let h2 = 16777619;
+  for (let i = 0; i < str.length; i++) {
+    const c = str.charCodeAt(i);
+    h1 = (h1 << 5) - h1 + c | 0;
+    h2 = (h2 << 5) - h2 + c | 0;
+  }
+  return (h1 >>> 0).toString(36) + (h2 >>> 0).toString(36);
+}
+
 // src/scanner/scanners/broken-links.ts
 var brokenLinksScanner = {
   id: "broken-links",
@@ -1895,10 +2357,22 @@ var brokenLinksScanner = {
       const addCandidate = (candidate) => {
         var _a2;
         const existing = linkCandidates.get(candidate.linkText);
+        if (!existing) {
+          linkCandidates.set(candidate.linkText, candidate);
+          return;
+        }
         linkCandidates.set(candidate.linkText, {
           linkText: candidate.linkText,
-          fixLinkText: (_a2 = existing == null ? void 0 : existing.fixLinkText) != null ? _a2 : candidate.fixLinkText,
-          ignorableUnresolvedNote: existing ? existing.ignorableUnresolvedNote && candidate.ignorableUnresolvedNote : candidate.ignorableUnresolvedNote
+          fixLinkText: (_a2 = existing.fixLinkText) != null ? _a2 : candidate.fixLinkText,
+          // A fix targets one exact source range. When merged references
+          // disagree on the original syntax (plain vs aliased, wiki vs
+          // markdown, embed vs non-embed) or one of them has no original,
+          // a single action cannot cover every occurrence — withhold it
+          // and keep the finding reviewable.
+          fix: existing.fix && candidate.fix && existing.fix.original === candidate.fix.original ? existing.fix : void 0,
+          isEmbed: existing.isEmbed || candidate.isEmbed,
+          isMarkdown: existing.isMarkdown || candidate.isMarkdown,
+          ignorableUnresolvedNote: existing.ignorableUnresolvedNote && candidate.ignorableUnresolvedNote
         });
       };
       for (const unresolvedLink of Object.keys(linksForFile != null ? linksForFile : {})) {
@@ -1908,6 +2382,8 @@ var brokenLinksScanner = {
         if (matchingReferences.length === 0) {
           addCandidate({
             linkText: unresolvedLink,
+            isEmbed: false,
+            isMarkdown: false,
             ignorableUnresolvedNote: false
           });
           continue;
@@ -1922,21 +2398,16 @@ var brokenLinksScanner = {
         }
       }
       for (const candidate of linkCandidates.values()) {
-        issues.push(...resolveLinkIssues(
-          ctx,
-          file.path,
-          candidate.linkText,
-          candidate.fixLinkText,
-          candidate.ignorableUnresolvedNote
-        ));
+        issues.push(...resolveLinkIssues(ctx, file.path, candidate));
       }
     }
     return issues;
   }
 };
-function resolveLinkIssues(ctx, sourcePath, linkText, fixLinkText, ignorableUnresolvedNote) {
+function resolveLinkIssues(ctx, sourcePath, candidate) {
   var _a;
   const issues = [];
+  const linkText = candidate.linkText;
   const rawTarget = getLinkTarget(linkText);
   if (!rawTarget || hasUriScheme(rawTarget)) return issues;
   if (isAttachmentLink(rawTarget)) {
@@ -1944,11 +2415,11 @@ function resolveLinkIssues(ctx, sourcePath, linkText, fixLinkText, ignorableUnre
       issues.push(
         makeIssue(
           sourcePath,
-          linkText,
-          fixLinkText,
+          candidate,
           rawTarget,
           "error",
-          `Attachment not found: ${rawTarget}`
+          `Attachment not found: ${rawTarget}`,
+          candidate.isEmbed ? "embed" : "attachment"
         )
       );
     }
@@ -1958,17 +2429,17 @@ function resolveLinkIssues(ctx, sourcePath, linkText, fixLinkText, ignorableUnre
   const headingPart = linkDestination.includes("#") ? linkDestination.split("#").slice(1).join("#") : null;
   const resolvedPath = findMarkdownPath(ctx, rawTarget, sourcePath);
   if (!resolvedPath) {
-    if (ctx.ignoreUnresolvedNoteLinks && ignorableUnresolvedNote) {
+    if (ctx.ignoreUnresolvedNoteLinks && candidate.ignorableUnresolvedNote) {
       return issues;
     }
     issues.push(
       makeIssue(
         sourcePath,
-        linkText,
-        fixLinkText,
+        candidate,
         rawTarget,
         "error",
-        `Linked file not found: ${rawTarget}`
+        `Linked file not found: ${rawTarget}`,
+        candidate.isEmbed ? "embed" : candidate.isMarkdown ? "markdown-link" : "note-link"
       )
     );
     return issues;
@@ -1986,11 +2457,11 @@ function resolveLinkIssues(ctx, sourcePath, linkText, fixLinkText, ignorableUnre
       issues.push(
         makeIssue(
           sourcePath,
-          linkText,
-          fixLinkText,
+          candidate,
           resolvedPath,
           "warning",
-          `Heading "#${headingPart}" not found in ${resolvedPath}`
+          `Heading "#${headingPart}" not found in ${resolvedPath}`,
+          candidate.isEmbed ? "embed" : candidate.isMarkdown ? "markdown-link" : "heading"
         )
       );
     }
@@ -2000,18 +2471,48 @@ function resolveLinkIssues(ctx, sourcePath, linkText, fixLinkText, ignorableUnre
 function getLinkCandidate({ reference, isEmbed }) {
   var _a;
   const original = (_a = reference.original) != null ? _a : "";
-  const originalWikiLink = original.match(/^!?\[\[([\s\S]+)\]\]$/);
-  if (originalWikiLink) {
+  const wikiMatch = original.match(/^(!?)\[\[([\s\S]+)\]\]$/);
+  if (wikiMatch) {
+    const inner = wikiMatch[2];
     return {
-      linkText: originalWikiLink[1],
-      fixLinkText: originalWikiLink[1],
-      ignorableUnresolvedNote: !isEmbed && original.startsWith("[[")
+      // Obsidian's LinkCache.link already strips the alias, so the candidate
+      // key must use it — the full inner text survives only as fix text.
+      linkText: reference.link,
+      fixLinkText: inner,
+      fix: {
+        original,
+        // Embeds render their target, not their text: removal is the
+        // only faithful transform.
+        replacement: wikiMatch[1] ? "" : deriveWikiReplacement(inner)
+      },
+      isEmbed,
+      isMarkdown: false,
+      ignorableUnresolvedNote: !isEmbed && !wikiMatch[1]
+    };
+  }
+  const markdownMatch = original.match(/^(!?)\[([^\]]*)\]\(\s*(?:<[^>]+>|[^)\s]*)\s*\)$/);
+  if (markdownMatch) {
+    return {
+      linkText: reference.link,
+      fix: {
+        original,
+        replacement: markdownMatch[1] ? "" : markdownMatch[2]
+      },
+      isEmbed: Boolean(markdownMatch[1]),
+      isMarkdown: true,
+      ignorableUnresolvedNote: false
     };
   }
   return {
     linkText: reference.link,
+    isEmbed,
+    isMarkdown: !isEmbed && original.startsWith("["),
     ignorableUnresolvedNote: false
   };
+}
+function deriveWikiReplacement(inner) {
+  const pipeIndex = inner.indexOf("|");
+  return pipeIndex === -1 ? inner : inner.slice(pipeIndex + 1);
 }
 function isAttachmentLink(target) {
   var _a;
@@ -2042,7 +2543,7 @@ function findResolvedPath(ctx, linkDestination, sourcePath) {
 function slugifyHeading(heading) {
   return heading.toLowerCase().trim().replace(/[^\p{L}\p{N}_\s-]/gu, "").replace(/\s+/g, "-");
 }
-function makeIssue(sourcePath, linkText, fixLinkText, targetPath, severity, message) {
+function makeIssue(sourcePath, candidate, targetPath, severity, message, linkKind) {
   const issue = {
     scannerId: "broken-links",
     severity,
@@ -2050,24 +2551,27 @@ function makeIssue(sourcePath, linkText, fixLinkText, targetPath, severity, mess
     message,
     primaryPath: sourcePath,
     relatedPaths: [targetPath],
-    evidence: { link: linkText, target: targetPath },
+    evidence: { link: candidate.linkText, target: targetPath, linkKind },
     ...describeFinding(
       "confirmed",
       severity === "error" ? "The link target could not be resolved in the vault." : "The target note exists, but the referenced heading was not found.",
       severity === "error" ? "Correct the target or remove the link from the source note." : "Correct the heading reference or remove it from the source note."
     ),
     fingerprint: generateFingerprint("broken-links", sourcePath, {
-      link: linkText,
+      link: candidate.linkText,
       target: targetPath
     })
   };
-  if (fixLinkText) {
+  if (candidate.fix) {
+    const fix = candidate.fix;
     issue.fixAction = {
       kind: "remove-link-text",
       label: "Remove link",
-      description: `Remove "[[${fixLinkText}]]" from "${sourcePath}"`,
+      description: fix.replacement === "" ? `Remove "${fix.original}" from "${sourcePath}"` : `Replace "${fix.original}" with "${fix.replacement}" in "${sourcePath}"`,
       targetPaths: [sourcePath],
-      linkText: fixLinkText
+      ...candidate.fixLinkText ? { linkText: candidate.fixLinkText } : {},
+      original: fix.original,
+      replacement: fix.replacement
     };
   }
   return issue;
@@ -2089,6 +2593,12 @@ var duplicateFilesScanner = {
     const files = ctx.allFiles.filter(
       (f) => f.stat.size > 0 && !isIgnoredPath(f.path, ctx.ignoredFolders)
     );
+    const filesByPath = new Map(files.map((file) => [file.path, file]));
+    const index = ctx.referenceIndex;
+    const inboundCount = (path) => {
+      var _a2, _b2;
+      return (_b2 = (_a2 = getInboundReference(index, path)) == null ? void 0 : _a2.count) != null ? _b2 : 0;
+    };
     const nameGroups = /* @__PURE__ */ new Map();
     for (const file of files) {
       const key = `${getBasename(file.path)}.${getExtension(file.path)}`;
@@ -2110,40 +2620,56 @@ var duplicateFilesScanner = {
       if (group.length >= 2) group.forEach((f) => candidates.add(f));
     }
     const hashGroups = /* @__PURE__ */ new Map();
+    const hashStates = /* @__PURE__ */ new Map();
     for (const file of candidates) {
-      if (file.stat.size <= ctx.duplicateHashMaxBytes) {
-        try {
-          const content = await ctx.vault.readBinary(file);
-          const hash = await hashContent(content);
-          const group = (_c = hashGroups.get(hash)) != null ? _c : [];
-          group.push(file.path);
-          hashGroups.set(hash, group);
-        } catch (e) {
-          continue;
-        }
+      if (file.stat.size > ctx.duplicateHashMaxBytes) {
+        hashStates.set(file.path, "cap-exceeded");
+        continue;
+      }
+      try {
+        const content = await ctx.vault.readBinary(file);
+        const hash = await hashContent(content);
+        hashStates.set(file.path, "hash-confirmed");
+        const group = (_c = hashGroups.get(hash)) != null ? _c : [];
+        group.push(file.path);
+        hashGroups.set(hash, group);
+      } catch (e) {
+        hashStates.set(file.path, "read-failed");
       }
     }
+    const referenceCountsOf = (sorted) => sorted.map(inboundCount).join(",");
+    const mtimesOf = (sorted) => sorted.map((path) => {
+      var _a2, _b2;
+      return (_b2 = (_a2 = filesByPath.get(path)) == null ? void 0 : _a2.stat.mtime) != null ? _b2 : 0;
+    }).join(",");
     const hashReportedPaths = /* @__PURE__ */ new Set();
     for (const [, paths] of hashGroups) {
       if (paths.length < 2) continue;
       paths.forEach((p) => hashReportedPaths.add(p));
       const sorted = paths.slice().sort();
-      const kept = sorted[0];
-      const duplicates = sorted.slice(1);
+      const referencedPaths = sorted.filter((path) => inboundCount(path) > 0);
+      const requiresReview = referencedPaths.length >= 2;
+      const kept = pickAutomaticKeepPath(sorted, index);
+      const duplicates = sorted.filter((path) => path !== kept);
       issues.push({
         scannerId: "duplicate-files",
         severity: "warning",
         title: "Duplicate files (hash-identical)",
         message: `${paths.length} files have identical content`,
-        relatedPaths: paths,
+        primaryPath: void 0,
+        relatedPaths: sorted,
         evidence: {
           count: paths.length,
-          paths: paths.join(", ")
+          paths: paths.join(", "),
+          hashState: "hash-confirmed",
+          referenceCounts: referenceCountsOf(sorted),
+          mtimes: mtimesOf(sorted),
+          referencedPaths: referencedPaths.join(",")
         },
         ...describeFinding(
           "confirmed",
           `SHA-256 content hashes match across ${paths.length} files.`,
-          "Choose the file to keep before moving the remaining copies to trash.",
+          requiresReview ? "Several copies are referenced from notes. Review which location to keep before moving any copy to trash." : "Choose the file to keep before moving the remaining copies to trash.",
           "The files are byte-identical, but their locations can still serve different workflows."
         ),
         fingerprint: generateFingerprint("duplicate-files", void 0, {
@@ -2157,79 +2683,108 @@ var duplicateFilesScanner = {
           selection: {
             kind: "keep-one",
             candidatePaths: sorted,
-            automaticKeepPath: kept
+            automaticKeepPath: kept,
+            referencedPaths,
+            requiresReview
           }
         }
       });
     }
     for (const [name, group] of nameGroups) {
       if (group.length < 2) continue;
-      const unreached = group.filter((f) => !hashReportedPaths.has(f.path));
+      const unreached = group.filter((f) => !hashReportedPaths.has(f.path)).map((f) => f.path).sort();
       if (unreached.length < 2) continue;
-      const paths = unreached.map((f) => f.path);
       issues.push({
         scannerId: "duplicate-files",
         severity: "info",
         title: "Duplicate file candidates (same name)",
-        message: `${paths.length} files share the name "${name}"`,
-        relatedPaths: paths,
+        message: `${unreached.length} files share the name "${name}"`,
+        relatedPaths: unreached,
         evidence: {
-          count: paths.length,
-          paths: paths.join(", ")
+          count: unreached.length,
+          paths: unreached.join(", "),
+          hashStates: statesOf(hashStates, unreached),
+          referenceCounts: referenceCountsOf(unreached),
+          mtimes: mtimesOf(unreached)
         },
         ...describeFinding(
           "candidate",
-          `${paths.length} files share the same filename.`,
+          `${unreached.length} files share the same filename.`,
           "Compare their content and usage before deciding whether either file is redundant.",
           "Matching names do not prove matching content."
         ),
         fingerprint: generateFingerprint("duplicate-files", void 0, {
-          nameCandidates: paths.slice().sort().join(",")
+          nameCandidates: unreached.join(",")
         })
       });
     }
     for (const [size, group] of sizeGroups) {
       if (group.length < 2) continue;
-      const unreached = group.filter((f) => !hashReportedPaths.has(f.path));
+      const unreached = group.filter((f) => !hashReportedPaths.has(f.path)).map((f) => f.path).sort();
       if (unreached.length < 2) continue;
-      const paths = unreached.map((f) => f.path);
       issues.push({
         scannerId: "duplicate-files",
         severity: "info",
         title: "Duplicate file candidates (same size)",
-        message: `${paths.length} files share size ${formatSize(size)}`,
-        relatedPaths: paths,
+        message: `${unreached.length} files share size ${formatSize(size)}`,
+        relatedPaths: unreached,
         evidence: {
-          count: paths.length,
-          size,
-          paths: paths.join(", ")
+          count: unreached.length,
+          paths: unreached.join(", "),
+          hashStates: statesOf(hashStates, unreached),
+          referenceCounts: referenceCountsOf(unreached),
+          mtimes: mtimesOf(unreached),
+          size
         },
         ...describeFinding(
           "candidate",
-          `${paths.length} files share the same byte size.`,
+          `${unreached.length} files share the same byte size.`,
           "Compare their content and usage before deciding whether either file is redundant.",
           "Matching sizes do not prove matching content."
         ),
         fingerprint: generateFingerprint("duplicate-files", void 0, {
-          sizeCandidates: paths.slice().sort().join(",")
+          sizeCandidates: unreached.join(",")
         })
       });
     }
     return issues;
   }
 };
+function pickAutomaticKeepPath(paths, index) {
+  var _a, _b, _c, _d;
+  let best = paths[0];
+  let bestCount = (_b = (_a = getInboundReference(index, best)) == null ? void 0 : _a.count) != null ? _b : 0;
+  for (const path of paths.slice(1)) {
+    const count = (_d = (_c = getInboundReference(index, path)) == null ? void 0 : _c.count) != null ? _d : 0;
+    if (count > bestCount || count === bestCount && path < best) {
+      best = path;
+      bestCount = count;
+    }
+  }
+  return best;
+}
+function statesOf(hashStates, paths) {
+  return [...new Set(paths.map((path) => {
+    var _a;
+    return (_a = hashStates.get(path)) != null ? _a : "cap-exceeded";
+  }))].sort().join(",");
+}
 
 // src/scanner/scanners/empty-notes.ts
 var emptyNotesScanner = {
   id: "empty-notes",
   async scan(ctx) {
+    var _a, _b;
     const issues = [];
+    const index = ctx.referenceIndex;
     for (const file of ctx.markdownFiles) {
       if (isIgnoredPath(file.path, ctx.ignoredFolders)) continue;
       const content = await ctx.vault.cachedRead(file);
       const body = stripFrontmatterAndTitle(content);
       const wordCount = countWords(body);
-      if (wordCount <= ctx.emptyNoteWordThreshold) {
+      const structureCount = countMeaningfulStructures(body);
+      const inboundReferenceCount = (_b = (_a = getInboundReference(index, file.path)) == null ? void 0 : _a.count) != null ? _b : 0;
+      if (wordCount <= ctx.emptyNoteWordThreshold && structureCount === 0) {
         issues.push({
           scannerId: "empty-notes",
           severity: "warning",
@@ -2237,20 +2792,30 @@ var emptyNotesScanner = {
           message: wordCount === 0 ? "This note has no content besides a title" : `This note only has ${wordCount} word${wordCount > 1 ? "s" : ""} (likely a stub)`,
           primaryPath: file.path,
           relatedPaths: [],
-          evidence: { size: file.stat.size, wordCount },
+          evidence: {
+            size: file.stat.size,
+            wordCount,
+            structureCount,
+            inboundReferenceCount
+          },
           ...describeFinding(
             "candidate",
-            `The note contains ${wordCount} meaningful word${wordCount === 1 ? "" : "s"}, at or below the configured threshold of ${ctx.emptyNoteWordThreshold}.`,
-            "Add meaningful content, ignore the finding, or move the note to trash after review.",
+            `The note contains ${wordCount} meaningful word${wordCount === 1 ? "" : "s"} and no meaningful structures (links, embeds, tasks, list items, or code blocks), at or below the configured threshold of ${ctx.emptyNoteWordThreshold}.`,
+            inboundReferenceCount > 0 ? `This stub is referenced by ${inboundReferenceCount} inbound link${inboundReferenceCount === 1 ? "" : "s"}. Review why it is referenced before adding content or deleting it.` : "Add meaningful content, ignore the finding, or move the note to trash after review.",
             "Intentional placeholders, index notes, and generated stubs can be valid."
           ),
           fingerprint: generateFingerprint("empty-notes", file.path, {}),
-          fixAction: {
-            kind: "trash-file",
-            label: "Delete",
-            description: `Move "${file.path}" to trash`,
-            targetPaths: [file.path]
-          }
+          // Delete eligibility requires zero inbound references: a
+          // referenced stub may be a deliberate index entry, so it
+          // stays reviewable and out of bulk-delete flows.
+          ...inboundReferenceCount === 0 ? {
+            fixAction: {
+              kind: "trash-file",
+              label: "Delete",
+              description: `Move "${file.path}" to trash`,
+              targetPaths: [file.path]
+            }
+          } : {}
         });
       }
     }
@@ -2278,6 +2843,64 @@ function countWords(text) {
   const withoutCjk = text.replace(cjkPattern, " ");
   for (const segment of withoutCjk.split(/\s+/)) {
     if (segment.length > 0) count++;
+  }
+  return count;
+}
+function countMeaningfulStructures(body) {
+  let count = 0;
+  const visible = body.replace(/<!--[\s\S]*?-->/g, "");
+  for (const match of visible.matchAll(/\[\[[^\]]+\]\]/g)) {
+    void match;
+    count++;
+  }
+  for (const match of visible.matchAll(/!?\[[^\]\r\n]*\]\(\s*(?:<[^>\r\n]+>|[^)\r\n]+)\s*\)/g)) {
+    const bracketIndex = match.index + (match[0].startsWith("!") ? 1 : 0);
+    if (visible[bracketIndex - 1] === "\\") continue;
+    count++;
+  }
+  let inFence = false;
+  let fenceHasContent = false;
+  let inTable = false;
+  for (const line of visible.split("\n")) {
+    const trimmed = line.trim();
+    if (/^(```|~~~)/.test(trimmed)) {
+      if (inFence && fenceHasContent) count++;
+      inFence = !inFence;
+      fenceHasContent = false;
+      continue;
+    }
+    if (inFence) {
+      if (trimmed !== "") fenceHasContent = true;
+      continue;
+    }
+    if (trimmed === "") continue;
+    if (/^\|.*\|/.test(trimmed)) {
+      if (!inTable) {
+        count++;
+        inTable = true;
+      }
+      continue;
+    }
+    inTable = false;
+    if (/^[-*+]\s+\[[ xX]\]/.test(trimmed)) {
+      count++;
+      continue;
+    }
+    if (/^\d+[.)]\s+\[[ xX]\]/.test(trimmed)) {
+      count++;
+      continue;
+    }
+    if (/^[-*+]\s+\S/.test(trimmed)) {
+      count++;
+      continue;
+    }
+    if (/^\d+[.)]\s+\S/.test(trimmed)) {
+      count++;
+      continue;
+    }
+    if (/<img\b/.test(trimmed)) {
+      count++;
+    }
   }
   return count;
 }
@@ -2448,6 +3071,7 @@ var externalLinksScanner = {
 var EXTERNAL_LINK_TIMEOUT_MS = 5e3;
 var EXTERNAL_LINK_SCAN_BUDGET_MS = 6e4;
 var EXTERNAL_LINK_BATCH_SIZE = 5;
+var HEAD_REJECTED_STATUSES = /* @__PURE__ */ new Set([405, 501]);
 async function collectExternalUrls(ctx) {
   var _a, _b;
   const entries = [];
@@ -2581,25 +3205,41 @@ async function checkUrl(url, ctx, signal) {
       reason: assessment.reason
     };
   }
-  try {
-    if (ctx == null ? void 0 : ctx.requestUrl) {
-      const status = await ctx.requestUrl(url, signal);
-      return { url, sourcePath: "", kind: "http", status };
-    }
+  if (!(ctx == null ? void 0 : ctx.requestUrl)) {
     return {
       url,
       sourcePath: "",
       kind: "failed",
       error: "No request adapter configured"
     };
+  }
+  let head;
+  try {
+    head = await ctx.requestUrl(url, "HEAD", signal);
   } catch (error) {
+    return { url, sourcePath: "", kind: "failed", error: errorMessage(error) };
+  }
+  if (!HEAD_REJECTED_STATUSES.has(head.status)) {
+    return { url, sourcePath: "", kind: "http", status: head.status, method: "HEAD" };
+  }
+  const fallbackAssessment = assessExternalHttpUrl(url);
+  if (!fallbackAssessment.allowed) {
     return {
       url,
       sourcePath: "",
-      kind: "failed",
-      error: error instanceof Error ? error.message : String(error)
+      kind: "blocked",
+      reason: fallbackAssessment.reason
     };
   }
+  try {
+    const rangeGet = await ctx.requestUrl(url, "GET", signal);
+    return { url, sourcePath: "", kind: "http", status: rangeGet.status, method: "GET" };
+  } catch (error) {
+    return { url, sourcePath: "", kind: "failed", error: errorMessage(error) };
+  }
+}
+function errorMessage(error) {
+  return error instanceof Error ? error.message : String(error);
 }
 async function withTimeout(promise, timeoutMs, timeoutValue, ctx, onTimeout) {
   const timer = getTimer(ctx);
@@ -2628,12 +3268,90 @@ function getTimer(ctx) {
 function makeIssue2(result) {
   if (result.kind === "http") {
     if (result.status < 400) return null;
+    if (result.status === 401 || result.status === 403) {
+      return {
+        ...describeFinding(
+          "unverified",
+          `The server returned HTTP ${result.status}, so this URL's availability could not be verified.`,
+          "Open the URL in a browser \u2014 a login, paywall, or bot protection may be required.",
+          "Access-restricted responses do not mean the link is dead."
+        ),
+        scannerId: "external-links",
+        severity: "info",
+        title: "External link access restricted",
+        message: `HTTP ${result.status} \u2014 ${result.url}`,
+        primaryPath: result.sourcePath,
+        relatedPaths: [],
+        evidence: {
+          url: result.url,
+          status: result.status,
+          method: result.method,
+          restricted: true
+        },
+        fingerprint: generateFingerprint("external-links", result.sourcePath, {
+          url: result.url,
+          restricted: true
+        })
+      };
+    }
+    if (result.status === 429) {
+      return {
+        ...describeFinding(
+          "unverified",
+          "The server rate-limited the check (HTTP 429), so this URL's availability could not be verified.",
+          "Run the scan again later.",
+          "Rate-limited responses do not mean the link is dead."
+        ),
+        scannerId: "external-links",
+        severity: "info",
+        title: "External link rate limited",
+        message: `HTTP ${result.status} \u2014 ${result.url}`,
+        primaryPath: result.sourcePath,
+        relatedPaths: [],
+        evidence: {
+          url: result.url,
+          status: result.status,
+          method: result.method,
+          rateLimited: true
+        },
+        fingerprint: generateFingerprint("external-links", result.sourcePath, {
+          url: result.url,
+          rateLimited: true
+        })
+      };
+    }
+    if (result.status >= 500) {
+      return {
+        ...describeFinding(
+          "candidate",
+          `The server reported a failure (HTTP ${result.status}).`,
+          "Run the scan again later; if the failure persists, verify the URL manually.",
+          "Server-side failures are often temporary and do not yet indicate a dead link."
+        ),
+        scannerId: "external-links",
+        severity: "info",
+        title: "External link server error",
+        message: `HTTP ${result.status} \u2014 ${result.url}`,
+        primaryPath: result.sourcePath,
+        relatedPaths: [],
+        evidence: {
+          url: result.url,
+          status: result.status,
+          method: result.method,
+          serverError: true
+        },
+        fingerprint: generateFingerprint("external-links", result.sourcePath, {
+          url: result.url,
+          serverError: true
+        })
+      };
+    }
     return {
       ...describeFinding(
         "candidate",
         `The server returned HTTP ${result.status} for this URL.`,
         "Open the URL manually, then update or remove it if the failure persists.",
-        "Authentication, rate limits, bot protection, and temporary outages can produce a non-success status."
+        "HTTP 404 and 410 strongly indicate the resource is gone; access restrictions, rate limits, and server failures are reported separately."
       ),
       scannerId: "external-links",
       severity: "warning",
@@ -2643,7 +3361,8 @@ function makeIssue2(result) {
       relatedPaths: [],
       evidence: {
         url: result.url,
-        status: result.status
+        status: result.status,
+        method: result.method
       },
       fingerprint: generateFingerprint("external-links", result.sourcePath, {
         url: result.url
@@ -2723,12 +3442,6 @@ function makeIssue2(result) {
   };
 }
 function withSourcePath(result, sourcePath) {
-  if (result.kind === "http") {
-    return { ...result, sourcePath };
-  }
-  if (result.kind === "timeout") {
-    return { ...result, sourcePath };
-  }
   return { ...result, sourcePath };
 }
 
@@ -2924,59 +3637,82 @@ var orphanAttachmentsScanner = {
   id: "orphan-attachments",
   scan(ctx) {
     const issues = [];
-    const referencedPaths = collectReferencedPaths(ctx);
+    const index = ctx.referenceIndex;
     for (const file of ctx.allFiles) {
       if (isIgnoredPath(file.path, ctx.ignoredFolders)) continue;
       if (!isAttachment(file.path)) continue;
-      if (!referencedPaths.has(file.path)) {
-        const severity = isRecent(file.stat.mtime) ? "info" : "warning";
-        issues.push({
-          scannerId: "orphan-attachments",
-          severity,
-          title: "Orphan attachment",
-          message: "This attachment is not referenced by any note",
-          primaryPath: file.path,
-          relatedPaths: [],
-          evidence: {
-            lastModified: file.stat.mtime
-          },
-          ...describeFinding(
-            "candidate",
-            "No Markdown note references this attachment within the scanned vault metadata.",
-            "Review external and generated references before moving the file to trash.",
-            "CSS, Canvas, Dataview, publishing pipelines, and external tools can reference files outside this scan boundary."
-          ),
-          fingerprint: generateFingerprint("orphan-attachments", file.path, {
-            orphan: true
-          }),
+      if (isReferenced(index, file.path)) continue;
+      const severity = isRecent(file.stat.mtime) ? "info" : "warning";
+      issues.push({
+        scannerId: "orphan-attachments",
+        severity,
+        title: "Orphan attachment",
+        message: "This attachment is not referenced by any note",
+        primaryPath: file.path,
+        relatedPaths: [],
+        evidence: {
+          size: file.stat.size,
+          lastModified: file.stat.mtime,
+          // Referenced files are skipped above, so this is always 0;
+          // recorded to make "no inbound references" explicit evidence.
+          referenceCount: 0,
+          coverageComplete: index.coverageComplete
+        },
+        ...describeFinding(
+          "candidate",
+          "No note, embed, frontmatter link, or Canvas file node in the vault references this attachment.",
+          index.coverageComplete ? "Review external and generated references before moving the file to trash." : "Resolve the incomplete reference coverage below before moving the file to trash.",
+          "CSS, Dataview, publishing pipelines, and external tools can reference files outside this scan boundary."
+        ),
+        fingerprint: generateFingerprint("orphan-attachments", file.path, {
+          orphan: true
+        }),
+        // Delete eligibility requires complete reference coverage:
+        // unindexed Markdown or Canvas sources could reference this file.
+        ...index.coverageComplete ? {
           fixAction: {
             kind: "trash-file",
             label: "Delete",
             description: `Move "${file.path}" to trash`,
             targetPaths: [file.path]
           }
-        });
-      }
+        } : {}
+      });
+    }
+    if (index.coverageFailures.length > 0) {
+      issues.push(buildCoverageFinding(index.coverageFailures));
     }
     return issues;
   }
 };
-function collectReferencedPaths(ctx) {
-  var _a, _b, _c, _d;
-  const paths = /* @__PURE__ */ new Set();
-  const canResolveLinks = typeof ctx.metadataCache.getFirstLinkpathDest === "function";
-  for (const file of ctx.markdownFiles) {
-    const cache = ctx.metadataCache.getFileCache(file);
-    if (!cache) continue;
-    const links = (_a = cache.links) != null ? _a : [];
-    const embeds = (_b = cache.embeds) != null ? _b : [];
-    const frontmatterLinks = (_c = cache.frontmatterLinks) != null ? _c : [];
-    for (const link of [...links, ...embeds, ...frontmatterLinks]) {
-      const resolvedTarget = canResolveLinks ? (_d = ctx.metadataCache.getFirstLinkpathDest(link.link, file.path)) == null ? void 0 : _d.path : resolveVaultLinkTargets(ctx, link.link, file.path)[0];
-      if (resolvedTarget) paths.add(resolvedTarget);
-    }
-  }
-  return paths;
+function buildCoverageFinding(failures) {
+  const sorted = [...failures].sort(
+    (a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0
+  );
+  const failedPaths = sorted.map((failure) => failure.path);
+  const reasons = [...new Set(sorted.map((failure) => failure.reason))].sort().join(",");
+  return {
+    scannerId: "orphan-attachments",
+    severity: "info",
+    title: "Reference coverage incomplete",
+    message: `${failedPaths.length} reference source file${failedPaths.length === 1 ? "" : "s"} could not be indexed (${reasons}); orphan results may be incomplete`,
+    primaryPath: failedPaths[0],
+    relatedPaths: failedPaths,
+    evidence: {
+      failedCount: failedPaths.length,
+      failedPaths: failedPaths.join(","),
+      reasons
+    },
+    ...describeFinding(
+      "unverified",
+      "Markdown metadata or Canvas reference sources could not be fully indexed, so the absence of references for some attachments is not yet trustworthy.",
+      "Resolve the reference coverage failures listed here, then rescan."
+    ),
+    fingerprint: generateFingerprint("orphan-attachments", failedPaths[0], {
+      coverageFailure: true,
+      paths: failedPaths.join(",")
+    })
+  };
 }
 function isRecent(mtime) {
   const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1e3;
@@ -3122,6 +3858,8 @@ var DEFAULT_SETTINGS = {
   ignoredFoldersByScanner: createEmptyIgnoredFoldersByScanner(),
   ignoreUnresolvedNoteLinks: false,
   ignoredProperties: [],
+  automaticScanIntervalHours: 0,
+  automaticScanNetworkChecks: false,
   reportFolderPath: "Vault Inspector Reports"
 };
 
@@ -3181,6 +3919,35 @@ var InspectorSettingTab = class extends import_obsidian6.PluginSettingTab {
             );
           }
         }))
+      },
+      {
+        heading: "Automatic scanning",
+        items: [
+          {
+            name: "Automatic scan interval (hours)",
+            desc: "Run one read-only scan after startup when the last successful scan is older than this many hours. 0 disables automatic scans.",
+            render: (setting) => {
+              setting.addSlider(
+                (slider) => slider.setLimits(0, 168, 1).setValue(this.plugin.settings.automaticScanIntervalHours).onChange(async (value) => {
+                  this.plugin.settings.automaticScanIntervalHours = value;
+                  await this.plugin.saveSettings();
+                })
+              );
+            }
+          },
+          {
+            name: "Automatic scan network checks",
+            desc: "Allow automatic scans to include the external link scanner. Off by default, so automatic scans never touch the network without a separate opt-in.",
+            render: (setting) => {
+              setting.addToggle(
+                (toggle) => toggle.setValue(this.plugin.settings.automaticScanNetworkChecks).onChange(async (value) => {
+                  this.plugin.settings.automaticScanNetworkChecks = value;
+                  await this.plugin.saveSettings();
+                })
+              );
+            }
+          }
+        ]
       },
       {
         heading: "Fix actions",
@@ -3538,6 +4305,8 @@ function getMarkdownDetails(issue) {
     if (lastModified !== null) {
       details.push({ label: "Modified", value: new Date(lastModified).toLocaleString() });
     }
+    const size = getNumber2(issue.evidence.size);
+    if (size !== null) details.push({ label: "Size", value: formatSize(size) });
   }
   if (issue.scannerId === "empty-notes") {
     const size = getNumber2(issue.evidence.size);
@@ -3660,11 +4429,17 @@ function getReportExportPreflight(report) {
 // src/fix/fix-executor.ts
 var import_obsidian8 = require("obsidian");
 async function executeFixAction(app, action) {
+  var _a;
   switch (action.kind) {
     case "trash-file":
       return trashFiles(app, action.targetPaths);
-    case "remove-link-text":
-      return removeLinkText(app, action.targetPaths[0], action.linkText);
+    case "remove-link-text": {
+      const source = action.targetPaths[0];
+      if (action.original !== void 0) {
+        return replaceLinkText(app, source, action.original, (_a = action.replacement) != null ? _a : "");
+      }
+      return removeLinkText(app, source, action.linkText);
+    }
     default:
       return 0;
   }
@@ -3700,6 +4475,31 @@ async function removeLinkText(app, sourcePath, linkText) {
     removed = true;
   }
   if (removed) updated += content.slice(cursor);
+  else updated = content;
+  if (updated === content) return 0;
+  await app.vault.modify(file, updated);
+  return 1;
+}
+async function replaceLinkText(app, sourcePath, original, replacement) {
+  const file = app.vault.getAbstractFileByPath(sourcePath);
+  if (!(file instanceof import_obsidian8.TFile)) return 0;
+  const content = await app.vault.read(file);
+  const pattern = new RegExp(`(?<!!)${escapeRegex(original)}`, "g");
+  const protectedRanges = findProtectedMarkdownRanges(content);
+  let cursor = 0;
+  let updated = "";
+  let replaced = false;
+  for (const match of content.matchAll(pattern)) {
+    const start = match.index;
+    const end = start + match[0].length;
+    if (protectedRanges.some((range) => start < range.end && end > range.start)) {
+      continue;
+    }
+    updated += content.slice(cursor, start) + replacement;
+    cursor = end;
+    replaced = true;
+  }
+  if (replaced) updated += content.slice(cursor);
   else updated = content;
   if (updated === content) return 0;
   await app.vault.modify(file, updated);
@@ -3801,12 +4601,22 @@ function escapeRegex(str) {
 
 // src/fix/fix-runner.ts
 async function runFixBatch(issues, decisions, dependencies) {
+  const frozenSettings = structuredClone(dependencies.settings());
+  const scanOnce = () => dependencies.scan(structuredClone(frozenSettings));
   const decisionsByFingerprint = new Map(
     decisions.map((decision) => [decision.fingerprint, decision])
   );
   const outcomes = issues.map(() => null);
   const pending = [];
+  let scannedDuringBatch = false;
   for (const [index, issue] of issues.entries()) {
+    if (isBlockedFromExecution(issue)) {
+      outcomes[index] = skipped(
+        issue,
+        "The fix is blocked by the action policy."
+      );
+      continue;
+    }
     const decision = decisionsByFingerprint.get(issue.fingerprint);
     if (!decision) {
       outcomes[index] = skipped(
@@ -3815,10 +4625,18 @@ async function runFixBatch(issues, decisions, dependencies) {
       );
       continue;
     }
-    const freshResult = await dependencies.scan();
+    const freshResult = await scanOnce();
+    scannedDuringBatch = true;
     const freshIssue = freshResult ? [...freshResult.issues, ...freshResult.ignoredIssues].find(
       (candidate) => candidate.fingerprint === issue.fingerprint
     ) : void 0;
+    if (freshIssue && isBlockedFromExecution(freshIssue)) {
+      outcomes[index] = skipped(
+        issue,
+        "The finding was re-evaluated as blocked before execution."
+      );
+      continue;
+    }
     const freshAction = getFreshFixAction(issue, freshIssue, decision);
     if (!freshAction) {
       outcomes[index] = skipped(
@@ -3844,7 +4662,7 @@ async function runFixBatch(issues, decisions, dependencies) {
       };
     }
   }
-  const verificationResult = await dependencies.scan();
+  const verificationResult = pending.length > 0 || scannedDuringBatch ? await scanOnce() : null;
   if (!verificationResult) {
     for (const action of pending) {
       outcomes[action.index] = {
@@ -3890,7 +4708,7 @@ function skipped(issue, message) {
 
 // src/snapshot/scan-snapshot.ts
 var SNAPSHOT_SCHEMA_VERSION = 1;
-var COMPARISON_VERSION = 1;
+var COMPARISON_VERSION = 2;
 function createScanSnapshot(result, scanProfile, toolVersion, createdAt = Date.now()) {
   return {
     schemaVersion: SNAPSHOT_SCHEMA_VERSION,
@@ -4011,29 +4829,165 @@ function isOneOf(value, allowed) {
   return typeof value === "string" && allowed.includes(value);
 }
 
+// src/snapshot/scan-history.ts
+var HISTORY_SCHEMA_VERSION = 1;
+var MAX_HISTORY_ENTRIES = 20;
+function createScanHistoryEntry(input) {
+  var _a;
+  const { result, comparison } = input;
+  return {
+    schemaVersion: HISTORY_SCHEMA_VERSION,
+    createdAt: (_a = input.createdAt) != null ? _a : Date.now(),
+    toolVersion: input.toolVersion,
+    scanProfile: input.scanProfile,
+    comparisonVersion: COMPARISON_VERSION,
+    trigger: input.trigger,
+    filesScanned: result.filesScanned,
+    scannersRun: [...result.scannersRun],
+    totals: {
+      active: result.issues.length,
+      ignored: result.ignoredIssues.length,
+      newIssues: countStatus2(comparison, "new"),
+      persistingIssues: countStatus2(comparison, "persisting"),
+      resolvedIssues: comparison.available ? comparison.resolvedIssues.length : 0
+    },
+    severityCounts: countSeverities(result.issues),
+    classificationCounts: countClassifications(result.issues)
+  };
+}
+function appendScanHistoryEntry(history, entry) {
+  return [entry, ...history].slice(0, MAX_HISTORY_ENTRIES);
+}
+function isScanHistoryEntry(value) {
+  if (!isPlainRecord2(value)) return false;
+  if (!hasOnlyKeys2(value, [
+    "schemaVersion",
+    "createdAt",
+    "toolVersion",
+    "scanProfile",
+    "comparisonVersion",
+    "trigger",
+    "filesScanned",
+    "scannersRun",
+    "totals",
+    "severityCounts",
+    "classificationCounts"
+  ])) {
+    return false;
+  }
+  if (value.schemaVersion !== HISTORY_SCHEMA_VERSION) return false;
+  if (typeof value.createdAt !== "number" || !Number.isFinite(value.createdAt)) return false;
+  if (typeof value.toolVersion !== "string") return false;
+  if (typeof value.scanProfile !== "string") return false;
+  if (typeof value.comparisonVersion !== "number" || !Number.isSafeInteger(value.comparisonVersion) || value.comparisonVersion <= 0) {
+    return false;
+  }
+  if (!isOneOf2(value.trigger, ["manual", "automatic"])) return false;
+  if (!isCount(value.filesScanned)) return false;
+  if (!Array.isArray(value.scannersRun) || value.scannersRun.length === 0) return false;
+  const seen = /* @__PURE__ */ new Set();
+  for (const scannerId of value.scannersRun) {
+    if (typeof scannerId !== "string") return false;
+    if (!SCANNER_IDS.includes(scannerId)) return false;
+    if (seen.has(scannerId)) return false;
+    seen.add(scannerId);
+  }
+  if (!isCountRecord(value.totals, [
+    "active",
+    "ignored",
+    "newIssues",
+    "persistingIssues",
+    "resolvedIssues"
+  ])) {
+    return false;
+  }
+  if (!isCountRecord(value.severityCounts, ["error", "warning", "info"])) return false;
+  if (!isCountRecord(value.classificationCounts, ["confirmed", "candidate", "unverified"])) {
+    return false;
+  }
+  return true;
+}
+function parseScanHistory(value) {
+  if (!Array.isArray(value)) return [];
+  return value.filter(isScanHistoryEntry).sort((a, b) => b.createdAt - a.createdAt).slice(0, MAX_HISTORY_ENTRIES);
+}
+function countStatus2(comparison, status) {
+  if (!comparison.available) return 0;
+  let total = 0;
+  for (const value of comparison.statuses.values()) {
+    if (value === status) total += 1;
+  }
+  return total;
+}
+function countSeverities(issues) {
+  const counts = {
+    error: 0,
+    warning: 0,
+    info: 0
+  };
+  for (const issue of issues) counts[issue.severity] += 1;
+  return counts;
+}
+function countClassifications(issues) {
+  const counts = {
+    confirmed: 0,
+    candidate: 0,
+    unverified: 0
+  };
+  for (const issue of issues) counts[issue.classification] += 1;
+  return counts;
+}
+function isCount(value) {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+}
+function isCountRecord(value, keys) {
+  if (!isPlainRecord2(value)) return false;
+  if (!hasOnlyKeys2(value, keys)) return false;
+  return keys.every((key) => isCount(value[key]));
+}
+function isPlainRecord2(value) {
+  if (!isRecord2(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+function isRecord2(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+function hasOnlyKeys2(value, allowed) {
+  return Reflect.ownKeys(value).every(
+    (key) => typeof key === "string" && allowed.includes(key)
+  );
+}
+function isOneOf2(value, allowed) {
+  return typeof value === "string" && allowed.includes(value);
+}
+
 // src/settings/plugin-data.ts
 function parsePluginData(value) {
-  if (!isRecord2(value)) {
+  if (!isRecord3(value)) {
     return {
       settings: {},
       lastSuccessfulSnapshot: null,
+      scanHistory: [],
       legacy: true
     };
   }
-  if (isRecord2(value.settings)) {
+  if (isRecord3(value.settings)) {
     return {
       settings: value.settings,
       lastSuccessfulSnapshot: isScanSnapshot(value.lastSuccessfulSnapshot) ? value.lastSuccessfulSnapshot : null,
+      scanHistory: parseScanHistory(value.scanHistory),
       legacy: false
     };
   }
   return {
     settings: value,
     lastSuccessfulSnapshot: null,
+    scanHistory: [],
     legacy: true
   };
 }
-function isRecord2(value) {
+function isRecord3(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
@@ -4079,12 +5033,21 @@ function normalizeFolders(values) {
 }
 
 // src/scanner/result-diff.ts
+function resolveBaselineCompatibility(baselineComparisonVersion, baselineScanProfile, currentProfile) {
+  if (baselineComparisonVersion !== COMPARISON_VERSION) return "semantics-changed";
+  if (baselineScanProfile !== currentProfile) return "settings-changed";
+  return null;
+}
 function compareScanResult(current, snapshot, currentProfile) {
   if (snapshot === null) return unavailable("first-scan");
-  if (snapshot.comparisonVersion !== COMPARISON_VERSION) {
-    return unavailable("semantics-changed");
+  const mismatch = resolveBaselineCompatibility(
+    snapshot.comparisonVersion,
+    snapshot.scanProfile,
+    currentProfile
+  );
+  if (mismatch) {
+    return { ...unavailable(mismatch), previousScanAt: snapshot.createdAt };
   }
-  if (snapshot.scanProfile !== currentProfile) return unavailable("settings-changed");
   const previousByFingerprint = new Map(
     snapshot.issues.map((issue) => [issue.fingerprint, issue])
   );
@@ -4107,7 +5070,12 @@ function compareScanResult(current, snapshot, currentProfile) {
   const resolvedIssues = snapshot.issues.filter(
     (issue) => !currentFingerprints.has(issue.fingerprint)
   );
-  return { available: true, statuses, resolvedIssues };
+  return {
+    available: true,
+    previousScanAt: snapshot.createdAt,
+    statuses,
+    resolvedIssues
+  };
 }
 function unavailable(reason) {
   return {
@@ -4115,6 +5083,146 @@ function unavailable(reason) {
     reason,
     statuses: /* @__PURE__ */ new Map(),
     resolvedIssues: []
+  };
+}
+
+// src/scanner/scan-session.ts
+async function runScanSession(deps, settings, hooks = {}, trigger = "manual") {
+  let scanSettings;
+  let scanProfile;
+  try {
+    scanSettings = structuredClone(settings);
+    scanProfile = await deps.createProfile(scanSettings);
+  } catch (error) {
+    return { status: "failed", message: errorMessage2(error) };
+  }
+  const operation = await runScanOperation(deps, scanSettings, hooks);
+  if (operation.status === "failed") return operation;
+  try {
+    const accepted = await acceptScanResult(
+      deps,
+      hooks,
+      operation.result,
+      scanProfile,
+      trigger
+    );
+    return { status: "completed", result: operation.result, ...accepted };
+  } catch (error) {
+    stopScanningBestEffort(hooks);
+    return { status: "failed", message: errorMessage2(error) };
+  }
+}
+async function runScanOperation(deps, settings, hooks = {}) {
+  var _a;
+  try {
+    (_a = hooks.onScanningChange) == null ? void 0 : _a.call(hooks, true);
+    const result = await deps.runner.run(deps.app, settings, {
+      onProgress: (progress) => {
+        var _a2;
+        try {
+          (_a2 = hooks.onProgress) == null ? void 0 : _a2.call(hooks, progress);
+        } catch (e) {
+        }
+      }
+    });
+    return { status: "completed", result };
+  } catch (error) {
+    stopScanningBestEffort(hooks);
+    return { status: "failed", message: errorMessage2(error) };
+  }
+}
+async function acceptScanResult(deps, hooks, result, scanProfile, trigger = "manual") {
+  var _a;
+  const comparison = compareScanResult(result, deps.getSnapshot(), scanProfile);
+  (_a = hooks.onResult) == null ? void 0 : _a.call(hooks, result, comparison);
+  const nextSnapshot = createScanSnapshot(result, scanProfile, deps.toolVersion);
+  const nextHistory = appendScanHistoryEntry(
+    deps.getHistory(),
+    createScanHistoryEntry({
+      result,
+      comparison,
+      scanProfile,
+      toolVersion: deps.toolVersion,
+      trigger
+    })
+  );
+  try {
+    await deps.persistAccepted({
+      acceptedSnapshot: nextSnapshot,
+      acceptedHistory: nextHistory
+    });
+  } catch (error) {
+    return { comparison, persistWarning: errorMessage2(error) };
+  }
+  return { comparison };
+}
+function stopScanningBestEffort(hooks) {
+  var _a;
+  try {
+    (_a = hooks.onScanningChange) == null ? void 0 : _a.call(hooks, false);
+  } catch (e) {
+  }
+}
+function errorMessage2(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+// src/scanner/scan-scheduler.ts
+var HOUR_MS = 36e5;
+function decideAutomaticScan(input) {
+  const intervalMs = input.settings.automaticScanIntervalHours * HOUR_MS;
+  if (intervalMs <= 0) return { run: false, reason: "disabled" };
+  if (input.busy) return { run: false, reason: "busy" };
+  if (input.snapshot !== null && input.now - input.snapshot.createdAt < intervalMs) {
+    return { run: false, reason: "fresh" };
+  }
+  return { run: true };
+}
+function automaticScanSettings(settings) {
+  const scanSettings = structuredClone(settings);
+  if (!scanSettings.automaticScanNetworkChecks) {
+    scanSettings.enabledScanners["external-links"] = false;
+  }
+  return scanSettings;
+}
+function confirmedNewIssues(result, comparison) {
+  if (!comparison.available) return [];
+  return result.issues.filter((issue) => comparison.statuses.get(issue.fingerprint) === "new" && issue.classification === "confirmed" && issue.severity === "error");
+}
+function automaticScanNotice(newIssues) {
+  const count = newIssues.length;
+  return `Vault Inspector automatic scan found ${count} new confirmed error${count === 1 ? "" : "s"}.`;
+}
+function createStartupScanScheduler(deps) {
+  let scheduled = false;
+  let fired = false;
+  return {
+    schedule() {
+      if (scheduled) return;
+      scheduled = true;
+      deps.whenSettled(() => {
+        if (fired) return;
+        fired = true;
+        const decision = decideAutomaticScan({
+          settings: deps.getSettings(),
+          snapshot: deps.getSnapshot(),
+          now: deps.now(),
+          busy: deps.isBusy()
+        });
+        if (!decision.run) return;
+        void deps.runAutomaticScan(automaticScanSettings(deps.getSettings())).then((outcome) => {
+          if (outcome.status !== "completed" || outcome.persistWarning !== void 0) return;
+          const newIssues = confirmedNewIssues(
+            outcome.result,
+            outcome.comparison
+          );
+          if (newIssues.length > 0) {
+            deps.notify(automaticScanNotice(newIssues));
+          }
+        }).catch(() => {
+        });
+      });
+    }
   };
 }
 
@@ -4140,11 +5248,18 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
     super(...arguments);
     this.settings = DEFAULT_SETTINGS;
     this.lastSuccessfulSnapshot = null;
+    this.scanHistory = [];
     this.saveQueue = Promise.resolve();
     this.operationQueue = Promise.resolve();
-    this.scanRunner = new ScanRunner(async (url) => {
-      const response = await (0, import_obsidian9.requestUrl)({ url, method: "HEAD" });
-      return response.status;
+    this.operationRunning = false;
+    this.startupScanScheduler = null;
+    this.scanRunner = new ScanRunner(async (url, method) => {
+      const response = await (0, import_obsidian9.requestUrl)({
+        url,
+        method,
+        headers: method === "GET" ? { Range: "bytes=0-0" } : void 0
+      });
+      return { status: response.status, method };
     }, {
       setTimeout: (callback, delayMs) => window.setTimeout(callback, delayMs),
       clearTimeout: (timeoutId) => window.clearTimeout(timeoutId)
@@ -4169,6 +5284,16 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
     });
     registerDefaultScanners(this.scanRunner);
     this.addSettingTab(new InspectorSettingTab(this.app, this));
+    this.startupScanScheduler = createStartupScanScheduler({
+      getSettings: () => this.settings,
+      getSnapshot: () => this.lastSuccessfulSnapshot,
+      isBusy: () => this.operationRunning,
+      now: () => Date.now(),
+      whenSettled: (run) => this.app.workspace.onLayoutReady(run),
+      runAutomaticScan: (settings) => this.enqueueOperation(() => runScanSession(this.scanDeps(), settings, {}, "automatic")),
+      notify: (message) => new import_obsidian9.Notice(message)
+    });
+    this.startupScanScheduler.schedule();
     this.addRibbonIcon("shield-check", "Run scan", () => this.runScan());
   }
   onunload() {
@@ -4189,6 +5314,7 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
       }
     };
     this.lastSuccessfulSnapshot = parsed.lastSuccessfulSnapshot;
+    this.scanHistory = parsed.scanHistory;
     if (migrateExcalidrawFrontmatterKey(this.settings, loaded)) {
       await this.saveSettings();
     }
@@ -4198,15 +5324,20 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
   }
   persistPluginData(options) {
     const write = this.saveQueue.catch(() => void 0).then(async () => {
-      var _a, _b;
+      var _a, _b, _c;
       const snapshot = (_a = options == null ? void 0 : options.acceptedSnapshot) != null ? _a : this.lastSuccessfulSnapshot;
+      const history = (_b = options == null ? void 0 : options.acceptedHistory) != null ? _b : this.scanHistory;
       const data = {
-        settings: structuredClone((_b = options == null ? void 0 : options.settings) != null ? _b : this.settings),
-        ...snapshot ? { lastSuccessfulSnapshot: structuredClone(snapshot) } : {}
+        settings: structuredClone((_c = options == null ? void 0 : options.settings) != null ? _c : this.settings),
+        ...snapshot ? { lastSuccessfulSnapshot: structuredClone(snapshot) } : {},
+        ...history.length > 0 ? { scanHistory: structuredClone(history) } : {}
       };
       await this.saveData(data);
       if (options == null ? void 0 : options.acceptedSnapshot) {
         this.lastSuccessfulSnapshot = options.acceptedSnapshot;
+      }
+      if (options == null ? void 0 : options.acceptedHistory) {
+        this.scanHistory = options.acceptedHistory;
       }
     });
     this.saveQueue = write;
@@ -4242,7 +5373,7 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
           view.setOperationOutcomes(requestedIssues.map((issue) => ({
             fingerprint: issue.fingerprint,
             outcome: "failed",
-            message: `Failed to ignore issue: ${errorMessage(error)}`,
+            message: `Failed to ignore issue: ${errorMessage3(error)}`,
             affectedPaths: getAffectedIssuePaths(issue)
           })));
           return;
@@ -4251,7 +5382,7 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
           this.settings.ignoredIssueFingerprints,
           fingerprints
         );
-        await this.performScanAndRenderHandled(view);
+        await this.performScanAndRender(view);
         view.setOperationOutcomes(requestedIssues.map((issue) => ({
           fingerprint: issue.fingerprint,
           outcome: "ignored",
@@ -4273,7 +5404,7 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
           view.setOperationOutcomes(requestedIssues.map((issue) => ({
             fingerprint: issue.fingerprint,
             outcome: "failed",
-            message: `Failed to restore issue: ${errorMessage(error)}`,
+            message: `Failed to restore issue: ${errorMessage3(error)}`,
             affectedPaths: getAffectedIssuePaths(issue)
           })));
           return;
@@ -4281,7 +5412,7 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
         this.settings.ignoredIssueFingerprints = this.settings.ignoredIssueFingerprints.filter(
           (fp) => !toRestore.has(fp)
         );
-        await this.performScanAndRenderHandled(view);
+        await this.performScanAndRender(view);
         view.setOperationOutcomes(requestedIssues.map((issue) => ({
           fingerprint: issue.fingerprint,
           outcome: "restored",
@@ -4301,18 +5432,25 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
           const fixSettings = structuredClone(this.settings);
           const scanProfile = await createScanProfile(fixSettings);
           const batch = await runFixBatch(issues, decisions, {
-            scan: () => this.scan(view, structuredClone(fixSettings)),
+            settings: () => fixSettings,
+            scan: (batchSettings) => this.scan(view, batchSettings),
             execute: (action) => executeFixAction(this.app, action)
           });
           let acceptanceFailed = false;
           let acceptanceError;
           if (batch.verificationResult) {
             try {
-              await this.acceptScanResult(
-                view,
+              const accepted = await acceptScanResult(
+                this.scanDeps(),
+                this.viewHooks(view),
                 batch.verificationResult,
                 scanProfile
               );
+              if (accepted.persistWarning) {
+                new import_obsidian9.Notice(
+                  `Scan completed, but the comparison snapshot could not be saved: ${accepted.persistWarning}`
+                );
+              }
             } catch (error) {
               acceptanceFailed = true;
               acceptanceError = error;
@@ -4356,7 +5494,7 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
           view.setOperationOutcomes([{
             fingerprint: issue.fingerprint,
             outcome: "failed",
-            message: `Failed to ignore issue: ${errorMessage(error)}`,
+            message: `Failed to ignore issue: ${errorMessage3(error)}`,
             affectedPaths
           }]);
           return;
@@ -4365,7 +5503,7 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
           this.settings.ignoredIssueFingerprints,
           [issue.fingerprint]
         );
-        await this.performScanAndRenderHandled(view);
+        await this.performScanAndRender(view);
         view.setOperationOutcomes([{
           fingerprint: issue.fingerprint,
           outcome: "ignored",
@@ -4385,7 +5523,7 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
           view.setOperationOutcomes([{
             scannerId: request.scannerId,
             outcome: "failed",
-            message: `Failed to exclude folder: ${errorMessage(error)}`,
+            message: `Failed to exclude folder: ${errorMessage3(error)}`,
             affectedPaths: [request.folder]
           }]);
           return;
@@ -4394,7 +5532,7 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
           this.settings.ignoredFoldersByScanner[request.scannerId],
           [request.folder]
         );
-        await this.performScanAndRenderHandled(view);
+        await this.performScanAndRender(view);
         view.setOperationOutcomes([{
           scannerId: request.scannerId,
           outcome: "excluded",
@@ -4416,73 +5554,67 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
   scanAndRender(view) {
     return this.enqueueOperation(async () => {
       view.setOperationOutcomes([]);
-      await this.performScanAndRenderHandled(view);
+      await this.performScanAndRender(view);
     });
   }
-  async performScanAndRenderHandled(view) {
-    try {
-      await this.performScanAndRender(view);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      new import_obsidian9.Notice(`Vault Inspector scan failed: ${message}`);
-    }
-  }
   enqueueOperation(operation) {
-    const run = this.operationQueue.catch(() => void 0).then(operation);
+    const run = this.operationQueue.catch(() => void 0).then(() => this.runOperation(operation));
     this.operationQueue = run.catch(() => void 0);
     return run;
   }
-  async performScanAndRender(view) {
-    const scanSettings = structuredClone(this.settings);
-    const scanProfile = await createScanProfile(scanSettings);
+  async runOperation(operation) {
+    this.operationRunning = true;
     try {
-      const result = await this.scan(view, scanSettings);
-      if (!result) return;
-      await this.acceptScanResult(view, result, scanProfile);
-    } catch (error) {
-      this.stopScanningBestEffort(view);
-      throw error;
+      return await operation();
+    } finally {
+      this.operationRunning = false;
     }
   }
-  async acceptScanResult(view, result, scanProfile) {
-    const comparison = compareScanResult(
-      result,
-      this.lastSuccessfulSnapshot,
-      scanProfile
+  async performScanAndRender(view) {
+    const outcome = await runScanSession(
+      this.scanDeps(),
+      this.settings,
+      this.viewHooks(view)
     );
-    view.setResult(result, comparison);
-    const nextSnapshot = createScanSnapshot(
-      result,
-      scanProfile,
-      this.manifest.version
-    );
-    try {
-      await this.persistPluginData({ acceptedSnapshot: nextSnapshot });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+    if (outcome.status === "failed") {
+      new import_obsidian9.Notice(`Vault Inspector scan failed: ${outcome.message}`);
+      return;
+    }
+    if (outcome.persistWarning) {
       new import_obsidian9.Notice(
-        `Scan completed, but the comparison snapshot could not be saved: ${message}`
+        `Scan completed, but the comparison snapshot could not be saved: ${outcome.persistWarning}`
       );
     }
   }
+  scanDeps() {
+    return {
+      app: this.app,
+      runner: this.scanRunner,
+      createProfile: createScanProfile,
+      toolVersion: this.manifest.version,
+      getSnapshot: () => this.lastSuccessfulSnapshot,
+      getHistory: () => this.scanHistory,
+      persistAccepted: (accepted) => this.persistPluginData(accepted)
+    };
+  }
+  viewHooks(view) {
+    return {
+      onScanningChange: (scanning) => view.setScanning(scanning),
+      onProgress: (progress) => view.setScanProgress(progress),
+      onResult: (result, comparison) => view.setResult(result, comparison)
+    };
+  }
   async scan(view, settings) {
-    try {
-      view.setScanning(true);
-      return await this.scanRunner.run(this.app, settings, {
-        onProgress: (progress) => view.setScanProgress(progress)
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      new import_obsidian9.Notice(`Vault Inspector scan failed: ${message}`);
-      this.stopScanningBestEffort(view);
+    const outcome = await runScanOperation(
+      this.scanDeps(),
+      settings,
+      this.viewHooks(view)
+    );
+    if (outcome.status === "failed") {
+      new import_obsidian9.Notice(`Vault Inspector scan failed: ${outcome.message}`);
       return null;
     }
-  }
-  stopScanningBestEffort(view) {
-    try {
-      view.setScanning(false);
-    } catch (e) {
-    }
+    return outcome.result;
   }
   async exportReport() {
     var _a;
@@ -4520,7 +5652,7 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
       await this.app.vault.create(filepath, report);
       new import_obsidian9.Notice(`${exportKind} exported to ${filepath}`);
     } catch (error) {
-      new import_obsidian9.Notice(`Report export failed: ${errorMessage(error)}`);
+      new import_obsidian9.Notice(`Report export failed: ${errorMessage3(error)}`);
     }
   }
 };
@@ -4538,7 +5670,7 @@ function uniqueIssuesByFingerprint(issues) {
     return true;
   });
 }
-function errorMessage(error) {
+function errorMessage3(error) {
   return error instanceof Error ? error.message : String(error);
 }
 function mergeUnique(current, additions) {

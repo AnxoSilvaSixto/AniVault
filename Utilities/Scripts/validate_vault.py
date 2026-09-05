@@ -350,7 +350,10 @@ class Validator:
                     return candidates
             return []
         for variant in self.target_variants(clean):
-            stem = variant[:-3] if variant.casefold().endswith(".md") else variant
+            # Obsidian permits a note stem that itself ends in `.md`; for
+            # example, [[Signal.MD]] resolves to Signal.MD.md. Try the exact
+            # stem first, then the optional extension-stripped fallback.
+            stem = variant
             local = sorted(
                 p for p in source.parent.glob("*.md")
                 if p.stem.casefold() == stem.casefold()

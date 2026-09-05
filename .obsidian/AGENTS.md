@@ -296,7 +296,7 @@ git push origin staging  # if on main and need to sync staging
 - `Rating: 0` is an explicit unrated value and produces a warning rather than changing the note.
 - Pending notes are intentionally incomplete and are not subject to the watched-Anime schema.
 - Run with `python Utilities/Scripts/validate_vault.py`; it exits non-zero only for validation errors.
-- `Utilities/Scripts/link_media_audit_report.json` records conservative link/media findings and must be reviewed manually before any link migration.
+- `Utilities/Scripts/link_media_audit_report.json` records conservative link/media findings. `Signal.MD` intentionally resolves to `Extra/Studio/Signal.MD.md`; do not rename it solely to remove the repeated `.md` suffix.
 
 ## 11. WHAT NOT TO DO
 

@@ -38,12 +38,16 @@ echo   5. Sync new information
 echo   6. Preview new information
 echo.
 echo Utilities
-echo   7. Exit
+echo   7. Validate vault
+echo   8. Update README stats
+echo   9. Exit
 echo.
 
-choice /c 1234567 /n /m "Select an option (1-7): "
+choice /c 123456789 /n /m "Select an option (1-9): "
 
-if errorlevel 7 goto end
+if errorlevel 9 goto end
+if errorlevel 8 goto update_readme
+if errorlevel 7 goto validate_vault
 if errorlevel 6 goto studios_dry_run
 if errorlevel 5 goto studios_metadata
 if errorlevel 4 goto studios_full
@@ -91,6 +95,20 @@ echo.
 echo Previewing studio information for new/pending files only...
 echo.
 %PY_CMD% sync_studios.py --dry-run
+goto afterrun
+
+:validate_vault
+echo.
+echo Validating vault consistency...
+echo.
+%PY_CMD% validate_vault.py
+goto afterrun
+
+:update_readme
+echo.
+echo Updating README stats...
+echo.
+%PY_CMD% update_readme.py
 goto afterrun
 
 :afterrun

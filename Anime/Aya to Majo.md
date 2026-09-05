@@ -13,7 +13,7 @@ Themes: []
 Demographic: []
 Cover: https://cdn.myanimelist.net/images/anime/1242/110170l.jpg
 MAL: https://myanimelist.net/anime/42143
-Rating: 0
+Rating: 1
 ---
 > [!summary] Synopsis
 > With large windows adorning its spick-and-span halls, St. Morwald's Home for Children serves as a warm refuge for displaced orphans. For 10-year-old Aya, she is perfectly content living without a normal family, especially since she has everyone at the orphanage wrapped around her finger. However, to her dismay, she is one day selected by a peculiar couple, Bella Yaga and the Mandrake.

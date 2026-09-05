@@ -36,7 +36,7 @@ AniVault is a local-first Obsidian vault for tracking watched anime. Every entry
 
 ## 📊 Collection Stats
 
-> Snapshot as of `2026-09-05`. Live counts: open `Utilities/Bases/Anime tracker.base` or run `vault-inspector`.
+> Snapshot as of `2026-09-06`. Live counts: open `Utilities/Bases/Anime tracker.base` or run `vault-inspector`.
 
 | Category | Count | Notes |
 |----------|-------|-------|
@@ -48,7 +48,7 @@ AniVault is a local-first Obsidian vault for tracking watched anime. Every entry
 | — Sources | 10 | `Extra/Source/` |
 | — Demographics | 5 | `Extra/Demographic/` |
 | — Types | 5 | `Extra/Type/` |
-| **Watchlist** | **21** | `Pending/` (intentionally incomplete) |
+| **Watchlist** | **20** | `Pending/` (intentionally incomplete) |
 | **Bases** | 7 | `Utilities/Bases/` |
 | **Graphs** | 4 | `Utilities/Graphs/` |
 
@@ -81,7 +81,7 @@ git clone https://github.com/AnxoSilvaSixto/AniVault.git
 `Settings → Appearance → CSS snippets → Enable` all three: `media-grid`, `obsidian-icons`, `text-centered`.
 
 **5. Verify**
-Open `Utilities/Bases/Anime tracker.base` and `Homepage.canvas` — you should see 368 entries and 3 embedded graph charts. Run `python Utilities/Scripts/validate_vault.py` and review `Utilities/Scripts/link_media_audit_report.json` for the remaining documented warnings and manual link review items.
+Open `Utilities/Bases/Anime tracker.base` and `Homepage.canvas` — you should see 368 entries and 3 embedded graph charts. Run `python Utilities/Scripts/validate_vault.py` and review `Utilities/Scripts/link_media_audit_report.json` for the conservative link/media audit and duplicate-stem findings.
 
 ## 🏗️ Structure
 
@@ -95,7 +95,7 @@ AniVault/
 │   ├── Studio/            # 90 (MAPPA, Ufotable, …)
 │   ├── Themes/            # 52 (Isekai, Mecha, …)
 │   └── Type/              # 5  (TV, Movie, OVA, ONA, Special)
-├── Pending/               # 21 watchlist stubs — intentionally incomplete
+├── Pending/               # 20 watchlist stubs — intentionally incomplete
 ├── To-do/                 # Task tracking (ignored in search/graph)
 ├── Utilities/
 │   ├── Bases/             # 7 .base views (tracker + dimension tables)
@@ -313,4 +313,4 @@ No license — public domain equivalent. No rights reserved. Use, modify, and ad
 
 ---
 
-*Last updated: 2026-09-05 · Vault: 368 anime · 183 refs · 21 pending*
+*Last updated: 2026-09-06 · Vault: 368 anime · 183 refs · 20 pending*
