@@ -1,10 +1,10 @@
 # AniVault — Project Guidelines
 
-**ALWAYS read `_vault_guidelines.md` before making ANY changes to the main Obsidian vault.**
+This file contains the rules, restrictions, and workflows for changes to the main Obsidian vault.
 
 The main vault is located at: `C:\Users\Anxo\Documents\Obsidian\AniVault`
 
-All rules, restrictions, and workflows are documented in `_vault_guidelines.md`. Never assume you can create files, modify Pending/, or change configuration in the main vault without checking the guidelines first.
+Read this file before making changes. Never assume you can create files, modify Pending/, or change configuration in the main vault without checking these guidelines.
 
 ---
 
@@ -12,7 +12,7 @@ All rules, restrictions, and workflows are documented in `_vault_guidelines.md`.
 
 ```
 C:\Users\Anxo\Documents\Obsidian\AniVault\
-├── Anime/              → 369 anime notes (standalone + 57 series subfolders)
+├── Anime/              → 368 anime notes (standalone + 57 series subfolders)
 ├── Extra/              → 183 reference pages (studios, genres, themes, etc.)
 │   ├── Demographic/    → 5 files
 │   ├── Genre/          → 21 files
@@ -33,7 +33,7 @@ C:\Users\Anxo\Documents\Obsidian\AniVault\
 │   │   └── data/              → logs + Metadata_Updates/ + Studio_Updates/
 │   ├── Templates/      → Template files (media-grid Template.md)
 │   └── sortspec.md     → Custom Sort spec for Anime/ (mix folders+files A→Z)
-├── Homepage.canvas     → Main dashboard (embeds 4 graphs + bases)
+├── Homepage.canvas     → Main dashboard (embeds 3 graphs + 2 tracker views)
 ├── README.md           → GitHub landing page (auto-patched by update_readme.py)
 └── .obsidian/          → Vault configuration
     ├── AGENTS.md       → This file (hidden from vault, agent-facing)
@@ -105,7 +105,7 @@ Demographic:
   - "[[Shounen]]"
 Cover: https://cdn.myanimelist.net/images/anime/8/77966l.jpg
 MAL: https://myanimelist.net/anime/30654
-Rating: 8                      # 1-10, personal — never auto-overwritten, excluded from sync
+Rating: 8                      # 0-10; 0 means unrated — never auto-overwritten, excluded from sync
 # Relational (optional, manual)
 Prequels:
   - "[[Ansatsu Kyoushitsu]]"
@@ -126,7 +126,7 @@ Alternative Version: []
 | `Source` | `"[[Source]]"` | MAL | |
 | `Genre` / `Themes` / `Demographic` | `"[[...]]"[]` | MAL | Arrays, may be empty |
 | `Cover` / `MAL` | url | MAL | CDN hotlink |
-| `Rating` | 1–10 | **You** | Personal, never overwritten by sync |
+| `Rating` | 0–10 | **You** | Personal; `0` means unrated, never overwritten by sync |
 | `Prequels` / `Sequels` / `Alternative Version` | `"[[Anime]]"[]` | Manual | Rendered as media-grid |
 
 **File example:** `Anime/Ansatsu Kyoushitsu/Ansatsu Kyoushitsu 2nd Season.md` — demonstrates multi-genre, `Prequels`, and callout.
@@ -150,7 +150,7 @@ Alternative Version: []
 ### `update_readme.py` (Utilities/Scripts/) — VAULT-FACING, MUST MAINTAIN
 
 - **Purpose:** Keeps `README.md` stats in sync with filesystem. Called by backup script and manually.
-- **Counts:** `Anime` (rglob `*.md` 369), `Extra` (183) + per-dimension `Studio 90 / Themes 52 / Genre 21 / Source 10 / Demographic 5 / Type 5`, `Pending 21`, `Bases 7`, `Graphs 4`, series folders `Anime/*/ is_dir()` (57).
+- **Counts:** `Anime` (rglob `*.md` 368), `Extra` (183) + per-dimension `Studio 90 / Themes 52 / Genre 21 / Source 10 / Demographic 5 / Type 5`, `Pending 21`, `Bases 7`, `Graphs 4`, series folders `Anime/*/ is_dir()` (57).
 - **Patches:** `## 📊 Collection Stats` table, `## 🏗️ Structure` tree comments, Quick Start verify line (`you should see N entries`), footer `*Last updated: YYYY-MM-DD · Vault: N anime · M refs · P pending*` + snapshot `> Snapshot as of`.
 - **Usage:**
   ```powershell
@@ -167,14 +167,14 @@ Alternative Version: []
 - Syncs anime metadata from Tenrai API (Jikan-compatible)
 - Handles: `ID, Type, Episodes, Aired, Finished, Studio, Source, Genre, Themes, Demographic, Cover, MAL, Synopsis`
 - `Rating` excluded (personal)
-- Flags: `--full` (full rescan vs incremental via `data/metadata_synced.log` / `synopsis_synced.log`), `--dry-run`, `--mode {info,synopsis,both}` (default `both`)
+- Flags: `--full` (full rescan vs incremental via `data/metadata_synced.log` / `synopsis_synced.log`), `--dry-run`, `--mode {info,synopsis,both}` (default `both`). Dry-run does not write update files or sync logs.
 - **Manual revision mode:** Never overwrites originals — writes to `Utilities/Scripts/data/Metadata_Updates/` (mirroring structure) + `_changes_report.md` for review
 
 ### `sync_studios.py` (Utilities/Scripts/) — HELPER
 
 - Syncs studio/producer fields: `Foundation`/`Established`, `Cover`, `MAL`
 - Handles alias collapse (`Foundation` vs `Established`, `Cover` vs `Image`)
-- Incremental via `data/studios_synced.log`, `--full` for rescan, writes to `data/Studio_Updates/`
+- Incremental via `data/studios_synced.log`, `--full` for rescan, `--dry-run` for a non-mutating preview, writes to `data/Studio_Updates/`
 
 ### `sync_menu.bat` (Utilities/Scripts/)
 
@@ -186,8 +186,8 @@ Alternative Version: []
 
 - Weekly on Windows login via Task Scheduler `AniVault Git Backup` (checks ` $env:APPDATA\AniVault-lastRun.txt` — skips if <7 days)
 - Now calls `python Utilities/Scripts/update_readme.py` before `git add -A` (with `python`/`py` fallback, try/catch)
-- Then `git add -A && git commit -m "auto: vault backup $timestamp" && git push` (also pushes `staging` via separate remote tracking)
-- Branch sync: `main` is primary, `staging` fast-forwarded to `main` (`git merge --ff-only main`)
+- Then stages, commits, and pushes the current branch after each successful backup run
+- `staging` is not automatically synchronized by the external backup script; sync it explicitly when required
 
 ### Pre-commit hook — `.githooks/pre-commit` (versioned) + `.git/hooks/pre-commit` (installed)
 
@@ -209,19 +209,23 @@ Alternative Version: []
 
 **IMPORTANT:** Use `'"Anime"'` for folder query. Do NOT use `'"Anime/"'` (recursive) — it breaks graphs.
 
-Embedded together in `Homepage.canvas` (4 file nodes at x:-720/-120 etc).
+The first three graph notes are embedded in `Homepage.canvas`; `Rating Distribution.md` is standalone. The Canvas also embeds two Anime Base views.
 
 ## 7. OBSIDIAN BASES
 
 **Location:** `Utilities/Bases/` (7 files, all tracked)
 
-1. `Anime tracker.base` — Main collection tracker (369 entries)
+1. `Anime tracker.base` — Main collection tracker (368 entries)
 2. `Genre base.base` — Genre dimension
 3. `Themes base.base` — Themes dimension
 4. `Studio base.base` — Studio dimension
 5. `Source base.base` — Source material dimension
 6. `Demographic base.base` — Demographic dimension
 7. `Type base.base` — Type dimension
+
+`Anime tracker.base` includes `Full list`, `Hall of Fame`, `Top` (cards ordered by personal `Rating` descending), and `Searcher` views.
+
+`Studio base.base` retains a global `!Rating.isEmpty()` filter; its studio views intentionally show rated entries only.
 
 Bases are live counts — prefer over hardcoded README numbers.
 
@@ -248,7 +252,7 @@ Bases are live counts — prefer over hardcoded README numbers.
 ### Obsidian Settings (tracked)
 - `app.json: readableLineLength, foldHeading, newLinkFormat: shortest, alwaysUpdateLinks, showInlineTitle, openBehavior: file:Homepage.canvas, userIgnoreFilters: [Utilities/, To-do/]`
 - `appearance.json: cssTheme: Baseline, theme: obsidian`
-- `community-plugins.json: [pretty-properties, obsidian-charts, dataview, style-settings, custom-sort, vault-inspector]`
+- `community-plugins.json: [pretty-properties, obsidian-charts, dataview, obsidian-style-settings, custom-sort, vault-inspector]`
 
 ### Git Hygiene (tracked vs ignored)
 
@@ -271,7 +275,7 @@ git push
 git push origin staging  # if on main and need to sync staging
 ```
 
-**Branch model:** `main` (primary, `origin/HEAD`), `staging` (ff-only mirror of main, also Tracks backup). Never diverge — `git checkout staging && git merge --ff-only main && git push`.
+**Branch model:** `main` is primary (`origin/HEAD`). `staging` is a separate mirror and is not synchronized automatically; update it explicitly only when required after verifying the intended target.
 
 **Auto-backup:** `Task Scheduler → AniVault Git Backup` → `C:\Scripts\AniVault-backup.ps1` (weekly login, checks `AniVault-lastRun.txt`, calls `update_readme.py` then `git add/commit/push`)
 
@@ -282,9 +286,17 @@ git push origin staging  # if on main and need to sync staging
 ## 10. README MAINTENANCE
 
 - **Source of truth:** Filesystem counts, not README hardcodes. `README.md:30-52` table, tree `README.md:99-122`, and footer `*Last updated: ...*` are auto-patched.
-- **Script:** `Utilities/Scripts/update_readme.py:1` — idempotent, patches table rows `**369**` etc, tree `369 notes — 57 series folders`, `183 reference pages`, per-dimension counts, footer + snapshot date.
+- **Script:** `Utilities/Scripts/update_readme.py:1` — idempotent, patches table rows `**368**` etc, tree `368 notes — 57 series folders`, `183 reference pages`, per-dimension counts, footer + snapshot date.
 - **When to run:** Before every commit that changes `Anime/`, `Extra/`, `Pending/`, `Utilities/Bases/`, `Utilities/Graphs/` or weekly via backup. Also in CI with `--check`.
 - **What NOT to do:** Don't manually edit numbers in README — they'll be overwritten. Don't document sync scripts in README — they are helpers (`README.md` should only mention `update_readme.py`).
+
+### `validate_vault.py` (Utilities/Scripts/)
+
+- Read-only, dependency-free validation for Anime frontmatter, IDs, dates, MAL/ID consistency, taxonomy and relationship links, media-grid targets, duplicate stems, encoding, and README counts.
+- `Rating: 0` is an explicit unrated value and produces a warning rather than changing the note.
+- Pending notes are intentionally incomplete and are not subject to the watched-Anime schema.
+- Run with `python Utilities/Scripts/validate_vault.py`; it exits non-zero only for validation errors.
+- `Utilities/Scripts/link_media_audit_report.json` records conservative link/media findings and must be reviewed manually before any link migration.
 
 ## 11. WHAT NOT TO DO
 
@@ -301,6 +313,36 @@ git push origin staging  # if on main and need to sync staging
 | Manually edit README stats | Use `update_readme.py` — manual edits drift | BLOCKED |
 | Track `workspace.json` / `vault-inspector/data.json` | Volatile, ignored via `.gitignore` | BLOCKED |
 | Use `LICENSE` badge without file | Broken link — vault uses public domain, no license | BLOCKED |
+
+## 12. AI AGENT TOOLS
+
+### obsidian-mcp (MCP Server)
+- **Purpose:** Rust-based MCP server providing 19 tools for direct vault filesystem access. No Obsidian app required to be running.
+- **Install:** `cargo install obsidian-mcp` or download pre-built binary from https://github.com/lstpsche/obsidian-mcp/releases
+- **Config:** `~/.config/opencode/opencode.jsonc` → `mcp.obsidian-mcp` → points to this vault
+- **19 tools:** vault navigation, note CRUD (`note_read`, `note_write`, `note_create`, `note_insert`, `note_patch`, `note_delete`, `note_move`), search (`search_text` BM25, `search_semantic`, `search_regex`, `search_metadata`), backlinks/outgoing/broken/orphans via `wikilinks`, frontmatter get/set/remove, periodic notes, vault stats
+- **Search:** BM25 full-text (default, with stemming + fuzzy), semantic search (optional, requires embeddings config), regex, tag/frontmatter queries
+- **Tool filtering:** `OBSIDIAN_TOOLS` env var — `full`, `core`, `read`, `minimal`, or custom allow/deny lists
+
+### obsidian-skills (Agent Skills)
+- **Location:** `~/.opencode/skills/obsidian-skills/` (cloned from https://github.com/kepano/obsidian-skills)
+- **Auto-discovered** by OpenCode — no config changes needed
+- **5 skills:**
+  - `obsidian-markdown` — Create/edit Obsidian Flavored Markdown (wikilinks, embeds, callouts, properties, tags)
+  - `obsidian-cli` — Interact with Obsidian vault via Obsidian CLI (requires Obsidian app running)
+  - `json-canvas` — Create/edit `.canvas` files with nodes, edges, groups
+  - `obsidian-bases` — Create/edit `.base` files with views, filters, formulas
+  - `defuddle` — Extract clean markdown from web pages (use instead of WebFetch for standard URLs)
+
+### When to Use Which
+| Task | Tool |
+|------|------|
+| Read/write notes on disk (no Obsidian running) | obsidian-mcp |
+| Interact with running Obsidian instance | obsidian-cli skill |
+| Create/edit Markdown with Obsidian syntax | obsidian-markdown skill |
+| Create visual canvases | json-canvas skill |
+| Create database-style views | obsidian-bases skill |
+| Fetch web content cleanly | defuddle skill |
 
 ---
 

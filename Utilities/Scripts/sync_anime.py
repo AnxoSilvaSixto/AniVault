@@ -1,6 +1,6 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
-sync_metadata.py â€” Anime Metadata Sync (Manual Revision Edition)
+sync_metadata.py — Anime Metadata Sync (Manual Revision Edition)
 ---------------------------------------------
 Fetches current metadata for each anime from the Tenrai API (a Jikan-schema
 mirror; switched over from Jikan directly after its public API was announced
@@ -8,7 +8,7 @@ as being discontinued). Instead of overwriting original files, it outputs
 complete, updated Markdown files into a 'Metadata_Updates' folder for manual
 revision.
 
-Note: Rating is intentionally excluded from the sync â€” that field holds your
+Note: Rating is intentionally excluded from the sync — that field holds your
 own personal score, not the source's community score.
 """
 
@@ -16,18 +16,14 @@ import sys
 import re
 import time
 import argparse
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import NamedTuple
 
-try:
-    import requests
-except ImportError:
-    sys.exit("[ERROR] 'requests' not installed. Run: pip install requests")
-
 class Change(NamedTuple):
     """One changed field: what it's called, what it was, what it's becoming.
-    Behaves exactly like a plain (str, str, str) tuple for unpacking â€” this is
+    Behaves exactly like a plain (str, str, str) tuple for unpacking — this is
     purely a documentation/readability upgrade, not a behavior change."""
     field: str
     old: str
@@ -41,12 +37,14 @@ DATA_DIR    = SCRIPT_DIR / "data"
 UPDATES_DIR = DATA_DIR / "Metadata_Updates"
 
 ANIME_API_URL = "https://api.tenrai.org/v1/anime/{mal_id}"
-# Optional: paste a Patreon "X-Server-Key" here later for 300 RPM/5 RPS instead of 120 RPM/4 RPS
-SERVER_KEY = None
-REQUEST_DELAY = 1.0  # Tenrai's public tier documents 120/min & 4/sec â€” this stays well under both on purpose
+# Optional server-key tier: provide TENRAI_SERVER_KEY in the environment. Never put
+# the key in this source file. Tenrai documents 120 RPM/4 RPS publicly and
+# 300 RPM/5 RPS with a server key; Retry-After is honored for 429 responses.
+SERVER_KEY = os.environ.get("TENRAI_SERVER_KEY") or None
+REQUEST_DELAY = 1.0  # Public-tier pacing stays under 120/min and 4/sec.
 MAX_RETRIES = 3
 RETRY_BACKOFF_BASE = 5  # seconds; fallback wait = RETRY_BACKOFF_BASE * attempt number, used only if no Retry-After header
-RETRYABLE_CODES = {403, 429, 500, 502, 503, 504}  # 403 is Tenrai's anti-abuse trigger â€” docs say it's always temporary
+RETRYABLE_CODES = {403, 429, 500, 502, 503, 504}  # 403 is Tenrai's anti-abuse trigger — docs say it's always temporary
 WRITE_FULL_FILES = True  # False = only write the _changes_report.md summary, skip full per-anime files
 
 MAL_ID_RE = re.compile(r"myanimelist\.net/anime/(\d+)")
@@ -60,13 +58,13 @@ def describe_error(resp) -> str:
     try:
         body = resp.json()
         msg = body.get("message") or body.get("error")
-        return f"HTTP {resp.status_code} â€” {msg}" if msg else f"HTTP {resp.status_code}"
+        return f"HTTP {resp.status_code} — {msg}" if msg else f"HTTP {resp.status_code}"
     except Exception:
         return f"HTTP {resp.status_code}"
 
 def retry_wait(resp, attempt: int) -> float:
     """Prefer the server's own Retry-After header (Tenrai sends this on 429s); it can be
-    either a plain number of seconds or an HTTP-date (RFC 2822) â€” handle both. Fall back
+    either a plain number of seconds or an HTTP-date (RFC 2822) — handle both. Fall back
     to the fixed backoff schedule only if the header is absent or genuinely unparseable."""
     retry_after = (resp.headers.get("Retry-After") or "").strip()
     if retry_after:
@@ -88,7 +86,11 @@ def retry_wait(resp, attempt: int) -> float:
 def fetch_anime(mal_id: str):
     """GET the anime detail endpoint, retrying with backoff on RETRYABLE_CODES.
     Prints its own progress for retries, since this is a CLI tool where that feedback
-    matters â€” returns the final requests.Response either way (caller checks status)."""
+    matters — returns the final requests.Response either way (caller checks status)."""
+    try:
+        import requests
+    except ImportError:
+        sys.exit("[ERROR] 'requests' not installed. Run: pip install requests")
     headers = build_headers()
     resp = requests.get(ANIME_API_URL.format(mal_id=mal_id), headers=headers, timeout=10)
     retries = 0
@@ -105,7 +107,7 @@ def load_file(filepath: Path) -> str:
         # utf-8-sig transparently strips a BOM if a Windows editor added one.
         return filepath.read_text(encoding="utf-8-sig")
     except UnicodeDecodeError:
-        # Falls back to latin-1 just to be ABLE to read an odd legacy file â€” but writing
+        # Falls back to latin-1 just to be ABLE to read an odd legacy file — but writing
         # always uses plain utf-8 regardless (see write_text_preserving_line_ending),
         # since API-sourced text (non-Latin titles, smart quotes) can't be represented
         # in latin-1 and would crash on write otherwise. utf-8 is a superset here.
@@ -121,7 +123,7 @@ def detect_line_ending(filepath: Path) -> str:
 def write_text_preserving_line_ending(filepath: Path, content: str, line_ending: str):
     """Write with an explicit, guaranteed line ending, always as UTF-8. newline=''
     disables Python's own write-time translation (which otherwise follows the OS
-    default â€” \\r\\n on Windows, \\n on Linux/Mac â€” and would double up any \\r\\n
+    default — \\r\\n on Windows, \\n on Linux/Mac — and would double up any \\r\\n
     we've already inserted ourselves). Content is normalized to bare '\\n' first so
     this is safe to call no matter what mix of line endings the input contains."""
     normalized = content.replace("\r\n", "\n").replace("\r", "\n")
@@ -132,7 +134,7 @@ FRONTMATTER_RE = re.compile(r'\A---[ \t]*\r?\n(?P<fm>.*?\r?\n)---[ \t]*\r?\n?', 
 
 def split_frontmatter(content: str) -> tuple[str, str] | None:
     """Split into (frontmatter_text, body). Delimiters must be '---' alone on their own
-    line â€” the actual Markdown-frontmatter convention â€” found via regex anchored to the
+    line — the actual Markdown-frontmatter convention — found via regex anchored to the
     start of the file, rather than a raw substring search. A frontmatter VALUE that
     happens to contain the literal text '---' (a stylistic dash, say) can no longer be
     mistaken for the closing delimiter, which content.split('---', 2) was vulnerable to.
@@ -143,7 +145,7 @@ def split_frontmatter(content: str) -> tuple[str, str] | None:
     return m.group('fm'), content[m.end():]
 
 def extract_mal_id(content: str) -> str | None:
-    """Search only the frontmatter block for a MAL URL, not the whole file â€” a mention
+    """Search only the frontmatter block for a MAL URL, not the whole file — a mention
     of a different anime elsewhere (a 'prequel to ...' note, a related-anime link) must
     not be mistaken for this note's own ID."""
     split = split_frontmatter(content)
@@ -155,7 +157,7 @@ def extract_mal_id(content: str) -> str | None:
 
 def file_key(fp: Path) -> str:
     """Unique identifier for sync-log tracking. Uses the path relative to ANIME_DIR,
-    not just the filename â€” two different anime that happen to share a filename in
+    not just the filename — two different anime that happen to share a filename in
     different subfolders (a TV series and a movie both called the same thing, say)
     would otherwise collide in the log and silently suppress or overwrite each other."""
     return str(fp.relative_to(ANIME_DIR).with_suffix(""))
@@ -181,7 +183,7 @@ def parse_yaml_frontmatter(yaml_str: str) -> dict:
                 metadata[key] = []
                 current_key = key
             elif not val:
-                metadata[key] = ""  # genuinely blank scalar â€” stays blank, not silently
+                metadata[key] = ""  # genuinely blank scalar — stays blank, not silently
                 current_key = key   # promoted to []. If '- item' lines follow, the list
                                      # branch above converts it to a list on the first item.
             else:
@@ -205,7 +207,7 @@ def dump_yaml_frontmatter(meta_dict: dict) -> str:
             else:
                 lines.append(f"{k}: {v}")
     lines.append("---")
-    return "\n".join(lines) + "\n"  # guarantee a trailing newline â€” see process_anime_file
+    return "\n".join(lines) + "\n"  # guarantee a trailing newline — see process_anime_file
 
 def normalize_value(val):
     if isinstance(val, list):
@@ -241,7 +243,7 @@ def parse_date_value(value) -> str:
 
 def normalize_type(raw_type: str) -> str:
     """Fold every 'Special' variant into one canonical value. Confirmed against Tenrai's
-    documented type enum (tv, movie, ova, special, ona, music, cm, pv, tv_special) â€”
+    documented type enum (tv, movie, ova, special, ona, music, cm, pv, tv_special) —
     'special' and 'tv_special' are the only two, so a case-insensitive substring check
     is safe and needs no further variants added."""
     if raw_type and "special" in raw_type.lower():
@@ -254,7 +256,7 @@ MAL_ATTRIBUTION_RE = re.compile(r'\n{1,2}\[Written by.*?\]\s*$', re.IGNORECASE)
 
 def clean_synopsis_text(raw: str) -> str:
     """Strip MAL's '[Written by X]' attribution suffix, which the existing notes don't
-    include (confirmed against the uploaded Cowboy Bebop note â€” its synopsis ends at
+    include (confirmed against the uploaded Cowboy Bebop note — its synopsis ends at
     'revenge for his old wounds.' with no attribution line)."""
     return MAL_ATTRIBUTION_RE.sub('', (raw or '')).strip()
 
@@ -291,13 +293,13 @@ def extract_synopsis_text(body: str) -> str | None:
     for line in lines[start:]:
         stripped = line.lstrip()
         if not stripped.startswith('>') or CALLOUT_START_RE.match(stripped):
-            break  # end of this callout â€” either non-quote content or a NEW callout starting
+            break  # end of this callout — either non-quote content or a NEW callout starting
         text_lines.append(stripped[1:].strip())
     return '\n'.join(text_lines).strip()
 
 def replace_synopsis_block(body: str, new_synopsis: str) -> str:
     """Replace ONLY the content of the '> [!summary] Synopsis' callout with new_synopsis.
-    Everything else in the body â€” the media-grid div, personal notes, anything below â€”
+    Everything else in the body — the media-grid div, personal notes, anything below —
     is preserved untouched. If no callout exists yet, inserts one at the very top.
     Works in normalized '\\n' space; the caller handles final line-ending conversion."""
     normalized = body.replace('\r\n', '\n').replace('\r', '\n')
@@ -319,7 +321,7 @@ def replace_synopsis_block(body: str, new_synopsis: str) -> str:
 
     if start is None:
         # No existing callout: insert at the top. The body typically starts with one
-        # blank line right after the frontmatter's closing '---' â€” preserve that.
+        # blank line right after the frontmatter's closing '---' — preserve that.
         leading_blank = [''] if lines and lines[0].strip() == '' else []
         rest = lines[len(leading_blank):]
         new_lines = leading_blank + block + [''] + rest
@@ -328,7 +330,7 @@ def replace_synopsis_block(body: str, new_synopsis: str) -> str:
         while end < len(lines):
             stripped = lines[end].lstrip()
             if not stripped.startswith('>') or CALLOUT_START_RE.match(stripped):
-                break  # a new callout (or non-quote content) starts here â€” stop before it
+                break  # a new callout (or non-quote content) starts here — stop before it
             end += 1
         new_lines = lines[:start] + block + lines[end:]
 
@@ -375,14 +377,14 @@ def compute_frontmatter_changes(current_meta: dict, api_data: dict) -> tuple[dic
     target_meta["Themes"] = [wikilink(t['name']) for t in (api_data.get('themes') or [])]
     target_meta["Demographic"] = [wikilink(d['name']) for d in (api_data.get('demographics') or [])]
     target_meta["Cover"] = api_data.get('images', {}).get('jpg', {}).get('large_image_url', '')
-    # Bare canonical URL (ID only, no title slug) built straight from the numeric mal_id â€”
+    # Bare canonical URL (ID only, no title slug) built straight from the numeric mal_id —
     # a slug rename on the source's end would otherwise show up as a false "MAL changed"
     # diff every run even though nothing meaningful actually changed.
     target_meta["MAL"] = (
         f"https://myanimelist.net/anime/{api_data.get('mal_id')}"
         if api_data.get('mal_id') else api_data.get('url', '')
     )
-    # Rating is intentionally NOT synced here â€” it's your personal score, not the
+    # Rating is intentionally NOT synced here — it's your personal score, not the
     # API's community score, so it's never written or diffed against.
 
     managed_keys = ["ID", "Type", "Episodes", "Aired", "Finished", "Studio", "Source", "Genre", "Themes", "Demographic", "Cover", "MAL"]
@@ -390,7 +392,7 @@ def compute_frontmatter_changes(current_meta: dict, api_data: dict) -> tuple[dic
     for key in managed_keys:
         new_val = target_meta.get(key)
         if not new_val:
-            # An empty API value (e.g. no "aired.from") must never count as a change â€”
+            # An empty API value (e.g. no "aired.from") must never count as a change —
             # it would erase the file's existing value on merge.
             continue
         old_val = current_meta.get(key)
@@ -401,7 +403,7 @@ def compute_frontmatter_changes(current_meta: dict, api_data: dict) -> tuple[dic
 
 def compute_synopsis_changes(body: str, api_data: dict) -> tuple[str, list[Change]]:
     """Pure computation, no file I/O. Synopsis currently comes from the same Tenrai
-    response already fetched for the frontmatter fields â€” no second API call. If you'd
+    response already fetched for the frontmatter fields — no second API call. If you'd
     rather source it from elsewhere, this is the one function to swap."""
     new_synopsis = clean_synopsis_text(api_data.get('synopsis', ''))
     if not new_synopsis:
@@ -433,14 +435,14 @@ def process_anime_file(filepath: Path, api_data: dict, mode: str, dry_run: bool 
     current_meta = parse_yaml_frontmatter(raw_frontmatter)
 
     changes = []
-    # Default to the ORIGINAL frontmatter text, untouched â€” not a value reconstructed
+    # Default to the ORIGINAL frontmatter text, untouched — not a value reconstructed
     # from the parsed dict. dump_yaml_frontmatter always renders an empty list as
-    # "key: []", for example, even if the source file had a bare "key:" â€” cosmetically
+    # "key: []", for example, even if the source file had a bare "key:" — cosmetically
     # different but semantically identical. Regenerating it unconditionally would mean
     # synopsis-only mode silently reformats frontmatter it has no business touching.
     # raw_frontmatter already ends in its own newline (shared with the closing '---'
-    # delimiter's preceding line) but does NOT include a leading one â€” that's consumed
-    # separately by the regex â€” so it must be added back explicitly here.
+    # delimiter's preceding line) but does NOT include a leading one — that's consumed
+    # separately by the regex — so it must be added back explicitly here.
     new_yaml = f"---\n{raw_frontmatter}---\n"
     new_body = body
 
@@ -449,13 +451,13 @@ def process_anime_file(filepath: Path, api_data: dict, mode: str, dry_run: bool 
         changes.extend(fm_changes)
         if fm_changes:
             # ID goes first for quick manual API lookups. Seeding merged_meta with it
-            # before merging the rest keeps it first â€” dict.update() only changes
+            # before merging the rest keeps it first — dict.update() only changes
             # values for keys that already exist, it never moves them.
             merged_meta = {"ID": target_meta["ID"]}
             merged_meta.update(current_meta)
             for key, value in target_meta.items():
                 if not value:
-                    # Empty API value â€” never let it wipe an existing frontmatter value
+                    # Empty API value — never let it wipe an existing frontmatter value
                     continue
                 merged_meta[key] = value  # Retains your custom keys, updates managed ones
             new_yaml = dump_yaml_frontmatter(merged_meta)
@@ -467,7 +469,7 @@ def process_anime_file(filepath: Path, api_data: dict, mode: str, dry_run: bool 
     if changes and WRITE_FULL_FILES and not dry_run:
         new_content = f"{new_yaml}{new_body}"
         # Mirror the subfolder structure under UPDATES_DIR instead of flattening to
-        # just the filename â€” two different anime that happen to share a filename in
+        # just the filename — two different anime that happen to share a filename in
         # different subfolders would otherwise silently overwrite each other's output.
         out_path = UPDATES_DIR / filepath.relative_to(ANIME_DIR)
         out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -498,13 +500,13 @@ def already_synced_for_mode(mode: str) -> set[str]:
     return info_done & synopsis_done
 
 def write_changes_report(all_changes: list[tuple[str, list[Change]]]):
-    lines = [f"# Metadata Changes â€” {datetime.now().strftime('%Y-%m-%d %H:%M')}", ""]
+    lines = [f"# Metadata Changes — {datetime.now().strftime('%Y-%m-%d %H:%M')}", ""]
     lines.append(f"**{len(all_changes)} anime with changes**")
     lines.append("")
     for name, changes in all_changes:
         lines.append(f"## {name}")
         for key, old, new in changes:
-            lines.append(f"- **{key}**: {old} â†’ {new}")
+            lines.append(f"- **{key}**: {old} → {new}")
         lines.append("")
 
     UPDATES_DIR.mkdir(parents=True, exist_ok=True)
@@ -519,9 +521,17 @@ def main():
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     except (AttributeError, ValueError):
-        pass  # stdout isn't reconfigurable (e.g. piped/redirected in some setups) â€” non-fatal
+        pass  # stdout isn't reconfigurable (e.g. piped/redirected in some setups) — non-fatal
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Preview or generate manual-review anime metadata updates from Tenrai.",
+        epilog=(
+            "Tenrai limits: public 120 requests/minute and 4 requests/second; "
+            "server-key tier 300/minute and 5/second. 429 Retry-After is honored. "
+            "Set TENRAI_SERVER_KEY in the environment for the optional server key. "
+            "Rating is personal metadata and is never read from or written to the API."
+        ),
+    )
     parser.add_argument("--full", action="store_true", help="Recheck all files")
     parser.add_argument("--mode", choices=["info", "synopsis", "both"], default="both",
                           help="What to sync: info (frontmatter fields), synopsis (the summary callout), or both")
@@ -547,7 +557,7 @@ def main():
                 mal_id = extract_mal_id(content)
                 if mal_id: pending.append((f, mal_id))
     except KeyboardInterrupt:
-        sys.exit("\nInterrupted while scanning files â€” nothing was changed.")
+        sys.exit("\nInterrupted while scanning files — nothing was changed.")
 
     print(f"Mode      : {'FULL RESCAN' if args.full else 'Incremental'} ({args.mode})")
     print(f"Pending   : {len(pending)} files ({len(already)} already synced)")
@@ -562,7 +572,7 @@ def main():
     all_changes = []
     consecutive_failures = 0
     CONSECUTIVE_FAILURE_LIMIT = 3  # a handful of failures in a row means a sustained
-    # block, not a one-off bad ID â€” better to stop and let it clear than keep poking it
+    # block, not a one-off bad ID — better to stop and let it clear than keep poking it
 
     for i, (fp, mal_id) in enumerate(pending, 1):
         print(f"[{i:>3}/{len(pending)}] {fp.stem[:50]:<50}", end=" ", flush=True)
@@ -576,7 +586,7 @@ def main():
                 consecutive_failures += 1
                 if consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT:
                     print(f"\n{CONSECUTIVE_FAILURE_LIMIT} failures in a row, even after retries within "
-                          f"each â€” that's a sustained issue, not a one-off. Stopping here rather than "
+                          f"each — that's a sustained issue, not a one-off. Stopping here rather than "
                           f"keep hammering it; nothing already done is lost, just run again later.")
                     interrupted = True
             else:
@@ -587,7 +597,7 @@ def main():
                     consecutive_failures += 1
                     if consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT:
                         print(f"\n{CONSECUTIVE_FAILURE_LIMIT} failures in a row, even after retries within "
-                              f"each â€” that's a sustained issue, not a one-off. Stopping here rather than "
+                              f"each — that's a sustained issue, not a one-off. Stopping here rather than "
                               f"keep hammering it; nothing already done is lost, just run again later.")
                         interrupted = True
                     if interrupted:
@@ -620,10 +630,12 @@ def main():
 
         if interrupted:
             break
-        time.sleep(REQUEST_DELAY)  # Always pace â€” even after a failure â€” so one error can't cascade
+        time.sleep(REQUEST_DELAY)  # Always pace — even after a failure — so one error can't cascade
 
-    if args.mode in ("info", "both"): write_log(INFO_LOG_PATH, info_synced)
-    if args.mode in ("synopsis", "both"): write_log(SYNOPSIS_LOG_PATH, synopsis_synced)
+    # A dry run must not advance incremental-sync state.
+    if not args.dry_run:
+        if args.mode in ("info", "both"): write_log(INFO_LOG_PATH, info_synced)
+        if args.mode in ("synopsis", "both"): write_log(SYNOPSIS_LOG_PATH, synopsis_synced)
     print("=" * 65)
     if all_changes:
         if args.dry_run:

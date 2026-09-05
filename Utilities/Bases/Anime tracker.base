@@ -26,9 +26,6 @@ views:
     imageAspectRatio: 1.5
   - type: cards
     name: Top
-    filters:
-      and:
-        - Type == "ONA"
     order:
       - file.name
       - Rating

@@ -17,18 +17,13 @@ to data/Studio_Updates/ (mirroring the folder structure) for manual review.
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import sys
 import time
 from datetime import datetime
 from pathlib import Path
 from typing import NamedTuple
-
-try:
-    import requests
-except ImportError:
-    sys.exit("[ERROR] 'requests' not installed. Run: pip install requests")
-
 
 class Change(NamedTuple):
     field: str
@@ -50,8 +45,10 @@ LOG_PATH = DATA_DIR / "studios_synced.log"
 
 # --- API ---
 API_URL = "https://api.tenrai.org/v1/producers/{id}"
-# Optional: paste a Patreon "X-Server-Key" here for 300 RPM/5 RPS instead of 120 RPM/4 RPS
-SERVER_KEY = None
+# Optional server-key tier: provide TENRAI_SERVER_KEY in the environment. Never put
+# the key in this source file. Tenrai documents 120 RPM/4 RPS publicly and
+# 300 RPM/5 RPS with a server key; Retry-After is honored for 429 responses.
+SERVER_KEY = os.environ.get("TENRAI_SERVER_KEY") or None
 REQUEST_DELAY = 1.2
 MAX_RETRIES = 3
 RETRYABLE_CODES = {403, 429, 500, 502, 503, 504}
@@ -197,6 +194,10 @@ def describe_error(resp) -> str:
 
 
 def fetch_producer(producer_id: str):
+    try:
+        import requests
+    except ImportError:
+        sys.exit("[ERROR] 'requests' not installed. Run: pip install requests")
     resp = requests.get(API_URL.format(id=producer_id), headers=build_headers(), timeout=15)
     retries = 0
     while resp.status_code in RETRYABLE_CODES and retries < MAX_RETRIES:
@@ -300,7 +301,7 @@ def compute_changes(current_meta: dict, api_data: dict) -> tuple[dict, list[Chan
     return target, changes
 
 
-def process_file(path: Path, api_data: dict) -> list[Change]:
+def process_file(path: Path, api_data: dict, dry_run: bool = False) -> list[Change]:
     content = load_file(path)
     split = split_frontmatter(content)
     if split is None:
@@ -328,9 +329,10 @@ def process_file(path: Path, api_data: dict) -> list[Change]:
             merged[key] = value
 
     new_content = f"{dump_yaml_frontmatter(merged)}{body}"
-    out_path = UPDATES_DIR / path.relative_to(STUDIO_DIR)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    write_text_preserving_line_ending(out_path, new_content, detect_line_ending(path))
+    if not dry_run:
+        out_path = UPDATES_DIR / path.relative_to(STUDIO_DIR)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        write_text_preserving_line_ending(out_path, new_content, detect_line_ending(path))
     return changes
 
 
@@ -356,8 +358,16 @@ def main() -> None:
     except Exception:
         pass
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Preview or generate manual-review studio metadata updates from Tenrai.",
+        epilog=(
+            "Tenrai limits: public 120 requests/minute and 4 requests/second; "
+            "server-key tier 300/minute and 5/second. 429 Retry-After is honored. "
+            "Set TENRAI_SERVER_KEY in the environment for the optional server key."
+        ),
+    )
     parser.add_argument("--full", action="store_true", help="Recheck all files")
+    parser.add_argument("--dry-run", action="store_true", help="Show what would change without writing files")
     args = parser.parse_args()
 
     if not STUDIO_DIR.exists():
@@ -376,7 +386,7 @@ def main() -> None:
 
     print("Studio Metadata Sync — Tenrai API")
     print("=" * 50)
-    print(f"Mode    : {'FULL RESCAN' if args.full else 'Incremental'}")
+    print(f"Mode    : {'FULL RESCAN' if args.full else 'Incremental'}{' (DRY RUN)' if args.dry_run else ''}")
     print(f"Pending : {len(pending)} files")
 
     if not pending:
@@ -408,9 +418,9 @@ def main() -> None:
                 raw = resp.json()
                 data = raw.get("data", raw)  # auto-detect nested vs. flat response
 
-                changes = process_file(fp, data)
+                changes = process_file(fp, data, args.dry_run)
                 if changes:
-                    print("UPDATED")
+                    print("WOULD UPDATE" if args.dry_run else "UPDATED")
                     all_changes.append((key, changes))
                 else:
                     print("OK")
@@ -427,14 +437,18 @@ def main() -> None:
             break
         time.sleep(REQUEST_DELAY)
 
-    write_log(LOG_PATH, updated)
+    if not args.dry_run:
+        write_log(LOG_PATH, updated)
 
     print("=" * 50)
     if all_changes:
-        report = write_changes_report(all_changes)
-        print(f"Finished. {len(all_changes)} entries changed.")
-        print(f"Report: {report}")
-        print(f"Outputs: {UPDATES_DIR}")
+        if args.dry_run:
+            print(f"Dry run complete. {len(all_changes)} entries would change.")
+        else:
+            report = write_changes_report(all_changes)
+            print(f"Finished. {len(all_changes)} entries changed.")
+            print(f"Report: {report}")
+            print(f"Outputs: {UPDATES_DIR}")
     else:
         print("Finished. No changes found.")
 

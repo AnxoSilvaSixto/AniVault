@@ -1,0 +1,83 @@
+{
+  "audit": "conservative-link-media-grid",
+  "root": "C:/Users/Anxo/Documents/Obsidian/AniVault",
+  "policy": {
+    "no_mass_link_edits": true,
+    "resolution": [
+      "case-insensitive vault-relative path, with optional .md",
+      "case-insensitive basename/stem fallback for Obsidian-style unqualified targets",
+      "explicit path wins over stem fallback",
+      "HTML media-grid href values are audited as note targets, not external URLs"
+    ],
+    "excluded_from_actionable_findings": [
+      ".obsidian/AGENTS.md",
+      "README.md",
+      "Utilities/Templates/media-grid Template.md"
+    ]
+  },
+  "counts": {
+    "markdown_files": 580,
+    "wikilinks": 3341,
+    "wikilinks_unresolved_total": 11,
+    "wikilinks_unresolved_actionable": 2,
+    "wikilinks_ambiguous": 0,
+    "taxonomy_links": 2727,
+    "taxonomy_unresolved": 1,
+    "taxonomy_ambiguous": 0,
+    "relationship_links": 276,
+    "relationship_unresolved": 0,
+    "relationship_ambiguous": 0,
+    "media_grid_files": 202,
+    "media_grid_hrefs": 310,
+    "media_grid_hrefs_unresolved_total": 8,
+    "media_grid_hrefs_unresolved_actionable": 0,
+    "media_grid_hrefs_ambiguous": 0
+  },
+  "duplicate_stems": {
+    "orange": [
+      "Anime/Orange.md",
+      "Extra/Studio/Orange.md"
+    ]
+  },
+  "actionable_findings": {
+    "unresolved_taxonomy": [
+      {
+        "file": "Anime/Cider no You ni Kotoba ga Wakiagaru.md",
+        "line": 8,
+        "property": "Studio",
+        "target": "Signal.MD",
+        "reason": "No matching note exists under the current vault"
+      }
+    ],
+    "unresolved_wikilinks": [
+      {
+        "file": "Anime/Cider no You ni Kotoba ga Wakiagaru.md",
+        "line": 8,
+        "target": "Signal.MD",
+        "reason": "Same unresolved Studio property reference"
+      },
+      {
+        "file": "Extra/Studio/Xebec.md",
+        "line": 10,
+        "target": "Signal.MD",
+        "reason": "No matching note exists under the current vault"
+      }
+    ],
+    "unresolved_media_grid_hrefs": []
+  },
+  "relationship_properties": {
+    "prequels": 116,
+    "sequels": 124,
+    "side stories": 22,
+    "alternative version": 14,
+    "unresolved": [],
+    "ambiguous": []
+  },
+  "template_placeholders": {
+    "file": "Utilities/Templates/media-grid Template.md",
+    "href": "NOTE-NAME",
+    "occurrences": 8,
+    "not_counted_as_actionable": true
+  },
+  "recommendation": "Report only. Do not mass-edit links; Signal.MD requires source-data confirmation, and Orange's duplicate stem is already disambiguated by explicit Extra/Studio/Orange targets."
+}

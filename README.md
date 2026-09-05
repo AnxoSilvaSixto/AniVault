@@ -36,11 +36,11 @@ AniVault is a local-first Obsidian vault for tracking watched anime. Every entry
 
 ## 📊 Collection Stats
 
-> Snapshot as of `2026-08-31`. Live counts: open `Utilities/Bases/Anime tracker.base` or run `vault-inspector`.
+> Snapshot as of `2026-09-05`. Live counts: open `Utilities/Bases/Anime tracker.base` or run `vault-inspector`.
 
 | Category | Count | Notes |
 |----------|-------|-------|
-| **Anime Notes** | **369** | standalone + 57 series subfolders in `Anime/` |
+| **Anime Notes** | **368** | standalone + 57 series subfolders in `Anime/` |
 | **Reference Pages** | **183** | `Extra/` total |
 | — Studios | 90 | `Extra/Studio/` |
 | — Themes | 52 | `Extra/Themes/` |
@@ -81,13 +81,13 @@ git clone https://github.com/AnxoSilvaSixto/AniVault.git
 `Settings → Appearance → CSS snippets → Enable` all three: `media-grid`, `obsidian-icons`, `text-centered`.
 
 **5. Verify**
-Open `Utilities/Bases/Anime tracker.base` and `Homepage.canvas` — you should see 369 entries, 4 embedded charts, and no broken links (`vault-inspector`).
+Open `Utilities/Bases/Anime tracker.base` and `Homepage.canvas` — you should see 368 entries and 3 embedded graph charts. Run `python Utilities/Scripts/validate_vault.py` and review `Utilities/Scripts/link_media_audit_report.json` for the remaining documented warnings and manual link review items.
 
 ## 🏗️ Structure
 
 ```
 AniVault/
-├── Anime/                 # 369 notes — flat files + 57 series folders (e.g. "Ansatsu Kyoushitsu/")
+├── Anime/                 # 368 notes — flat files + 57 series folders (e.g. "Ansatsu Kyoushitsu/")
 ├── Extra/                 # 183 reference pages
 │   ├── Demographic/       # 5 (Seinen, Shounen, Shoujo, Josei, Kids)
 │   ├── Genre/             # 21 (Action, Romance, …)
@@ -103,7 +103,7 @@ AniVault/
 │   ├── Scripts/           # helper scripts (auto-updates README stats)
 │   ├── Templates/         # media-grid Template.md (requires media-grid.css)
 │   └── sortspec.md        # Custom Sort spec for Anime/ (mix folders+files A→Z)
-├── Homepage.canvas        # Dashboard — embeds 4 graphs + bases
+├── Homepage.canvas        # Dashboard — embeds 3 graphs + 2 tracker views
 ├── README.md              # This file
 └── .obsidian/             # Vault config (plugins, theme, snippets, hidden AGENTS.md)
     ├── AGENTS.md          # Project guidelines (hidden from vault)
@@ -118,7 +118,7 @@ AniVault/
 
 ![Homepage — Hall of Fame, Studio, Genres, Themes](.github/assets/homepage.png)
 
-*`Homepage.canvas` — `Hall of Fame` (8 × Rating 10) + `Studio`/`Genres`/`Themes` doughnuts + `Full list` (369). Baseline theme, 6 nodes. Captured 2026-08-31.*
+*`Homepage.canvas` — `Hall of Fame` (8 × Rating 10) + `Studio`/`Genres`/`Themes` doughnuts + `Full list` (368). Baseline theme, 5 nodes. Captured 2026-08-31.*
 
 ### Rating Distribution
 
@@ -128,7 +128,7 @@ AniVault/
 
 ## 📝 Frontmatter Schema
 
-Every `Anime/*.md` and `Pending/*.md` uses this frontmatter. Lists are YAML arrays of wikilinks. `Rating` is **your** score (personal, not MAL’s).
+Every watched `Anime/*.md` note uses this frontmatter. `Pending/*.md` is an intentionally incomplete watchlist and is not required to follow this schema. Lists are YAML arrays of wikilinks. `Rating` is **your** score (personal, not MAL’s).
 
 ```yaml
 ---
@@ -149,7 +149,7 @@ Demographic:
   - "[[Shounen]]"
 Cover: https://cdn.myanimelist.net/images/anime/8/77966l.jpg
 MAL: https://myanimelist.net/anime/30654
-Rating: 8                      # 1–10, personal — your own score
+Rating: 8                      # 0–10; 0 means unrated — your own score
 # Relational (optional, added when applicable)
 Prequels:
   - "[[Ansatsu Kyoushitsu]]"
@@ -168,7 +168,7 @@ Alternative Version: []
 | `Source` | `[[Source]]` | MAL | |
 | `Genre` / `Themes` / `Demographic` | `[[...]][]` | MAL | Arrays, may be empty |
 | `Cover` / `MAL` | url | MAL | Hotlink to MAL CDN |
-| `Rating` | 1–10 | **You** | Personal — never auto-overwritten |
+| `Rating` | 0–10 | **You** | Personal — `0` means unrated; never auto-overwritten |
 | `Prequels` / `Sequels` / `Alternative Version` | `[[Anime]][]` | Manual | Rendered as media-grid |
 
 **Example** — `Anime/Ansatsu Kyoushitsu/Ansatsu Kyoushitsu 2nd Season.md` demonstrates multi-genre, `Prequels`, and synopsis callout.
@@ -179,13 +179,17 @@ Location: `Utilities/Bases/` — native Obsidian Bases (1.9+), no Dataview neede
 
 | Base | Purpose |
 |------|---------|
-| `Anime tracker.base` | Main collection table — filter/sort all 369 entries |
+| `Anime tracker.base` | Main collection table — filter/sort all 368 entries |
 | `Genre base.base` | `Extra/Genre/` dimension |
 | `Themes base.base` | `Extra/Themes/` dimension |
 | `Studio base.base` | `Extra/Studio/` dimension |
 | `Source base.base` | `Extra/Source/` dimension |
 | `Demographic base.base` | `Extra/Demographic/` dimension |
 | `Type base.base` | `Extra/Type/` dimension |
+
+`Anime tracker.base` includes `Full list`, `Hall of Fame`, `Top`, and `Searcher` views; `Top` is a cards view ordered by personal `Rating` descending.
+
+`Studio base.base` retains a global `!Rating.isEmpty()` filter, so its studio views intentionally show rated entries only.
 
 Bases power cross-linked counts and the canvas dashboard.
 
@@ -202,11 +206,11 @@ Location: `Utilities/Graphs/` — DataviewJS + Charts.
 
 > **Gotcha:** Use `'"Anime"'` exactly. `'"Anime/"'` (recursive) breaks the graphs (`AGENTS.md §6`).
 
-Embedded together in `Homepage.canvas`:
+The first three are embedded together in `Homepage.canvas`; `Rating Distribution.md` is a standalone graph:
 
 ```
 [Genres.md] [Themes.md]
-[Studio.md] [Rating Distribution.md]
+[Studio.md]
 ```
 
 ## 🛠️ Tech Stack
@@ -269,6 +273,10 @@ Fixes Obsidian’s default “folders first” to pure A→Z interleaving. Witho
 
 ## 🔄 Automation
 
+### Vault validator
+
+Run the read-only audit with `python Utilities/Scripts/validate_vault.py`. It checks Anime frontmatter/schema, unique IDs, dates, MAL/ID consistency, taxonomy and relationship links, media-grid targets, duplicate stems, encoding warnings, and generated README counts. `Rating: 0` is retained as an explicit unrated value and reported as a warning; the validator never changes notes. `Utilities/Scripts/link_media_audit_report.json` is a separate, conservative link-audit report for unresolved media/reference links; it is retained as an audit artifact and is not auto-applied.
+
 ### Auto-backup (Windows)
 
 - **Trigger:** Windows login, weekly (runs only if last backup ≥7 days ago)
@@ -283,6 +291,8 @@ Versioned at `.githooks/pre-commit` (enabled via `git config core.hooksPath .git
 - Blocks files >10 MB
 
 > `README.md` stats (counts + `Last updated`) are auto-maintained by `Utilities/Scripts/update_readme.py` — run manually with `python Utilities/Scripts/update_readme.py` or let the backup task handle it.
+>
+> Validate Anime frontmatter, links, media-grid targets, encoding, and README counts with `python Utilities/Scripts/validate_vault.py` (read-only; exits non-zero for errors).
 
 ## 💡 Tips & Workflow
 
@@ -303,4 +313,4 @@ No license — public domain equivalent. No rights reserved. Use, modify, and ad
 
 ---
 
-*Last updated: 2026-08-31 · Vault: 369 anime · 183 refs · 21 pending*
+*Last updated: 2026-09-05 · Vault: 368 anime · 183 refs · 21 pending*
