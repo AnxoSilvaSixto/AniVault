@@ -541,7 +541,7 @@ class Validator:
                 elif int(match.group(1)) != counts[key]:
                     self.error(path, f"README count for {labels.get(key, key)} is {match.group(1)}, expected {counts[key]}")
 
-    def run(self) -> int:
+    def run(self, quiet: bool = False) -> int:
         if not self.root.is_dir():
             self.error(self.root, "vault root does not exist")
             return 1
@@ -552,9 +552,10 @@ class Validator:
         self.check_duplicate_stems()
         self.check_readme_counts()
         self.issues.sort(key=lambda item: (0 if item.level == "ERROR" else 1, item.path, item.line or 0, item.message))
-        for issue in self.issues:
-            location = f":{issue.line}" if issue.line else ""
-            print(f"[{issue.level}] {issue.path}{location}: {issue.message}")
+        if not quiet:
+            for issue in self.issues:
+                location = f":{issue.line}" if issue.line else ""
+                print(f"[{issue.level}] {issue.path}{location}: {issue.message}")
         errors = sum(issue.level == "ERROR" for issue in self.issues)
         warnings = sum(issue.level == "WARNING" for issue in self.issues)
         if not self.issues:
@@ -566,8 +567,9 @@ class Validator:
 def main(argv: Iterable[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Read-only AniVault frontmatter and link validator")
     parser.add_argument("--root", type=Path, default=DEFAULT_ROOT, help="vault root (default: repository root)")
+    parser.add_argument("--quiet", action="store_true", help="Suppress per-issue output (just exit code + summary)")
     args = parser.parse_args(list(argv) if argv is not None else None)
-    return Validator(args.root).run()
+    return Validator(args.root).run(quiet=args.quiet)
 
 
 if __name__ == "__main__":
