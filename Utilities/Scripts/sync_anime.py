@@ -44,14 +44,19 @@ RETRY_BACKOFF_BASE = 5
 RETRYABLE_CODES = frozenset({403, 429, 500, 502, 503, 504})
 WRITE_FULL_FILES = True
 
-LOG_PATH = DATA_DIR / "metadata_synced.log"
-SYNOPSIS_LOG_PATH = DATA_DIR / "synopsis_synced.log"
-# Combined bundle: union of both aspect logs, written alongside the splits.
+# Single sync log: files fully checked (both aspects). Legacy split logs
+# are only read once for migration, never written.
 ANIME_LOG_PATH = DATA_DIR / "anime_synced.log"
+LEGACY_LOG_PATHS = (DATA_DIR / "metadata_synced.log", DATA_DIR / "synopsis_synced.log")
 
 MAL_ID_RE = re.compile(r"myanimelist\.net/anime/(\d+)")
 
 logger = logging.getLogger("sync_anime")
+
+# Serializes worker-thread console writes so parallel progress lines can't
+# tear each other's rows (the first files' names used to be overwritten
+# before any newline, leaving orphan result fragments).
+_PRINT_LOCK = threading.Lock()
 
 
 # --- Data Models ---
@@ -574,21 +579,36 @@ def write_log(path: Path, items: set[str]) -> None:
     path.write_text("\n".join(sorted(items)) + "\n", encoding="utf-8")
 
 
-def already_synced_for_mode(mode: str) -> set[str]:
-    """A file only counts as synced for the aspects the given mode checks."""
-    info_done = load_log(LOG_PATH)
-    synopsis_done = load_log(SYNOPSIS_LOG_PATH)
+def load_history() -> set[str]:
+    """Single-log history: the combined log plus legacy splits (migration)."""
+    history = load_log(ANIME_LOG_PATH)
+    for legacy in LEGACY_LOG_PATHS:
+        history |= load_log(legacy)
+    return history
+
+
+def merge_history(existing: set[str], info_fresh: set[str], syn_fresh: set[str],
+                  valid: set[str], mode: str, completed: bool) -> set[str]:
+    """Single-log merge. A completed both-run adds fully-checked files.
+    Split-mode runs only invalidate (their files stay pending for a future
+    both run, since one aspect is still unchecked). An interrupted run
+    preserves history untouched."""
+    if not completed:
+        return set(existing) & valid
+    if mode == "both":
+        return (existing | info_fresh | syn_fresh) & valid
     if mode == "info":
-        return info_done
-    if mode == "synopsis":
-        return synopsis_done
-    return info_done & synopsis_done
+        return (existing - info_fresh) & valid
+    return (existing - syn_fresh) & valid
 
 
 # --- Report ---
 
-def write_changes_report(all_changes: list[tuple[str, list[Change]]]) -> Path:
+def write_changes_report(all_changes: list[tuple[str, list[Change]]], summary: str = "") -> Path:
     lines = [f"# Metadata Changes — {datetime.now().strftime('%Y-%m-%d %H:%M')}", ""]
+    if summary:
+        lines.append(summary)
+        lines.append("")
     lines.append(f"**{len(all_changes)} anime with changes**")
     lines.append("")
     for name, changes in all_changes:
@@ -604,9 +624,14 @@ def write_changes_report(all_changes: list[tuple[str, list[Change]]]) -> Path:
 
 # --- Sync Orchestration ---
 
-def discover_pending(anime_files: list[Path], already: set[str], mode: str) -> list[tuple[Path, str]]:
-    """Filter to files that need syncing, extracting their MAL IDs."""
+def discover_pending(anime_files: list[Path], already: set[str]) -> tuple[list[tuple[Path, str]], list[str]]:
+    """Filter to files that need syncing, extracting their MAL IDs.
+
+    Returns (pending, skipped): files without a MAL link can never be
+    synced, so they are reported instead of silently dropped.
+    """
     pending: list[tuple[Path, str]] = []
+    skipped: list[str] = []
     for fp in anime_files:
         if file_key(fp) in already:
             continue
@@ -614,7 +639,9 @@ def discover_pending(anime_files: list[Path], already: set[str], mode: str) -> l
         mal_id = extract_mal_id(content)
         if mal_id:
             pending.append((fp, mal_id))
-    return pending
+        else:
+            skipped.append(file_key(fp))
+    return pending, skipped
 
 
 def process_one_file(
@@ -629,7 +656,8 @@ def process_one_file(
     """Fetch and process a single anime file. Returns (file_key_str, changes, error)."""
     key = file_key(fp)
     pct = (idx - 1) / total * 100 if total else 0
-    print(f"\r[{idx:>3}/{total}] ({pct:5.1f}%) {fp.stem[:50]:<50}", end="", flush=True)
+    with _PRINT_LOCK:
+        print(f"\r[{idx:>3}/{total}] ({pct:5.1f}%) {fp.stem[:50]:<50}", end="", flush=True)
 
     if rate_limiter:
         rate_limiter.acquire()
@@ -648,10 +676,13 @@ def process_one_file(
 
     changes = process_anime_file(fp, api_data, config)
     if changes:
-        status = "WOULD UPDATE" if config.dry_run else "UPDATE GENERATED"
-        print(f" {status} ({len(changes)} changes)", flush=True)
+        status = f"{'WOULD UPDATE' if config.dry_run else 'UPDATE GENERATED'} ({len(changes)} changes)"
     else:
-        print(" OK", flush=True)
+        status = "OK"
+    # Self-contained record: the start-of-fetch flash above is routinely
+    # overwritten by sibling workers, so reprint full context here.
+    with _PRINT_LOCK:
+        print(f"\r[{idx:>3}/{total}] ({pct:5.1f}%) {fp.stem[:50]:<50} {status}", flush=True)
     return key, changes, None
 
 
@@ -792,11 +823,8 @@ def run_parallel(
             consecutive_failures = 0
             if changes:
                 if config.dry_run:
-                    print(f" WOULD UPDATE ({len(changes)} changes)", flush=True)
                     for field_name, old_val, new_val in changes:
                         print(f"  {field_name}: {old_val} -> {new_val}")
-                else:
-                    print(" UPDATE GENERATED", flush=True)
                 all_changes.append((key, changes))
 
             if config.mode in ("info", "both"):
@@ -852,11 +880,13 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     anime_files = sorted(ANIME_DIR.rglob("*.md"))
-    already = set() if config.full else already_synced_for_mode(config.mode)
-    pending = discover_pending(anime_files, already, config.mode)
+    already = set() if config.full else load_history()
+    pending, skipped = discover_pending(anime_files, already)
 
     print(f"Mode      : {'FULL RESCAN' if config.full else 'Incremental'} ({config.mode})")
     print(f"Pending   : {len(pending)} files ({len(already)} already synced)")
+    if skipped:
+        print(f"Skipped   : {len(skipped)} file(s) without MAL link (never synced): {', '.join(sorted(skipped))}")
     if config.dry_run:
         print("Dry run  : YES (no files will be written)")
     if config.parallel > 1:
@@ -866,19 +896,20 @@ def main(argv: list[str] | None = None) -> int:
         print("Nothing new to sync. Use --full for a full rescan.")
         return 0
 
-    existing_info = load_log(LOG_PATH)
-    existing_synopsis = load_log(SYNOPSIS_LOG_PATH)
+    existing = load_history()
     # Valid keys for pruning: entries whose files no longer exist are
-    # dropped when logs are rewritten, so logs can't grow stale.
+    # dropped when the log is rewritten, so it can't grow stale.
     valid_keys = {file_key(fp) for fp in anime_files}
-    # Seed working sets with history. run_* return only this run's files,
-    # so the finally block unions them back (see merge below) — without
-    # that, every incremental run would wipe the log and the next run
-    # would refetch the whole vault.
-    info_synced = set(existing_info)
-    synopsis_synced = set(existing_synopsis)
+    # Seed working sets with history (matters for the interrupt path);
+    # run_* return only this run's files, merged back in finally.
+    info_synced = set(existing)
+    synopsis_synced = set(existing)
+    merged_history = set(existing)
+    completed = False
 
     retry_pending: list[tuple[Path, str]] = []
+    failed_keys: list[str] = []
+    r_failed: list[str] = []
 
     try:
         with create_session() as session:
@@ -886,6 +917,7 @@ def main(argv: list[str] | None = None) -> int:
                 info_synced, synopsis_synced, all_changes, failed_keys = run_parallel(session, pending, config)
             else:
                 info_synced, synopsis_synced, all_changes, failed_keys = run_sequential(session, pending, config)
+            completed = True
 
             # Collect failed files for a second retry pass
             if failed_keys:
@@ -895,15 +927,9 @@ def main(argv: list[str] | None = None) -> int:
         print("\nInterrupted! Saving log...")
     finally:
         if not config.dry_run:
-            # Union this run's results back into history (run_* return
-            # only fresh sets) and prune keys for deleted files.
-            info_synced = (existing_info | info_synced) & valid_keys
-            synopsis_synced = (existing_synopsis | synopsis_synced) & valid_keys
-            if config.mode in ("info", "both"):
-                write_log(LOG_PATH, info_synced)
-            if config.mode in ("synopsis", "both"):
-                write_log(SYNOPSIS_LOG_PATH, synopsis_synced)
-            write_log(ANIME_LOG_PATH, info_synced | synopsis_synced)
+            merged_history = merge_history(existing, info_synced, synopsis_synced,
+                                           valid_keys, config.mode, completed)
+            write_log(ANIME_LOG_PATH, merged_history)
 
     # Second pass: retry failed files with a longer delay
     if retry_pending:
@@ -920,28 +946,35 @@ def main(argv: list[str] | None = None) -> int:
 
         try:
             with create_session() as session:
-                r_info, r_synopsis, r_changes, _ = run_sequential(session, retry_pending, retry_config)
-                info_synced.update(r_info)
-                synopsis_synced.update(r_synopsis)
+                r_info, r_synopsis, r_changes, r_failed = run_sequential(session, retry_pending, retry_config)
+                if config.mode == "both":
+                    merged_history |= r_info | r_synopsis
+                elif config.mode == "info":
+                    merged_history -= r_info
+                else:
+                    merged_history -= r_synopsis
                 all_changes.extend(r_changes)
 
-                # Update logs after retry pass
+                # Update log after retry pass
                 if not config.dry_run:
-                    if config.mode in ("info", "both"):
-                        write_log(LOG_PATH, info_synced)
-                    if config.mode in ("synopsis", "both"):
-                        write_log(SYNOPSIS_LOG_PATH, synopsis_synced)
-                    write_log(ANIME_LOG_PATH, info_synced | synopsis_synced)
+                    write_log(ANIME_LOG_PATH, merged_history & valid_keys)
         except KeyboardInterrupt:
             print("\nInterrupted during retry pass!")
 
     print("=" * 65)
+    # Full accounting: every pending file lands in exactly one bucket, so a
+    # clean file like Aho Girl is "already up to date", never invisible.
+    still_failed = set(r_failed) if retry_pending else set(failed_keys)
+    ok_count = len(pending) - len(all_changes) - len(still_failed)
+    summary = (f"Checked {len(pending)} files: {len(all_changes)} changed, "
+               f"{ok_count} already up to date, {len(still_failed)} failed.")
+    print(summary)
     if all_changes:
         if config.dry_run:
             print(f"Dry run complete. {len(all_changes)} anime would have changes.")
             print("Run without --dry-run to generate actual update files.")
         else:
-            report_path = write_changes_report(all_changes)
+            report_path = write_changes_report(all_changes, summary)
             print(f"Finished. {len(all_changes)} anime had changes.")
             print(f"Changes report: {report_path}")
             if WRITE_FULL_FILES:

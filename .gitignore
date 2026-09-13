@@ -33,6 +33,12 @@ __pycache__/
 Utilities/Scripts/data/Metadata_Updates/
 Utilities/Scripts/data/Studio_Updates/
 
+# Removed mpv watch-log (do not resurrect)
+Utilities/Scripts/mpv-watch-log.py
+Utilities/Scripts/data/mpv-watch-log.md
+Utilities/Scripts/data/mpv-history.jsonl
+Utilities/Scripts/data/mpv-watch-log.state.json
+
 # Temp
 *.tmp
 *.bak

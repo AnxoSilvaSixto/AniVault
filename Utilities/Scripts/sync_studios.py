@@ -57,6 +57,10 @@ FIELD_ALIASES: dict[str, tuple[str, ...]] = {
 
 logger = logging.getLogger("sync_studios")
 
+# Serializes worker-thread console writes so parallel progress lines can't
+# tear each other's rows.
+_PRINT_LOCK = threading.Lock()
+
 
 # --- Logging ---
 
@@ -385,8 +389,11 @@ def write_log(path: Path, items: set[str]) -> None:
 
 # --- Report ---
 
-def write_changes_report(all_changes: list[tuple[str, list[Change]]]) -> Path:
+def write_changes_report(all_changes: list[tuple[str, list[Change]]], summary: str = "") -> Path:
     lines = [f"# Studio Metadata Changes — {datetime.now().strftime('%Y-%m-%d %H:%M')}", ""]
+    if summary:
+        lines.append(summary)
+        lines.append("")
     lines.append(f"**{len(all_changes)} entries with changes**")
     lines.append("")
     for name, changes in all_changes:
@@ -414,7 +421,8 @@ def process_one_studio(
     """Fetch and process a single studio file."""
     key = str(path.relative_to(STUDIO_DIR).with_suffix(""))
     pct = (idx - 1) / total * 100 if total else 0
-    print(f"\r[{idx:>3}/{total}] ({pct:5.1f}%) {path.stem[:50]:<50}", end="", flush=True)
+    with _PRINT_LOCK:
+        print(f"\r[{idx:>3}/{total}] ({pct:5.1f}%) {path.stem[:50]:<50}", end="", flush=True)
 
     try:
         resp = fetch_producer(session, mal_id, config.delay, rate_limiter)
@@ -432,9 +440,13 @@ def process_one_studio(
     changes = process_file(path, data, config)
     if changes:
         status = "WOULD UPDATE" if config.dry_run else "UPDATED"
-        print(f" {status}", flush=True)
+        status = f"{status} ({len(changes)} changes)"
     else:
-        print(" OK", flush=True)
+        status = "OK"
+    # Self-contained record: the start-of-fetch flash above is routinely
+    # overwritten by sibling workers, so reprint full context here.
+    with _PRINT_LOCK:
+        print('[' + str(idx) + '/' + str(total) + '] ' + path.stem[:50] + ' ' + status, flush=True)
     return key, changes, None
 
 
@@ -552,10 +564,7 @@ def run_parallel(session: requests.Session, pending: list[tuple[Path, str]], con
 
             consecutive_failures = 0
             if changes:
-                print(f" {'WOULD UPDATE' if config.dry_run else 'UPDATED'}", flush=True)
                 all_changes.append((key, changes))
-            else:
-                print(" OK", flush=True)
             updated.add(key)
 
     return updated, all_changes, failed_keys
@@ -624,6 +633,8 @@ def main(argv: list[str] | None = None) -> int:
     retry_pending: list[tuple[Path, str]] = []
     # Pre-initialize so an early Ctrl+C can't hit an unbound name in finally.
     updated: set[str] = set()
+    failed_keys: list[str] = []
+    r_failed: list[str] = []
 
     try:
         with create_session() as session:
@@ -662,7 +673,7 @@ def main(argv: list[str] | None = None) -> int:
 
         try:
             with create_session() as session:
-                r_updated, r_changes, _ = run_sequential(session, retry_pending, retry_config)
+                r_updated, r_changes, r_failed = run_sequential(session, retry_pending, retry_config)
                 updated.update(r_updated)
                 all_changes.extend(r_changes)
 
@@ -673,11 +684,16 @@ def main(argv: list[str] | None = None) -> int:
             print("\nInterrupted during retry pass!")
 
     print("=" * 50)
+    still_failed = set(r_failed) if retry_pending else set(failed_keys)
+    ok_count = len(pending) - len(all_changes) - len(still_failed)
+    summary = (f"Checked {len(pending)} files: {len(all_changes)} changed, "
+               f"{ok_count} already up to date, {len(still_failed)} failed.")
+    print(summary)
     if all_changes:
         if config.dry_run:
             print(f"Dry run complete. {len(all_changes)} entries would change.")
         else:
-            report = write_changes_report(all_changes)
+            report = write_changes_report(all_changes, summary)
             print(f"Finished. {len(all_changes)} entries changed.")
             print(f"Report: {report}")
             print(f"Outputs: {UPDATES_DIR}")
