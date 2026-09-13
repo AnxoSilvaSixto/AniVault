@@ -539,7 +539,7 @@ class Validator:
                 if not match:
                     self.error(path, f"README count for {labels.get(key, key)!r} not found")
                 elif int(match.group(1)) != counts[key]:
-                    self.error(path, f"README count for {labels.get(key, key)} is {match.group(1)}, expected {counts[key]}")
+                    self.error(path, f"README count for {labels.get(key, key)} is {match.group(1)}, expected {counts[key]} (run update_readme.py to fix)")
 
     def run(self, quiet: bool = False) -> int:
         if not self.root.is_dir():

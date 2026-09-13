@@ -36,11 +36,11 @@ AniVault is a local-first Obsidian vault for tracking watched anime. Every entry
 
 ## 📊 Collection Stats
 
-> Snapshot as of `2026-09-07`. Live counts: open `Utilities/Bases/Anime tracker.base` or run `vault-inspector`.
+> Snapshot as of `2026-09-13`. Live counts: open `Utilities/Bases/Anime tracker.base` or run `vault-inspector`.
 
 | Category | Count | Notes |
 |----------|-------|-------|
-| **Anime Notes** | **368** | standalone + 57 series subfolders in `Anime/` |
+| **Anime Notes** | **369** | standalone + 57 series subfolders in `Anime/` |
 | **Reference Pages** | **183** | `Extra/` total |
 | — Studios | 90 | `Extra/Studio/` |
 | — Themes | 52 | `Extra/Themes/` |
@@ -48,7 +48,7 @@ AniVault is a local-first Obsidian vault for tracking watched anime. Every entry
 | — Sources | 10 | `Extra/Source/` |
 | — Demographics | 5 | `Extra/Demographic/` |
 | — Types | 5 | `Extra/Type/` |
-| **Watchlist** | **20** | `Pending/` (intentionally incomplete) |
+| **Watchlist** | **19** | `Pending/` (intentionally incomplete) |
 | **Bases** | 7 | `Utilities/Bases/` |
 | **Graphs** | 4 | `Utilities/Graphs/` |
 
@@ -81,13 +81,13 @@ git clone https://github.com/AnxoSilvaSixto/AniVault.git
 `Settings → Appearance → CSS snippets → Enable` all three: `media-grid`, `obsidian-icons`, `text-centered`.
 
 **5. Verify**
-Open `Utilities/Bases/Anime tracker.base` and `Homepage.canvas` — you should see 368 entries and 3 embedded graph charts. Run `python Utilities/Scripts/validate_vault.py` and review `Utilities/Scripts/link_media_audit_report.json` for the conservative link/media audit and duplicate-stem findings.
+Open `Utilities/Bases/Anime tracker.base` and `Homepage.canvas` — you should see 369 entries and 3 embedded graph charts. Run `python Utilities/Scripts/validate_vault.py` and review `Utilities/Scripts/link_media_audit_report.json` for the conservative link/media audit and duplicate-stem findings.
 
 ## 🏗️ Structure
 
 ```
 AniVault/
-├── Anime/                 # 368 notes — flat files + 57 series folders (e.g. "Ansatsu Kyoushitsu/")
+├── Anime/                 # 369 notes — flat files + 57 series folders (e.g. "Ansatsu Kyoushitsu/")
 ├── Extra/                 # 183 reference pages
 │   ├── Demographic/       # 5 (Seinen, Shounen, Shoujo, Josei, Kids)
 │   ├── Genre/             # 21 (Action, Romance, …)
@@ -95,7 +95,7 @@ AniVault/
 │   ├── Studio/            # 90 (MAPPA, Ufotable, …)
 │   ├── Themes/            # 52 (Isekai, Mecha, …)
 │   └── Type/              # 5  (TV, Movie, OVA, ONA, Special)
-├── Pending/               # 20 watchlist stubs — intentionally incomplete
+├── Pending/               # 19 watchlist stubs — intentionally incomplete
 ├── To-do/                 # Task tracking (ignored in search/graph)
 ├── Utilities/
 │   ├── Bases/             # 7 .base views (tracker + dimension tables)
@@ -179,7 +179,7 @@ Location: `Utilities/Bases/` — native Obsidian Bases (1.9+), no Dataview neede
 
 | Base | Purpose |
 |------|---------|
-| `Anime tracker.base` | Main collection table — filter/sort all 368 entries |
+| `Anime tracker.base` | Main collection table — filter/sort all 369 entries |
 | `Genre base.base` | `Extra/Genre/` dimension |
 | `Themes base.base` | `Extra/Themes/` dimension |
 | `Studio base.base` | `Extra/Studio/` dimension |
@@ -313,4 +313,4 @@ No license — public domain equivalent. No rights reserved. Use, modify, and ad
 
 ---
 
-*Last updated: 2026-09-07 · Vault: 368 anime · 183 refs · 20 pending*
+*Last updated: 2026-09-13 · Vault: 369 anime · 183 refs · 19 pending*

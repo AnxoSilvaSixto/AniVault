@@ -46,6 +46,8 @@ WRITE_FULL_FILES = True
 
 LOG_PATH = DATA_DIR / "metadata_synced.log"
 SYNOPSIS_LOG_PATH = DATA_DIR / "synopsis_synced.log"
+# Combined bundle: union of both aspect logs, written alongside the splits.
+ANIME_LOG_PATH = DATA_DIR / "anime_synced.log"
 
 MAL_ID_RE = re.compile(r"myanimelist\.net/anime/(\d+)")
 
@@ -228,7 +230,7 @@ def parse_yaml_frontmatter(yaml_str: str) -> dict:
 
 def dump_yaml_frontmatter(meta_dict: dict) -> str:
     lines = ["---"]
-    for k, v in meta_dict.items():
+    for k, v in order_frontmatter(meta_dict).items():
         if isinstance(v, list):
             if not v:
                 lines.append(f"{k}: []")
@@ -378,6 +380,26 @@ def replace_synopsis_block(body: str, new_synopsis: str) -> str:
 MANAGED_KEYS = ["ID", "Type", "Episodes", "Aired", "Finished", "Studio", "Source",
                 "Genre", "Themes", "Demographic", "Cover", "MAL"]
 
+# Canonical frontmatter order: matches REQUIRED_ANIME_FIELDS in
+# validate_vault.py and the manual Promare.md layout. Relation fields
+# (Prequels, Sequels, ...) and any custom keys trail after Rating in
+# their original relative order.
+CANONICAL_ORDER = ["ID", "Type", "Episodes", "Aired", "Finished", "Studio",
+                   "Source", "Genre", "Themes", "Demographic", "Cover",
+                   "MAL", "Rating"]
+# Managed list fields: always emitted as YAML lists (validator requires
+# list type), even when empty.
+LIST_SHAPE_KEYS = ("Studio", "Genre", "Themes", "Demographic")
+
+
+def order_frontmatter(meta: dict) -> dict:
+    """Return meta with canonical keys first, extras in original order."""
+    ordered = {k: meta[k] for k in CANONICAL_ORDER if k in meta}
+    for k, v in meta.items():
+        if k not in ordered:
+            ordered[k] = v
+    return ordered
+
 
 def compute_frontmatter_changes(current_meta: dict, api_data: dict) -> tuple[dict, list[Change]]:
     """Pure computation, no file I/O: given current frontmatter and fresh API payload."""
@@ -463,22 +485,75 @@ def process_anime_file(filepath: Path, api_data: dict, config: SyncConfig) -> li
     if config.mode in ("info", "both"):
         target_meta, fm_changes = compute_frontmatter_changes(current_meta, api_data)
         changes.extend(fm_changes)
-        if fm_changes:
+        # Rating holds your personal score: never overwritten from the API,
+        # but the validator requires the key. Inject 0 (unrated) when absent
+        # so new/legacy files without it stop failing validation.
+        _rating = current_meta.get("Rating")
+        rating_missing = "Rating" not in current_meta or _rating in (None, "") or isinstance(_rating, bool)
+        if fm_changes or rating_missing:
             merged_meta: dict = {"ID": target_meta["ID"]}
             merged_meta.update(current_meta)
             for key, value in target_meta.items():
                 if not value:
                     continue
                 merged_meta[key] = value
+            if rating_missing:
+                merged_meta["Rating"] = 0
+                changes.append(Change("Rating", "(missing)", "0"))
+            # Canonical shape: managed list fields always present as lists,
+            # even when empty (validator requires list type).
+            for key in LIST_SHAPE_KEYS:
+                if merged_meta.get(key) in (None, "") and (
+                    key not in current_meta or current_meta.get(key) in (None, "")
+                ):
+                    merged_meta[key] = []
+                    changes.append(Change(key, "(missing)", "[]"))
             new_yaml = dump_yaml_frontmatter(merged_meta)
+        else:
+            # No value changes: still converge order/shape drift left by
+            # older runs (e.g. MAL written 2nd, Demographic dropped) so the
+            # vault returns to canonical layout over time.
+            repaired = dict(current_meta)
+            shape_fix = False
+            for key in LIST_SHAPE_KEYS:
+                if key not in repaired or repaired.get(key) in (None, ""):
+                    if key not in current_meta or current_meta.get(key) in (None, ""):
+                        repaired[key] = []
+                        changes.append(Change(key, "(missing)", "[]"))
+                        shape_fix = True
+            if shape_fix or list(order_frontmatter(repaired).keys()) != list(repaired.keys()):
+                if not shape_fix:
+                    changes.append(Change("Order", "non-canonical", "canonical"))
+                new_yaml = dump_yaml_frontmatter(repaired)
 
     if config.mode in ("synopsis", "both"):
         new_body, syn_changes = compute_synopsis_changes(body, api_data)
         changes.extend(syn_changes)
 
     if changes and WRITE_FULL_FILES and not config.dry_run:
-        new_content = f"{new_yaml}{new_body}"
         out_path = UPDATES_DIR / filepath.relative_to(ANIME_DIR)
+        # Merge-safe output: a prior split-mode run (--mode info or
+        # --mode synopsis) may have already written this same update file.
+        # Without merging, the second run would clobber the first run's
+        # half of the fixes (both modes read from Anime/, not from the
+        # update dir). Preserve the previously written half here.
+        if out_path.is_file() and config.mode in ("info", "synopsis"):
+            try:
+                existing_split = split_frontmatter(load_file(out_path))
+            except OSError:
+                existing_split = None
+            if existing_split is not None:
+                existing_fm, existing_body = existing_split
+                if config.mode == "info":
+                    # Prior run already fixed the synopsis; keep its body.
+                    if existing_body != body:
+                        new_body = existing_body
+                else:  # config.mode == "synopsis"
+                    # Prior run already fixed the frontmatter; keep it.
+                    if existing_fm.strip() != raw_frontmatter.strip():
+                        new_yaml = f"---\n{existing_fm}---\n"
+            # Rebuild content from the (possibly merged) halves.
+        new_content = f"{new_yaml}{new_body}"
         out_path.parent.mkdir(parents=True, exist_ok=True)
         line_ending = detect_line_ending(filepath)
         write_text_preserving_line_ending(out_path, new_content, line_ending)
@@ -607,6 +682,9 @@ def run_sequential(
             failed_keys.append(file_key(fp))
             if consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT:
                 print(f"\n{CONSECUTIVE_FAILURE_LIMIT} consecutive failures — stopping.")
+                # Mark the unattempted remainder as failed so the retry
+                # pass (or the next incremental run) covers them.
+                failed_keys.extend(file_key(fp2) for fp2, _ in pending[i:])
                 break
             time.sleep(config.delay)
             continue
@@ -617,6 +695,7 @@ def run_sequential(
             failed_keys.append(file_key(fp))
             if consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT:
                 print(f"\n{CONSECUTIVE_FAILURE_LIMIT} consecutive failures — stopping.")
+                failed_keys.extend(file_key(fp2) for fp2, _ in pending[i:])
                 break
             time.sleep(config.delay)
             continue
@@ -628,6 +707,7 @@ def run_sequential(
             failed_keys.append(file_key(fp))
             if consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT:
                 print(f"\n{CONSECUTIVE_FAILURE_LIMIT} consecutive failures — stopping.")
+                failed_keys.extend(file_key(fp2) for fp2, _ in pending[i:])
                 break
             time.sleep(config.delay)
             continue
@@ -732,6 +812,7 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     except (AttributeError, ValueError):
         pass
+    setup_logging()
 
     start_time = time.monotonic()
 
@@ -787,12 +868,15 @@ def main(argv: list[str] | None = None) -> int:
 
     existing_info = load_log(LOG_PATH)
     existing_synopsis = load_log(SYNOPSIS_LOG_PATH)
-    # For incremental sync, start with the existing log entries so we don't
-    # lose track of previously synced files. The 'already' set only contains
-    # files that need re-checking for this mode; the logs contain ALL previously
-    # synced files for each aspect.
-    info_synced = set(existing_info) if config.mode != "synopsis" else existing_info
-    synopsis_synced = set(existing_synopsis) if config.mode != "info" else existing_synopsis
+    # Valid keys for pruning: entries whose files no longer exist are
+    # dropped when logs are rewritten, so logs can't grow stale.
+    valid_keys = {file_key(fp) for fp in anime_files}
+    # Seed working sets with history. run_* return only this run's files,
+    # so the finally block unions them back (see merge below) — without
+    # that, every incremental run would wipe the log and the next run
+    # would refetch the whole vault.
+    info_synced = set(existing_info)
+    synopsis_synced = set(existing_synopsis)
 
     retry_pending: list[tuple[Path, str]] = []
 
@@ -811,10 +895,15 @@ def main(argv: list[str] | None = None) -> int:
         print("\nInterrupted! Saving log...")
     finally:
         if not config.dry_run:
+            # Union this run's results back into history (run_* return
+            # only fresh sets) and prune keys for deleted files.
+            info_synced = (existing_info | info_synced) & valid_keys
+            synopsis_synced = (existing_synopsis | synopsis_synced) & valid_keys
             if config.mode in ("info", "both"):
                 write_log(LOG_PATH, info_synced)
             if config.mode in ("synopsis", "both"):
                 write_log(SYNOPSIS_LOG_PATH, synopsis_synced)
+            write_log(ANIME_LOG_PATH, info_synced | synopsis_synced)
 
     # Second pass: retry failed files with a longer delay
     if retry_pending:
@@ -842,6 +931,7 @@ def main(argv: list[str] | None = None) -> int:
                         write_log(LOG_PATH, info_synced)
                     if config.mode in ("synopsis", "both"):
                         write_log(SYNOPSIS_LOG_PATH, synopsis_synced)
+                    write_log(ANIME_LOG_PATH, info_synced | synopsis_synced)
         except KeyboardInterrupt:
             print("\nInterrupted during retry pass!")
 

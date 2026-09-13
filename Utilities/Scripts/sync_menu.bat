@@ -27,8 +27,7 @@ echo ================================================
 echo.
 echo Anime
 echo   1. Full sync (both info + synopsis)
-echo   2. Sync new synopsis only
-echo   3. Sync new metadata only
+echo   2. Sync new/pending (both info + synopsis)
 echo.
 echo Studios
 echo   5. Full studio rescan
@@ -47,8 +46,8 @@ choice /c 0123456789 /n /m "Select an option (0-9): "
 if errorlevel 255 goto invalid_choice
 
 rem errorlevel mapping for choice /c 0123456789:
-rem   0->el 1 (Exit), 1->el 2 (anime_full), 2->el 3 (synopsis),
-rem   3->el 4 (metadata), 4->el 5 (preview), 5->el 6 (studios_full),
+rem   0->el 1 (Exit), 1->el 2 (anime_full), 2->el 3 (anime_pending),
+rem   3->el 4 (anime_pending alias), 4->el 5 (preview), 5->el 6 (studios_full),
 rem   6->el 7 (studios_metadata), 7->el 8 (validate),
 rem   8->el 9 (update_readme), 9->el 10 (full_refresh)
 rem Check descending: highest errorlevel first.
@@ -59,8 +58,8 @@ if errorlevel 8 goto validate_vault
 if errorlevel 7 goto studios_metadata
 if errorlevel 6 goto studios_full
 if errorlevel 5 goto anime_dry_run
-if errorlevel 4 goto anime_metadata
-if errorlevel 3 goto anime_synopsis
+if errorlevel 4 goto anime_pending
+if errorlevel 3 goto anime_pending
 if errorlevel 2 goto anime_full
 if errorlevel 1 goto end
 
@@ -71,18 +70,11 @@ echo.
 %PY_CMD% sync_anime.py --full --mode both
 goto afterrun
 
-:anime_synopsis
+:anime_pending
 echo.
-echo Syncing anime synopsis for new/pending files only...
+echo Syncing new/pending anime (info + synopsis, single pass)...
 echo.
-%PY_CMD% sync_anime.py --mode synopsis
-goto afterrun
-
-:anime_metadata
-echo.
-echo Syncing anime metadata for new/pending files only...
-echo.
-%PY_CMD% sync_anime.py --mode info
+%PY_CMD% sync_anime.py --mode both
 goto afterrun
 
 :anime_dry_run
@@ -108,18 +100,11 @@ echo.
 %PY_CMD% sync_studios.py
 goto afterrun
 
-:studios_dry_run
-echo.
-echo Previewing studio information (no files written)...
-echo.
-%PY_CMD% sync_studios.py --dry-run
-goto afterrun
-
 :validate_vault
 echo.
 echo Validating vault consistency...
 echo.
-%PY_CMD% validate_vault.py --quiet
+%PY_CMD% validate_vault.py
 goto afterrun
 
 :update_readme
@@ -132,19 +117,19 @@ goto afterrun
 :full_refresh
 echo.
 echo === FULL VAULT REFRESH ===
-echo Launching anime and studio full rescans in parallel...
+echo Running anime + studio full rescans in serie (shared API limits)...
 echo.
-rem Launch both sync scripts simultaneously in separate windows
-start "Anime Sync" %PY_CMD% sync_anime.py --full --mode both --parallel 3 --delay 0.8
-start "Studio Sync" %PY_CMD% sync_studios.py --full --delay 0.3
+echo --- [1/2] Anime full rescan ---
 echo.
-echo Both sync windows launched. Close them when done, or wait for auto-close.
-echo After BOTH windows are closed, press any key to continue to validation.
-pause
+%PY_CMD% sync_anime.py --full --mode both --parallel 3 --delay 1.0
+echo.
+echo --- [2/2] Studio full rescan ---
+echo.
+%PY_CMD% sync_studios.py --full --delay 0.3
 echo.
 echo Validating vault...
 echo.
-%PY_CMD% validate_vault.py --quiet
+%PY_CMD% validate_vault.py
 echo.
 echo Updating README stats...
 echo.

@@ -185,6 +185,17 @@ def patch(text: str, c: dict[str, int], today: str) -> tuple[str, list[str]]:
     if n:
         changes.append("verify")
 
+    # --- Bases table: Anime tracker row ("filter/sort all N entries") ---
+    # The validator checks this line, so the updater must manage it too —
+    # otherwise the count drifts with no menu option able to fix it.
+    text, n = re.subn(
+        r"(filter/sort all\s+)\d+(\s+entries)",
+        rf"\g<1>{c['anime']}\g<2>",
+        text,
+    )
+    if n:
+        changes.append("bases:tracker")
+
     # --- Footer ---
     footer_pat = r"\*Last updated:\s*\d{4}-\d{2}-\d{2}(?:\s*\u00b7\s*Vault:\s*\d+\s+anime\s*\u00b7\s*\d+\s+refs\s*\u00b7\s*\d+\s+pending)?\*"
     new_footer = f"*Last updated: {today} \u00b7 Vault: {c['anime']} anime \u00b7 {c['extra']} refs \u00b7 {c['pending']} pending*"

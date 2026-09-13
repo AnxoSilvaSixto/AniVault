@@ -58,6 +58,17 @@ FIELD_ALIASES: dict[str, tuple[str, ...]] = {
 logger = logging.getLogger("sync_studios")
 
 
+# --- Logging ---
+
+def setup_logging(verbose: bool = False) -> None:
+    level = logging.DEBUG if verbose else logging.INFO
+    logging.basicConfig(
+        level=level,
+        format="%(message)s",
+        stream=sys.stdout,
+    )
+
+
 # --- Data Models ---
 
 class Change(NamedTuple):
@@ -450,6 +461,7 @@ def run_sequential(session: requests.Session, pending: list[tuple[Path, str]], c
             consecutive_failures += 1
             if consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT:
                 print(f"\n{CONSECUTIVE_FAILURE_LIMIT} consecutive failures — stopping.")
+                failed_keys.extend(str(fp.relative_to(STUDIO_DIR).with_suffix("")) for fp, _ in pending[i:])
                 break
             time.sleep(config.delay)
             continue
@@ -460,6 +472,7 @@ def run_sequential(session: requests.Session, pending: list[tuple[Path, str]], c
             consecutive_failures += 1
             if consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT:
                 print(f"\n{CONSECUTIVE_FAILURE_LIMIT} consecutive failures — stopping.")
+                failed_keys.extend(str(fp.relative_to(STUDIO_DIR).with_suffix("")) for fp, _ in pending[i:])
                 break
             time.sleep(config.delay)
             continue
@@ -472,6 +485,7 @@ def run_sequential(session: requests.Session, pending: list[tuple[Path, str]], c
             consecutive_failures += 1
             if consecutive_failures >= CONSECUTIVE_FAILURE_LIMIT:
                 print(f"\n{CONSECUTIVE_FAILURE_LIMIT} consecutive failures — stopping.")
+                failed_keys.extend(str(fp.relative_to(STUDIO_DIR).with_suffix("")) for fp, _ in pending[i:])
                 break
             time.sleep(config.delay)
             continue
@@ -552,6 +566,7 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     except (AttributeError, ValueError):
         pass
+    setup_logging()
 
     start_time = time.monotonic()
 
@@ -607,6 +622,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     retry_pending: list[tuple[Path, str]] = []
+    # Pre-initialize so an early Ctrl+C can't hit an unbound name in finally.
+    updated: set[str] = set()
 
     try:
         with create_session() as session:
@@ -623,6 +640,12 @@ def main(argv: list[str] | None = None) -> int:
         print("\nInterrupted. Saving log...")
     finally:
         if not config.dry_run:
+            # Union this run's results back into history (run_* return
+            # only fresh sets) and prune keys for deleted files — without
+            # this, every incremental run wipes the log and the next run
+            # refetches the whole folder.
+            valid = {str(fp.relative_to(STUDIO_DIR).with_suffix("")) for fp in files}
+            updated = (already | updated) & valid
             write_log(LOG_PATH, updated)
 
     # Second pass: retry failed files with a longer delay
