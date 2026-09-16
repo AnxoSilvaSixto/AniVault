@@ -1,3 +1,3 @@
 ---
-MAL: "https://myanimelist.net/anime/31442"
+MAL: https://myanimelist.net/anime/31442
 ---
