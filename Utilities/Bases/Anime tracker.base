@@ -37,13 +37,10 @@ views:
     name: Searcher
     filters:
       and:
-        - Rating.isEmpty()
+        - Genre.contains(link("Romance"))
     order:
       - file.name
-      - Aired
-      - Demographic
-      - Genre
-      - Themes
-      - Studio
       - Rating
-    sort: []
+    sort:
+      - property: Rating
+        direction: DESC
