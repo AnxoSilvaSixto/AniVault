@@ -12,6 +12,7 @@ Genre:
 Themes:
   - "[[Anthropomorphic]]"
   - "[[Racing]]"
+  - "[[School]]"
 Demographic: []
 Cover: https://cdn.myanimelist.net/images/anime/1733/93479l.jpg
 MAL: https://myanimelist.net/anime/37916

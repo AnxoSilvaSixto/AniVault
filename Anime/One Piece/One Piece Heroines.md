@@ -8,9 +8,7 @@ Studio:
   - "[[Toei Animation]]"
 Source: "[[Light novel]]"
 Genre:
-  - "[[Adventure]]"
   - "[[Fantasy]]"
-  - "[[Slice of Life]]"
 Themes: []
 Demographic:
   - "[[Shounen]]"
@@ -18,7 +16,7 @@ Cover: https://cdn.myanimelist.net/images/anime/1993/151415l.jpg
 MAL: https://myanimelist.net/anime/62233
 Rating: 3
 ---
-> [!summary] Synopsis
-> Go behind the runway as style icon Nami stars in a life-changing fashion show, observe wise Robin as she helps to decipher an ancient tablet with Koala and Sabo, watch as solemn Princess Vivi receives a love letter from an unexpected admirer, and check out Ghost Princess Perona's battle over the last bottle of wine with Zoro and Mihawk!
+>[!summary] Synopsis
+> After failing to stop the thieves due to ill-fitting shoes, Nami storms into the shop where she bought them for a refund. However, the head designer offers to make her a new pair from scratch on one condition: she must walk in their upcoming fashion show.
 >
-> (Source: VIZ Media)
+> (Source: Crunchyroll)
