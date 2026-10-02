@@ -34,4 +34,11 @@ Prequels:
 		</a>
 		<p class="media-caption">Mushoku Tensei II Isekai Ittara Honki Dasu</p>
 	</div>
+		<div class="media-column sequels">
+		<h4>Sequels</h4>
+		<a href="Mushoku Tensei III Isekai Ittara Honki Dasu" class="internal-link">
+			<img src="https://cdn.myanimelist.net/images/anime/1527/158340l.jpg" class="media-poster" alt="Broken link">
+		</a>
+		<p class="media-caption">Mushoku Tensei III Isekai Ittara Honki Dasu</p>
+	</div>
 </div>

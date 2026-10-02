@@ -1,14 +1,7 @@
 #!/usr/bin/env python3
-"""
-sync_anime.py — Anime Metadata Sync from Tenrai API (Jikan v4 schema).
-
-Fetches current metadata for each anime from the Tenrai API and outputs
-complete, updated Markdown files into a 'Metadata_Updates' folder for manual
-review. Works incrementally (only new/changed entries) or with --full rescan.
-
-Note: Rating is intentionally excluded from the sync — that field holds your
-own personal score, not the source's community score.
-"""
+"""Sync anime metadata from Tenrai API into Metadata_Updates/ for review (originals never touched).
+Rating is never synced (personal score).
+Usage: python Utilities/Scripts/sync_anime.py [--full] [--mode both]"""
 
 from __future__ import annotations
 
@@ -21,14 +14,14 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from email.utils import parsedate_to_datetime
 from pathlib import Path
-from typing import NamedTuple
 
 import requests
-
-# --- Paths & Configuration ---
+from common import client as _client
+from common import logs as _logs
+from common import yaml_utils as _yaml
+from common.dotenv import load_dotenv
+from common.logs import Change
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 VAULT_ROOT = SCRIPT_DIR.parent.parent
@@ -37,15 +30,40 @@ DATA_DIR = SCRIPT_DIR / "data"
 UPDATES_DIR = DATA_DIR / "Metadata_Updates"
 
 API_URL = "https://api.tenrai.org/v1/anime/{mal_id}"
-SERVER_KEY = os.environ.get("TENRAI_SERVER_KEY")
+
+
+load_dotenv()
+
+SERVER_KEY = os.environ.get("TENRAI_SERVER_KEY") or None
 DEFAULT_DELAY = 1.0
 MAX_RETRIES = 3
 RETRY_BACKOFF_BASE = 5
 RETRYABLE_CODES = frozenset({403, 429, 500, 502, 503, 504})
 WRITE_FULL_FILES = True
 
-# Single sync log: files fully checked (both aspects). Legacy split logs
-# are only read once for migration, never written.
+PUBLIC_LIMITS = _client.PUBLIC_LIMITS
+SERVER_LIMITS = _client.SERVER_LIMITS
+
+
+def get_api_tier() -> str:
+    """Return 'server-key' when TENRAI_SERVER_KEY is set, else 'public'."""
+    return _client.get_api_tier(SERVER_KEY)
+
+
+def tier_banner() -> str:
+    return _client.tier_banner(SERVER_KEY)
+
+
+def is_auth_failure(resp: requests.Response) -> bool:
+    """401 is auth; keyless 403 without Retry-After is auth (never retried).
+    403 with Retry-After is rate-limit, still retryable."""
+    return _client.is_auth_failure(resp, SERVER_KEY)
+
+
+def should_retry(resp: requests.Response) -> bool:
+    return _client.should_retry(resp, SERVER_KEY)
+
+# Single log for fully-checked files; legacy splits read once for migration.
 ANIME_LOG_PATH = DATA_DIR / "anime_synced.log"
 LEGACY_LOG_PATHS = (DATA_DIR / "metadata_synced.log", DATA_DIR / "synopsis_synced.log")
 
@@ -53,19 +71,8 @@ MAL_ID_RE = re.compile(r"myanimelist\.net/anime/(\d+)")
 
 logger = logging.getLogger("sync_anime")
 
-# Serializes worker-thread console writes so parallel progress lines can't
-# tear each other's rows (the first files' names used to be overwritten
-# before any newline, leaving orphan result fragments).
+# Serialize console writes from parallel workers.
 _PRINT_LOCK = threading.Lock()
-
-
-# --- Data Models ---
-
-class Change(NamedTuple):
-    """One changed field: what it's called, what it was, what it's becoming."""
-    field: str
-    old: str
-    new: str
 
 
 @dataclass
@@ -89,105 +96,66 @@ def setup_logging(verbose: bool = False) -> None:
     )
 
 
-# --- HTTP Layer ---
-
 def build_headers() -> dict[str, str]:
-    return {"X-Server-Key": SERVER_KEY} if SERVER_KEY else {}
+    return _client.build_headers(SERVER_KEY)
 
 
 def create_session() -> requests.Session:
-    session = requests.Session()
-    session.headers.update(build_headers())
-    return session
+    return _client.create_session(SERVER_KEY)
 
 
 def retry_wait(resp: requests.Response, attempt: int) -> float:
     """Prefer the server's Retry-After header; fall back to backoff schedule."""
-    retry_after = (resp.headers.get("Retry-After") or "").strip()
-    if retry_after:
-        try:
-            return max(0.0, float(retry_after))
-        except ValueError:
-            pass
-        try:
-            target = parsedate_to_datetime(retry_after)
-            if target.tzinfo is None:
-                target = target.replace(tzinfo=timezone.utc)
-            return max(0.0, (target - datetime.now(timezone.utc)).total_seconds())
-        except (TypeError, ValueError):
-            pass
-    return RETRY_BACKOFF_BASE * (attempt + 1)
+    return _client.retry_wait(resp, attempt, RETRY_BACKOFF_BASE)
 
 
 def describe_error(resp: requests.Response) -> str:
-    try:
-        body = resp.json()
-        msg = body.get("message") or body.get("error")
-        return f"HTTP {resp.status_code} \u2014 {msg}" if msg else f"HTTP {resp.status_code}"
-    except Exception:
-        return f"HTTP {resp.status_code}"
+    return _client.describe_error(resp)
 
 
 def fetch_anime(session: requests.Session, mal_id: str, delay: float) -> requests.Response:
-    """GET anime details, retrying with backoff on RETRYABLE_CODES."""
-    resp = session.get(API_URL.format(mal_id=mal_id), timeout=15)
-    retries = 0
-    while resp.status_code in RETRYABLE_CODES and retries < MAX_RETRIES:
-        wait = retry_wait(resp, retries)
-        logger.info(f"  ({describe_error(resp)}, waiting {wait:.0f}s)")
-        time.sleep(wait)
-        resp = session.get(API_URL.format(mal_id=mal_id), timeout=15)
-        retries += 1
-    return resp
+    """GET anime details, retrying with backoff on retryable codes.
+
+    Auth failures (401, or 403 without a server key) are NOT retried;
+    see should_retry(). Callers surface describe_error() plus the
+    TENRAI_SERVER_KEY hint printed at startup.
+    """
+    return _client.fetch_with_retry(
+        session,
+        API_URL.format(mal_id=mal_id),
+        max_retries=MAX_RETRIES,
+        backoff_base=RETRY_BACKOFF_BASE,
+        server_key=SERVER_KEY,
+        on_retry=lambda resp, wait: logger.info(
+            f"  ({describe_error(resp)}, waiting {wait:.0f}s)"
+        ),
+    )
 
 
-class RateLimiter:
-    """Thread-safe rate limiter for concurrent API requests."""
-
-    def __init__(self, delay: float):
-        self._delay = delay
-        self._next_allowed = 0.0
-        self._lock = threading.Lock()
-
-    def acquire(self) -> None:
-        with self._lock:
-            now = time.monotonic()
-            if self._next_allowed > now:
-                time.sleep(self._next_allowed - now)
-                now = self._next_allowed
-            self._next_allowed = now + self._delay
+RateLimiter = _client.RateLimiter
 
 
 # --- File I/O ---
 
 def load_file(filepath: Path) -> str:
-    try:
-        return filepath.read_text(encoding="utf-8-sig")
-    except UnicodeDecodeError:
-        return filepath.read_text(encoding="latin-1")
+    return _yaml.load_file(filepath)
 
 
 def detect_line_ending(filepath: Path) -> str:
-    raw = filepath.read_bytes()
-    return "\r\n" if b"\r\n" in raw else "\n"
+    return _yaml.detect_line_ending(filepath)
 
 
 def write_text_preserving_line_ending(filepath: Path, content: str, line_ending: str) -> None:
-    normalized = content.replace("\r\n", "\n").replace("\r", "\n")
-    final = normalized.replace("\n", line_ending) if line_ending != "\n" else normalized
-    filepath.write_text(final, encoding="utf-8", newline="")
+    return _yaml.write_text_preserving_line_ending(filepath, content, line_ending)
 
 
 # --- Frontmatter Parsing ---
 
-FRONTMATTER_RE = re.compile(r"\A---[ \t]*\r?\n(?P<fm>.*?\r?\n)---[ \t]*\r?\n?", re.DOTALL)
+FRONTMATTER_RE = _yaml.FRONTMATTER_RE
 
 
 def split_frontmatter(content: str) -> tuple[str, str] | None:
-    m = FRONTMATTER_RE.match(content)
-    if not m:
-        return None
-    return m.group("fm"), content[m.end():]
+    return _yaml.split_frontmatter(content)
 
 
 def extract_mal_id(content: str) -> str | None:
@@ -201,92 +169,33 @@ def extract_mal_id(content: str) -> str | None:
 
 def file_key(fp: Path) -> str:
     """Unique identifier for sync-log tracking (relative to ANIME_DIR)."""
-    return str(fp.relative_to(ANIME_DIR).with_suffix(""))
+    return _logs.file_key(fp, ANIME_DIR)
 
 
 def parse_yaml_frontmatter(yaml_str: str) -> dict:
-    metadata: dict[str, object] = {}
-    current_key: str | None = None
-    for raw_line in yaml_str.splitlines():
-        line = raw_line.strip()
-        if not line:
-            continue
-        if line.startswith("-") and current_key:
-            val = line[1:].strip()
-            if isinstance(metadata.get(current_key), list):
-                metadata[current_key].append(val)
-            else:
-                metadata[current_key] = [val]
-        elif ":" in line:
-            key, val = line.split(":", 1)
-            key = key.strip()
-            val = val.strip()
-            if val == "[]":
-                metadata[key] = []
-                current_key = key
-            elif not val:
-                metadata[key] = ""
-                current_key = key
-            else:
-                metadata[key] = val
-                current_key = key
-    return metadata
+    return _yaml.parse_yaml_frontmatter(yaml_str)
 
 
 def dump_yaml_frontmatter(meta_dict: dict) -> str:
-    lines = ["---"]
-    for k, v in order_frontmatter(meta_dict).items():
-        if isinstance(v, list):
-            if not v:
-                lines.append(f"{k}: []")
-            else:
-                lines.append(f"{k}:")
-                for item in v:
-                    lines.append(f"  - {item}")
-        else:
-            if v in ("", None):
-                lines.append(f"{k}: ")
-            else:
-                lines.append(f"{k}: {v}")
-    lines.append("---")
-    return "\n".join(lines) + "\n"
+    return _yaml.dump_yaml_frontmatter(meta_dict, CANONICAL_ORDER)
 
 
 # --- Normalization Helpers ---
 
 def normalize_value(val) -> list[str]:
-    if isinstance(val, list):
-        return sorted([str(x).replace('"', '').replace("'", '').replace('[', '').replace(']', '').strip() for x in val])
-    else:
-        s = str(val or "").replace('"', '').replace("'", '').replace('[', '').replace(']', '').strip()
-        return [s] if s else []
+    return _yaml.normalize_value_strict(val)
 
 
 def format_value(val) -> str:
-    if isinstance(val, list):
-        return ", ".join(val) if val else "(none)"
-    return str(val) if val not in (None, "") else "(none)"
+    return _yaml.format_value(val)
 
 
 def normalize_date_string(value: str) -> str:
-    value = value.strip()
-    if re.fullmatch(r"\d{4}", value):
-        return f"{value}-01-01"
-    return value[:10]
+    return _yaml.normalize_date_string(value)
 
 
 def parse_date_value(value) -> str:
-    if not value:
-        return ""
-    if isinstance(value, str):
-        return normalize_date_string(value)
-    if isinstance(value, dict):
-        for key in ("from", "date", "start", "year"):
-            v = value.get(key)
-            if isinstance(v, str) and v:
-                return normalize_date_string(v)
-        return ""
-    return normalize_date_string(str(value))
+    return _yaml.parse_date_value(value)
 
 
 def normalize_type(raw_type: str) -> str:
@@ -399,11 +308,7 @@ LIST_SHAPE_KEYS = ("Studio", "Genre", "Themes", "Demographic")
 
 def order_frontmatter(meta: dict) -> dict:
     """Return meta with canonical keys first, extras in original order."""
-    ordered = {k: meta[k] for k in CANONICAL_ORDER if k in meta}
-    for k, v in meta.items():
-        if k not in ordered:
-            ordered[k] = v
-    return ordered
+    return _yaml.order_frontmatter(meta, CANONICAL_ORDER)
 
 
 def compute_frontmatter_changes(current_meta: dict, api_data: dict) -> tuple[dict, list[Change]]:
@@ -569,14 +474,11 @@ def process_anime_file(filepath: Path, api_data: dict, config: SyncConfig) -> li
 # --- Log Management ---
 
 def load_log(path: Path) -> set[str]:
-    if not path.exists():
-        return set()
-    return {line.strip() for line in path.read_text("utf-8").splitlines() if line.strip()}
+    return _logs.load_log(path)
 
 
 def write_log(path: Path, items: set[str]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("\n".join(sorted(items)) + "\n", encoding="utf-8")
+    return _logs.write_log(path, items)
 
 
 def load_history() -> set[str]:
@@ -605,21 +507,7 @@ def merge_history(existing: set[str], info_fresh: set[str], syn_fresh: set[str],
 # --- Report ---
 
 def write_changes_report(all_changes: list[tuple[str, list[Change]]], summary: str = "") -> Path:
-    lines = [f"# Metadata Changes — {datetime.now().strftime('%Y-%m-%d %H:%M')}", ""]
-    if summary:
-        lines.append(summary)
-        lines.append("")
-    lines.append(f"**{len(all_changes)} anime with changes**")
-    lines.append("")
-    for name, changes in all_changes:
-        lines.append(f"## {name}")
-        for field_name, old, new in changes:
-            lines.append(f"- **{field_name}**: {old} → {new}")
-        lines.append("")
-    UPDATES_DIR.mkdir(parents=True, exist_ok=True)
-    report_path = UPDATES_DIR / "_changes_report.md"
-    report_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    return report_path
+    return _logs.write_changes_report(UPDATES_DIR, "Metadata Changes", "anime", all_changes, summary)
 
 
 # --- Sync Orchestration ---
@@ -874,6 +762,11 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"Metadata Sync — Tenrai API v1 (Manual Revision Mode) [{config.mode}]")
     print("=" * 65)
+    print(tier_banner())
+    if not SERVER_KEY:
+        print("Hint: copy .env.example to .env and set TENRAI_SERVER_KEY for the")
+        print("      server-key tier. Public tier works but is rate-limited sooner.")
+        print("      Offline checks only: pytest tests/ + python validate_vault.py.")
 
     if not ANIME_DIR.exists():
         print(f"[ERROR] Anime folder not found: {ANIME_DIR}")
@@ -981,6 +874,9 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"Full updated files: {UPDATES_DIR}")
     else:
         print("Finished. No changes found.")
+    if still_failed and not SERVER_KEY:
+        print("Hint: failures without TENRAI_SERVER_KEY are often HTTP 401/403.")
+        print("      Set TENRAI_SERVER_KEY in .env (see .env.example) and retry.")
 
     elapsed = time.monotonic() - start_time
     print(f"Elapsed: {elapsed:.1f}s ({len(pending)} files, {len(all_changes)} changed)")

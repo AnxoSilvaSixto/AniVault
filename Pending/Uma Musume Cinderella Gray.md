@@ -13,9 +13,10 @@ Genre:
 Themes:
   - "[[Anthropomorphic]]"
   - "[[Racing]]"
-Demographic: "[[Seinen]]"
-Cover: "https://cdn.myanimelist.net/images/anime/1626/148097l.jpg"
-MAL: "https://myanimelist.net/anime/59636"
+Demographic:
+  - "[[Seinen]]"
+Cover: https://cdn.myanimelist.net/images/anime/1626/148097l.jpg
+MAL: https://myanimelist.net/anime/59636
 Rating:
 ---
 > [!summary] Synopsis

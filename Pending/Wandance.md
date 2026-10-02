@@ -13,9 +13,10 @@ Genre:
 Themes:
   - "[[Performing Arts]]"
   - "[[School]]"
-Demographic: "[[Seinen]]"
-Cover: "https://cdn.myanimelist.net/images/anime/1104/151524.jpg"
-MAL: "https://myanimelist.net/anime/59623"
+Demographic:
+  - "[[Seinen]]"
+Cover: https://cdn.myanimelist.net/images/anime/1104/151524.jpg
+MAL: https://myanimelist.net/anime/59623
 Rating:
 ---
 > [!summary] Synopsis

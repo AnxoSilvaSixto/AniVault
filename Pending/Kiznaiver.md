@@ -11,10 +11,10 @@ Genre:
   - "[[Drama]]"
   - "[[Romance]]"
   - "[[Sci-Fi]]"
-Themes:
-Demographic:
-Cover: "https://cdn.myanimelist.net/images/anime/1085/147246.jpg"
-MAL: "https://myanimelist.net/anime/31798"
+Themes: []
+Demographic: []
+Cover: https://cdn.myanimelist.net/images/anime/1085/147246.jpg
+MAL: https://myanimelist.net/anime/31798
 Rating:
 ---
 > [!summary] Synopsis

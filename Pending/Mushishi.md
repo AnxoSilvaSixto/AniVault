@@ -16,9 +16,10 @@ Themes:
   - "[[Adult Cast]]"
   - "[[Historical]]"
   - "[[Iyashikei]]"
-Demographic: "[[Seinen]]"
-Cover: "https://cdn.myanimelist.net/images/anime/2/73862.jpg"
-MAL: "https://myanimelist.net/anime/457"
+Demographic:
+  - "[[Seinen]]"
+Cover: https://cdn.myanimelist.net/images/anime/2/73862.jpg
+MAL: https://myanimelist.net/anime/457
 Rating:
 ---
 > [!summary] Synopsis

@@ -13,9 +13,9 @@ Genre:
 Themes:
   - "[[Isekai]]"
   - "[[Super Power]]"
-Demographic:
-Cover: "https://cdn.myanimelist.net/images/anime/1509/117149.jpg"
-MAL: "https://myanimelist.net/anime/48849"
+Demographic: []
+Cover: https://cdn.myanimelist.net/images/anime/1509/117149.jpg
+MAL: https://myanimelist.net/anime/48849
 Rating:
 ---
 > [!summary] Synopsis

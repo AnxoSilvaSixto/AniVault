@@ -11,10 +11,18 @@ while IFS= read -r -d '' FILE; do
     fi
 
     # Inspect exactly what is staged, not a later working-tree version.
-    if git show ":$FILE" 2>/dev/null | grep -aqiE '(api[_-]?key\s*=|secret\s*=|token\s*=|ghp_|github_pat_)'; then
-        echo "POSSIBLE SECRET DETECTED in $FILE"
-        HAS_ERROR=1
-    fi
+    # Vendored plugin bundles excluded: upstream release code (e.g. micromark's
+    # `const token = ...`) trips the token= pattern. Size check below still
+    # applies to every file including these.
+    case "$FILE" in
+        .obsidian/plugins/*/main.js) ;;
+        *)
+            if git show ":$FILE" 2>/dev/null | grep -aqiE '(api[_-]?key\s*=|secret\s*=|token\s*=|ghp_|github_pat_)'; then
+                echo "POSSIBLE SECRET DETECTED in $FILE"
+                HAS_ERROR=1
+            fi
+            ;;
+    esac
 
     SIZE=$(git cat-file -s ":$FILE" 2>/dev/null) || {
         echo "Unable to inspect staged file: $FILE"

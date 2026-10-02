@@ -11,10 +11,10 @@ Genre:
   - "[[Action]]"
   - "[[Mystery]]"
   - "[[Supernatural]]"
-Themes:
-Demographic:
-Cover: "https://cdn.myanimelist.net/images/anime/10/71772.jpg"
-MAL: "https://myanimelist.net/anime/6746"
+Themes: []
+Demographic: []
+Cover: https://cdn.myanimelist.net/images/anime/10/71772.jpg
+MAL: https://myanimelist.net/anime/6746
 Rating:
 ---
 > [!summary] Synopsis

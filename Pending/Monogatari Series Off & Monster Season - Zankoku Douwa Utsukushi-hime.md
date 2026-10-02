@@ -14,9 +14,9 @@ Genre:
 Themes:
   - "[[Psychological]]"
   - "[[Vampire]]"
-Demographic:
-Cover: "https://cdn.myanimelist.net/images/anime/1887/144936.jpg"
-MAL: "https://myanimelist.net/anime/59612"
+Demographic: []
+Cover: https://cdn.myanimelist.net/images/anime/1887/144936.jpg
+MAL: https://myanimelist.net/anime/59612
 Rating:
 ---
 > [!summary] Synopsis

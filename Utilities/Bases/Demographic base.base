@@ -3,10 +3,10 @@ filters:
     - "!Rating.isEmpty()"
 views:
   - type: table
-    name: Shonen
+    name: Shounen
     filters:
       and:
-        - Demographic == link("Shounen")
+        - Demographic.contains(link("Shounen"))
     order:
       - file.name
       - Studio
@@ -21,7 +21,7 @@ views:
     name: Josei
     filters:
       and:
-        - Demographic == link("Josei")
+        - Demographic.contains(link("Josei"))
     order:
       - file.name
       - Studio
@@ -36,7 +36,7 @@ views:
     name: Kids
     filters:
       and:
-        - Demographic == link("Kids")
+        - Demographic.contains(link("Kids"))
     order:
       - file.name
       - Studio
@@ -51,7 +51,7 @@ views:
     name: Seinen
     filters:
       and:
-        - Demographic == link("Seinen")
+        - Demographic.contains(link("Seinen"))
     order:
       - file.name
       - Studio
@@ -66,7 +66,7 @@ views:
     name: Shoujo
     filters:
       and:
-        - Demographic == link("Shoujo")
+        - Demographic.contains(link("Shoujo"))
     order:
       - file.name
       - Studio

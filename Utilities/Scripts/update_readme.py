@@ -1,12 +1,6 @@
 #!/usr/bin/env python3
-"""
-update_readme.py — Keep README.md stats in sync with vault contents.
-
-Counts anime notes, extra reference pages (per dimension), pending, bases,
-graphs, and series subfolders. Patches README.md's stats table, structure
-code block, quick-start line, and footer.
-
-Idempotent, preserves formatting, CRLF/LF agnostic.
+"""Keep README.md stats in sync with vault contents.
+Usage: python Utilities/Scripts/update_readme.py [--dry-run|--check]
 """
 
 from __future__ import annotations
@@ -15,7 +9,7 @@ import argparse
 import difflib
 import re
 import sys
-from datetime import date
+from datetime import datetime, timezone
 from pathlib import Path
 
 try:
@@ -66,8 +60,6 @@ def counts() -> dict[str, int]:
 
 def patch(text: str, c: dict[str, int], today: str) -> tuple[str, list[str]]:
     changes: list[str] = []
-
-    # --- Collection Stats table ---
     repls = [
         (r"(\|\s*\*\*Anime Notes\*\*\s*\|\s*\*\*)(\d+)(\*\*\s*\|)", rf"\g<1>{c['anime']}\g<3>"),
         (r"(\|\s*\*\*Reference Pages\*\*\s*\|\s*\*\*)(\d+)(\*\*\s*\|)", rf"\g<1>{c['extra']}\g<3>"),
@@ -92,7 +84,6 @@ def patch(text: str, c: dict[str, int], today: str) -> tuple[str, list[str]]:
             text = new
             changes.append(pat)
 
-    # series subfolders note
     text, n = re.subn(
         r"(standalone \+\s*)\d+(\s+series subfolders)",
         rf"\g<1>{c['series_folders']}\g<2>",
@@ -101,8 +92,6 @@ def patch(text: str, c: dict[str, int], today: str) -> tuple[str, list[str]]:
     if n:
         changes.append("table:series_folders")
 
-    # --- Structure code block ---
-    # Unicode box-drawing: ├── ──
     text, n = re.subn(
         r"(\u251c\u2500\u2500 Anime/\s+#\s*)\d+(\s+notes \u2014 flat files \+\s*)\d+(\s+series folders)",
         rf"\g<1>{c['anime']}\g<2>{c['series_folders']}\g<3>",
@@ -110,8 +99,6 @@ def patch(text: str, c: dict[str, int], today: str) -> tuple[str, list[str]]:
     )
     if n:
         changes.append("structure:Anime")
-
-    # Extra total
     text, n = re.subn(
         r"(\u251c\u2500\u2500 Extra/\s+#\s*)\d+(\s+reference pages)",
         rf"\g<1>{c['extra']}\g<2>",
@@ -119,8 +106,6 @@ def patch(text: str, c: dict[str, int], today: str) -> tuple[str, list[str]]:
     )
     if n:
         changes.append("structure:Extra")
-
-    # per-dimension in tree
     for name, key in [
         ("Demographic", "demo"), ("Genre", "genre"), ("Source", "source"),
         ("Studio", "studio"), ("Themes", "themes"), ("Type", "type"),
@@ -130,10 +115,8 @@ def patch(text: str, c: dict[str, int], today: str) -> tuple[str, list[str]]:
             rf"\g<1>{c[key]}",
             text,
         )
-        if n:
-            changes.append(f"structure:{name}")
-
-    # Pending line
+    if n:
+        changes.append(f"structure:{name}")
     text, n = re.subn(
         r"(\u251c\u2500\u2500 Pending/\s+#\s*)\d+(\s+watchlist)",
         rf"\g<1>{c['pending']}\g<2>",
@@ -141,8 +124,6 @@ def patch(text: str, c: dict[str, int], today: str) -> tuple[str, list[str]]:
     )
     if n:
         changes.append("structure:Pending")
-
-    # Bases / Graphs in tree
     text, n = re.subn(
         r"(\u251c\u2500\u2500 Bases/\s+#\s*)\d+(\s+\.base views)",
         rf"\g<1>{c['bases']}\g<2>",
@@ -158,8 +139,6 @@ def patch(text: str, c: dict[str, int], today: str) -> tuple[str, list[str]]:
     )
     if n:
         changes.append("structure:Graphs")
-
-    # alternative tree using vertical bars
     text, n = re.subn(
         r"(\u2502\s+\u251c\u2500\u2500 Bases/\s+#\s*)\d+",
         rf"\g<1>{c['bases']}",
@@ -175,8 +154,6 @@ def patch(text: str, c: dict[str, int], today: str) -> tuple[str, list[str]]:
     )
     if n:
         changes.append("structure:Graphs2")
-
-    # --- Quick Start verify line ---
     text, n = re.subn(
         r"(you should see\s+)\d+(\s+entries)",
         rf"\g<1>{c['anime']}\g<2>",
@@ -184,10 +161,7 @@ def patch(text: str, c: dict[str, int], today: str) -> tuple[str, list[str]]:
     )
     if n:
         changes.append("verify")
-
-    # --- Bases table: Anime tracker row ("filter/sort all N entries") ---
-    # The validator checks this line, so the updater must manage it too —
-    # otherwise the count drifts with no menu option able to fix it.
+    # Validator checks tracker line, so updater must manage it too.
     text, n = re.subn(
         r"(filter/sort all\s+)\d+(\s+entries)",
         rf"\g<1>{c['anime']}\g<2>",
@@ -195,15 +169,11 @@ def patch(text: str, c: dict[str, int], today: str) -> tuple[str, list[str]]:
     )
     if n:
         changes.append("bases:tracker")
-
-    # --- Footer ---
     footer_pat = r"\*Last updated:\s*\d{4}-\d{2}-\d{2}(?:\s*\u00b7\s*Vault:\s*\d+\s+anime\s*\u00b7\s*\d+\s+refs\s*\u00b7\s*\d+\s+pending)?\*"
     new_footer = f"*Last updated: {today} \u00b7 Vault: {c['anime']} anime \u00b7 {c['extra']} refs \u00b7 {c['pending']} pending*"
     text, n = re.subn(footer_pat, new_footer, text)
     if n:
         changes.append("footer")
-
-    # --- Snapshot note ---
     text, n = re.subn(
         r"(>\s*Snapshot as of\s*`)\d{4}-\d{2}-\d{2}(`)",
         rf"\g<1>{today}\g<2>",
@@ -228,7 +198,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     c = counts()
-    today = date.today().isoformat()
+    today = datetime.now(timezone.utc).astimezone().date().isoformat()
     raw = args.readme.read_text(encoding="utf-8")
     line_ending = "\r\n" if "\r\n" in raw[:2000] else "\n"
     new_text, changes = patch(raw, c, today)
@@ -246,8 +216,6 @@ def main(argv: list[str] | None = None) -> int:
             for line in difflib.unified_diff(raw.splitlines(), new_text.splitlines(), lineterm="", n=3):
                 print(line)
         return 1 if args.check else 0
-
-    # write preserving line ending
     normalized = new_text.replace("\r\n", "\n").replace("\r", "\n")
     if line_ending != "\n":
         normalized = normalized.replace("\n", line_ending)

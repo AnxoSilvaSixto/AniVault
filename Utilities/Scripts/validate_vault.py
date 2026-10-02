@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
-"""Read-only, dependency-free consistency validator for the AniVault vault.
-
-The validator checks Anime frontmatter, IDs, dates, MAL URLs, taxonomy and
-relationship links, media-grid hrefs, duplicate note stems, text encoding, and
-README filesystem counts.  It never writes to the vault or makes network calls.
-
-Usage:
-    python Utilities/Scripts/validate_vault.py
-    python Utilities/Scripts/validate_vault.py --root C:/path/to/AniVault
+"""Read-only validator for AniVault frontmatter, links, and counts.
+Usage: python Utilities/Scripts/validate_vault.py [--root PATH]
 """
 
 from __future__ import annotations
@@ -18,12 +11,11 @@ import html
 import re
 import sys
 from collections import defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
-from typing import Iterable
 from urllib.parse import urlparse
-
 
 DEFAULT_ROOT = Path(__file__).resolve().parents[2]
 REQUIRED_ANIME_FIELDS = (
@@ -55,8 +47,7 @@ FRONTMATTER_RE = re.compile(
     re.DOTALL,
 )
 KEY_RE = re.compile(r"^(?P<indent>\s*)(?P<key>[^:#][^:]*?):(?:\s*(?P<value>.*?))?\s*$")
-# A warning is useful for accidentally decoded legacy text, but normal Unicode
-# titles are not warnings.  The replacement character is always suspicious.
+# Replacement char is always suspicious; normal Unicode titles are not warnings.
 MOJIBAKE_RE = re.compile(
     r"(?:\ufffd|\u00c3.|\u00c2.|\u00e2(?:\u20ac.|\u20ac\u2122|\u20ac\u2026)|\u00f0\u0178..|\u00d0.)",
     re.DOTALL,
@@ -135,7 +126,7 @@ class Validator:
                 continue
             try:
                 raw = path.read_bytes()
-                text = raw.decode("utf-8-sig")
+                raw.decode("utf-8-sig")
             except UnicodeDecodeError as exc:
                 self.warning(path, f"not valid UTF-8 ({exc})")
                 continue
@@ -201,8 +192,7 @@ class Validator:
         value = cls._unquote(value)
         if value in {"", "null", "Null", "NULL", "~"}:
             return None if value else ""
-        # A wikilink starts with two brackets; do not mistake it for an inline
-        # YAML list after removing its YAML quotes.
+        # Wikilinks start with [[; do not mistake for inline YAML list.
         if value.startswith("[[") and value.endswith("]]" ):
             return value
         if value == "[]":
@@ -236,10 +226,9 @@ class Validator:
                 continue
             key_match = KEY_RE.match(line)
             if not key_match or key_match.group("indent"):
-                # Unknown YAML is deliberately ignored; known schema fields
-                # are validated below rather than attempting a full YAML parser.
+                # Unknown YAML ignored; known fields validated below.
                 continue
-            current_key = key_match.group("key").strip()
+            current_key = (key_match.group("key") or "").strip()
             metadata[current_key] = cls._scalar(key_match.group("value") or "")
         return metadata, text[match.end():]
 
@@ -303,11 +292,7 @@ class Validator:
 
     @staticmethod
     def target_variants(target: str) -> list[str]:
-        """Return the literal target plus an optional Markdown extension removal.
-
-        A stem may itself end in ``.md`` (for example ``Signal.MD.md``), so
-        extension removal is a fallback rather than an unconditional rewrite.
-        """
+        """Literal target plus .md-stripped fallback."""
         variants = [target]
         if target.casefold().endswith(".md"):
             variants.append(target[:-3])
@@ -337,8 +322,7 @@ class Validator:
         clean = self.clean_target(target).strip("/")
         if not clean:
             return []
-        # Explicit vault-relative paths are authoritative, while matching is
-        # case-insensitive to mirror Obsidian's behavior on Windows.
+        # Case-insensitive to mirror Obsidian on Windows; explicit paths win.
         if "/" in clean:
             for variant in self.target_variants(clean):
                 filename = variant if variant.casefold().endswith(".md") else variant + ".md"
@@ -350,9 +334,7 @@ class Validator:
                     return candidates
             return []
         for variant in self.target_variants(clean):
-            # Obsidian permits a note stem that itself ends in `.md`; for
-            # example, [[Signal.MD]] resolves to Signal.MD.md. Try the exact
-            # stem first, then the optional extension-stripped fallback.
+            # Stem may itself end in .md (e.g. [[Signal.MD]]); try exact first.
             stem = variant
             local = sorted(
                 p for p in source.parent.glob("*.md")
@@ -371,9 +353,7 @@ class Validator:
         return path.is_relative_to(self.root / "Anime") or path.is_relative_to(self.root / "Pending")
 
     def check_duplicate_stems(self) -> None:
-        # Cross-folder collisions are not necessarily ambiguous: taxonomy links
-        # are resolved in their declared Extra namespace and anime links in the
-        # Anime/Pending namespace. Warn only where a namespace has ambiguity.
+        # Taxonomy/anime resolve in separate namespaces; warn only on same-namespace ambiguity.
         for label, index in (("Anime", self.anime_by_stem), ("Pending", self.pending_by_stem)):
             for stem, paths in sorted(index.items()):
                 if len(paths) > 1:
@@ -477,8 +457,7 @@ class Validator:
                     target = href.split("#", 1)[0].split("?", 1)[0].strip()
                     if not target or target.startswith(("#", "//")):
                         continue
-                    # The media-grid uses bare note stems; explicit paths are
-                    # also accepted, but asset links must not be treated as notes.
+                    # Bare stems or explicit paths; skip asset links.
                     if target.casefold().endswith((".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp")):
                         continue
                     matches = self.resolve_anime(path, target, include_pending=True)

@@ -18,7 +18,7 @@ Themes:
 Demographic: []
 Cover: https://cdn.myanimelist.net/images/anime/1028/117777l.jpg
 MAL: https://myanimelist.net/anime/45576
-Rating: 8
+Rating: 9
 Prequels:
   - "[[Mushoku Tensei Isekai Ittara Honki Dasu]]"
 Sequels:

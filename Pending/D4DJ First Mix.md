@@ -15,9 +15,9 @@ Themes:
   - "[[Idols (Female)]]"
   - "[[Music]]"
   - "[[School]]"
-Demographic:
-Cover: "https://cdn.myanimelist.net/images/anime/1765/109713.jpg"
-MAL: "https://myanimelist.net/anime/39681"
+Demographic: []
+Cover: https://cdn.myanimelist.net/images/anime/1765/109713.jpg
+MAL: https://myanimelist.net/anime/39681
 Rating:
 ---
 > [!summary] Synopsis

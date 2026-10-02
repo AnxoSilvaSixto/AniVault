@@ -216,7 +216,7 @@ views:
     name: Idols (Female)
     filters:
       and:
-        - Themes.contains(link("Idols (female)"))
+        - Themes.contains(link("Idols (Female)"))
     order:
       - file.name
       - Studio

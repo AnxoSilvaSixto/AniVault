@@ -23,12 +23,14 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from email.utils import parsedate_to_datetime
 from pathlib import Path
-from typing import NamedTuple
 
 import requests
+from common import client as _client
+from common import logs as _logs
+from common import yaml_utils as _yaml
+from common.dotenv import load_dotenv
+from common.logs import Change
 
 # --- Paths & Configuration ---
 
@@ -40,14 +42,39 @@ UPDATES_DIR = DATA_DIR / "Studio_Updates"
 LOG_PATH = DATA_DIR / "studios_synced.log"
 
 API_URL = "https://api.tenrai.org/v1/producers/{id}"
-SERVER_KEY = os.environ.get("TENRAI_SERVER_KEY")
+
+
+load_dotenv()
+
+SERVER_KEY = os.environ.get("TENRAI_SERVER_KEY") or None
 DEFAULT_DELAY = 1.2
 MAX_RETRIES = 3
 RETRY_BACKOFF_BASE = 4
 RETRYABLE_CODES = frozenset({403, 429, 500, 502, 503, 504})
 
+PUBLIC_LIMITS = _client.PUBLIC_LIMITS
+SERVER_LIMITS = _client.SERVER_LIMITS
+
+
+def get_api_tier() -> str:
+    """Return 'server-key' when TENRAI_SERVER_KEY is set, else 'public'."""
+    return _client.get_api_tier(SERVER_KEY)
+
+
+def tier_banner() -> str:
+    return _client.tier_banner(SERVER_KEY)
+
+
+def is_auth_failure(resp: requests.Response) -> bool:
+    """401 is always auth; 403 without a key and without Retry-After is auth."""
+    return _client.is_auth_failure(resp, SERVER_KEY)
+
+
+def should_retry(resp: requests.Response) -> bool:
+    return _client.should_retry(resp, SERVER_KEY)
+
 PRODUCER_ID_RE = re.compile(r"myanimelist\.net/anime/producer/(\d+)")
-FRONTMATTER_RE = re.compile(r"\A---[ \t]*\r?\n(?P<fm>.*?\r?\n)---[ \t]*\r?\n?", re.DOTALL)
+FRONTMATTER_RE = _yaml.FRONTMATTER_RE
 
 FIELD_ALIASES: dict[str, tuple[str, ...]] = {
     "Foundation": ("Foundation", "Established", "FoundationDate", "EstablishedDate"),
@@ -75,13 +102,6 @@ def setup_logging(verbose: bool = False) -> None:
 
 # --- Data Models ---
 
-class Change(NamedTuple):
-    """One changed field: what it's called, what it was, what it's becoming."""
-    field: str
-    old: str
-    new: str
-
-
 @dataclass
 class SyncConfig:
     """Configuration for a sync run."""
@@ -91,106 +111,64 @@ class SyncConfig:
     parallel: int = 1
 
 
-class RateLimiter:
-    """Thread-safe rate limiter for concurrent API requests."""
-
-    def __init__(self, delay: float):
-        self._delay = delay
-        self._next_allowed = 0.0
-        self._lock = threading.Lock()
-
-    def acquire(self) -> None:
-        with self._lock:
-            now = time.monotonic()
-            if self._next_allowed > now:
-                time.sleep(self._next_allowed - now)
-                now = self._next_allowed
-            self._next_allowed = now + self._delay
+RateLimiter = _client.RateLimiter
 
 
 # --- HTTP Layer ---
 
 def build_headers() -> dict[str, str]:
-    return {"X-Server-Key": SERVER_KEY} if SERVER_KEY else {}
+    return _client.build_headers(SERVER_KEY)
 
 
 def create_session() -> requests.Session:
-    session = requests.Session()
-    session.headers.update(build_headers())
-    return session
+    return _client.create_session(SERVER_KEY)
 
 
 def retry_wait(resp: requests.Response, attempt: int) -> float:
     """Prefer the server's Retry-After header; fall back to backoff schedule."""
-    retry_after = (resp.headers.get("Retry-After") or "").strip()
-    if retry_after:
-        try:
-            return max(0.0, float(retry_after))
-        except ValueError:
-            pass
-        try:
-            target = parsedate_to_datetime(retry_after)
-            if target.tzinfo is None:
-                target = target.replace(tzinfo=timezone.utc)
-            return max(0.0, (target - datetime.now(timezone.utc)).total_seconds())
-        except (TypeError, ValueError):
-            pass
-    return RETRY_BACKOFF_BASE * (attempt + 1)
+    return _client.retry_wait(resp, attempt, RETRY_BACKOFF_BASE)
 
 
 def describe_error(resp: requests.Response) -> str:
-    try:
-        body = resp.json()
-        msg = body.get("message") or body.get("error")
-        return f"HTTP {resp.status_code} \u2014 {msg}" if msg else f"HTTP {resp.status_code}"
-    except Exception:
-        return f"HTTP {resp.status_code}"
+    return _client.describe_error(resp)
 
 
 def fetch_producer(session: requests.Session, producer_id: str, delay: float, rate_limiter: RateLimiter | None = None) -> requests.Response:
-    """GET producer details, retrying with backoff on RETRYABLE_CODES."""
-    if rate_limiter:
-        rate_limiter.acquire()
-    resp = session.get(API_URL.format(id=producer_id), timeout=15)
-    retries = 0
-    while resp.status_code in RETRYABLE_CODES and retries < MAX_RETRIES:
-        wait = retry_wait(resp, retries)
-        logger.info(f"  ({describe_error(resp)}, waiting {wait:.0f}s)")
-        time.sleep(wait)
-        if rate_limiter:
-            rate_limiter.acquire()
-        resp = session.get(API_URL.format(id=producer_id), timeout=15)
-        retries += 1
-    return resp
+    """GET producer details, retrying with backoff on retryable codes.
+
+    Auth failures (401, or 403 without a server key) are NOT retried.
+    """
+    return _client.fetch_with_retry(
+        session,
+        API_URL.format(id=producer_id),
+        max_retries=MAX_RETRIES,
+        backoff_base=RETRY_BACKOFF_BASE,
+        server_key=SERVER_KEY,
+        rate_limiter=rate_limiter,
+        on_retry=lambda resp, wait: logger.info(
+            f"  ({describe_error(resp)}, waiting {wait:.0f}s)"
+        ),
+    )
 
 
 # --- File I/O ---
 
 def load_file(path: Path) -> str:
-    try:
-        return path.read_text(encoding="utf-8-sig")
-    except UnicodeDecodeError:
-        return path.read_text(encoding="latin-1")
+    return _yaml.load_file(path)
 
 
 def detect_line_ending(path: Path) -> str:
-    raw = path.read_bytes()
-    return "\r\n" if b"\r\n" in raw else "\n"
+    return _yaml.detect_line_ending(path)
 
 
 def write_text_preserving_line_ending(path: Path, content: str, line_ending: str) -> None:
-    normalized = content.replace("\r\n", "\n").replace("\r", "\n")
-    final = normalized.replace("\n", line_ending) if line_ending != "\n" else normalized
-    path.write_text(final, encoding="utf-8", newline="")
+    return _yaml.write_text_preserving_line_ending(path, content, line_ending)
 
 
 # --- Frontmatter Parsing ---
 
 def split_frontmatter(content: str) -> tuple[str, str] | None:
-    m = FRONTMATTER_RE.match(content)
-    if not m:
-        return None
-    return m.group("fm"), content[m.end():]
+    return _yaml.split_frontmatter(content)
 
 
 def extract_mal_id(content: str) -> str | None:
@@ -203,72 +181,21 @@ def extract_mal_id(content: str) -> str | None:
 
 
 def parse_yaml_frontmatter(yaml_str: str) -> dict:
-    meta: dict[str, object] = {}
-    current_key: str | None = None
-    for raw_line in yaml_str.splitlines():
-        line = raw_line.strip()
-        if not line:
-            continue
-        if line.startswith("-") and current_key:
-            val = line[1:].strip()
-            if isinstance(meta.get(current_key), list):
-                meta[current_key].append(val)
-            else:
-                meta[current_key] = [val]
-        elif ":" in line:
-            key, val = line.split(":", 1)
-            key = key.strip()
-            val = val.strip()
-            if val == "[]":
-                meta[key] = []
-            elif val == "":
-                meta[key] = ""
-            else:
-                meta[key] = val
-            current_key = key
-    return meta
+    return _yaml.parse_yaml_frontmatter(yaml_str)
 
 
 def dump_yaml_frontmatter(meta: dict) -> str:
-    lines = ["---"]
-    for k, v in meta.items():
-        if isinstance(v, list):
-            if not v:
-                lines.append(f"{k}: []")
-            else:
-                lines.append(f"{k}:")
-                for item in v:
-                    lines.append(f"  - {item}")
-        else:
-            if v in ("", None):
-                lines.append(f"{k}: ")
-            else:
-                lines.append(f"{k}: {v}")
-    lines.append("---")
-    return "\n".join(lines) + "\n"
+    return _yaml.dump_yaml_frontmatter(meta)
 
 
 # --- Value Extraction ---
 
 def normalize_date_string(value: str) -> str:
-    value = value.strip()
-    if re.fullmatch(r"\d{4}", value):
-        return f"{value}-01-01"
-    return value[:10]
+    return _yaml.normalize_date_string(value)
 
 
 def parse_date_value(value) -> str:
-    if not value:
-        return ""
-    if isinstance(value, str):
-        return normalize_date_string(value)
-    if isinstance(value, dict):
-        for key in ("from", "date", "start", "year"):
-            v = value.get(key)
-            if isinstance(v, str) and v:
-                return normalize_date_string(v)
-        return ""
-    return normalize_date_string(str(value))
+    return _yaml.parse_date_value(value)
 
 
 def extract_founded_date(api_data: dict) -> str:
@@ -291,15 +218,11 @@ def extract_picture_url(api_data: dict) -> str:
 
 
 def normalize_value(val) -> list[str]:
-    if isinstance(val, list):
-        return sorted(str(x).strip() for x in val)
-    return [str(val).strip()] if val not in (None, "") else []
+    return _yaml.normalize_value(val)
 
 
 def format_value(val) -> str:
-    if isinstance(val, list):
-        return ", ".join(val) if val else "(none)"
-    return str(val) if val not in (None, "") else "(none)"
+    return _yaml.format_value(val)
 
 
 # --- Field Alias Handling ---
@@ -377,34 +300,19 @@ def process_file(path: Path, api_data: dict, config: SyncConfig) -> list[Change]
 # --- Log Management ---
 
 def load_log(path: Path) -> set[str]:
-    if not path.exists():
-        return set()
-    return {line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()}
+    return _logs.load_log(path)
 
 
 def write_log(path: Path, items: set[str]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("\n".join(sorted(items)) + "\n", encoding="utf-8")
+    return _logs.write_log(path, items)
 
 
 # --- Report ---
 
 def write_changes_report(all_changes: list[tuple[str, list[Change]]], summary: str = "") -> Path:
-    lines = [f"# Studio Metadata Changes — {datetime.now().strftime('%Y-%m-%d %H:%M')}", ""]
-    if summary:
-        lines.append(summary)
-        lines.append("")
-    lines.append(f"**{len(all_changes)} entries with changes**")
-    lines.append("")
-    for name, changes in all_changes:
-        lines.append(f"## {name}")
-        for field_name, old, new in changes:
-            lines.append(f"- **{field_name}**: {old} → {new}")
-        lines.append("")
-    UPDATES_DIR.mkdir(parents=True, exist_ok=True)
-    report_path = UPDATES_DIR / "_changes_report.md"
-    report_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    return report_path
+    return _logs.write_changes_report(
+        UPDATES_DIR, "Studio Metadata Changes", "entries", all_changes, summary
+    )
 
 
 # --- Sync Orchestration ---
@@ -605,6 +513,11 @@ def main(argv: list[str] | None = None) -> int:
 
     print("Studio Metadata Sync — Tenrai API")
     print("=" * 50)
+    print(tier_banner())
+    if not SERVER_KEY:
+        print("Hint: copy .env.example to .env and set TENRAI_SERVER_KEY for the")
+        print("      server-key tier. Public tier works but is rate-limited sooner.")
+        print("      Offline checks only: pytest tests/ + python validate_vault.py.")
 
     if not STUDIO_DIR.exists():
         print(f"[ERROR] Studio folder not found: {STUDIO_DIR}")
@@ -699,6 +612,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Outputs: {UPDATES_DIR}")
     else:
         print("Finished. No changes found.")
+    if still_failed and not SERVER_KEY:
+        print("Hint: failures without TENRAI_SERVER_KEY are often HTTP 401/403.")
+        print("      Set TENRAI_SERVER_KEY in .env (see .env.example) and retry.")
 
     elapsed = time.monotonic() - start_time
     print(f"Elapsed: {elapsed:.1f}s ({len(pending)} files, {len(all_changes)} changed)")

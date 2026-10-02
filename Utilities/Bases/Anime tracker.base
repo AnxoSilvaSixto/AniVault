@@ -35,9 +35,6 @@ views:
     image: note.Cover
   - type: table
     name: Searcher
-    filters:
-      and:
-        - Genre.contains(link("Romance"))
     order:
       - file.name
       - Rating

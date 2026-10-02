@@ -13,9 +13,10 @@ Genre:
   - "[[Suspense]]"
 Themes:
   - "[[Time Travel]]"
-Demographic: "[[Shounen]]"
-Cover: "https://cdn.myanimelist.net/images/anime/1120/120796.jpg"
-MAL: "https://myanimelist.net/anime/47194"
+Demographic:
+  - "[[Shounen]]"
+Cover: https://cdn.myanimelist.net/images/anime/1120/120796.jpg
+MAL: https://myanimelist.net/anime/47194
 Rating:
 ---
 > [!summary] Synopsis

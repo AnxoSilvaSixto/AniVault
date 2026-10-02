@@ -9,10 +9,11 @@ Studio:
 Source: "[[Manga]]"
 Genre:
   - "[[Fantasy]]"
-Themes:
-Demographic: "[[Seinen]]"
-Cover: "https://cdn.myanimelist.net/images/anime/1726/155542.jpg"
-MAL: "https://myanimelist.net/anime/51553"
+Themes: []
+Demographic:
+  - "[[Seinen]]"
+Cover: https://cdn.myanimelist.net/images/anime/1726/155542.jpg
+MAL: https://myanimelist.net/anime/51553
 Rating:
 ---
 > [!summary] Synopsis

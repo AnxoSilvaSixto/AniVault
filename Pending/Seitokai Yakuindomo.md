@@ -12,9 +12,10 @@ Genre:
 Themes:
   - "[[Gag Humor]]"
   - "[[School]]"
-Demographic: "[[Shounen]]"
-Cover: "https://cdn.myanimelist.net/images/anime/4/75550.jpg"
-MAL: "https://myanimelist.net/anime/8675"
+Demographic:
+  - "[[Shounen]]"
+Cover: https://cdn.myanimelist.net/images/anime/4/75550.jpg
+MAL: https://myanimelist.net/anime/8675
 Rating:
 ---
 > [!summary] Synopsis

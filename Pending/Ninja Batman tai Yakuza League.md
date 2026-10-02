@@ -12,9 +12,9 @@ Genre:
 Themes:
   - "[[Martial Arts]]"
   - "[[Samurai]]"
-Demographic:
+Demographic: []
 Cover:
-MAL: "https://myanimelist.net/anime/58964"
+MAL: https://myanimelist.net/anime/58964
 Rating:
 ---
 > [!summary] Synopsis

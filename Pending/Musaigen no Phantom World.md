@@ -15,9 +15,9 @@ Genre:
 Themes:
   - "[[School]]"
   - "[[Urban Fantasy]]"
-Demographic:
-Cover: "https://cdn.myanimelist.net/images/anime/4/78339.jpg"
-MAL: "https://myanimelist.net/anime/31442"
+Demographic: []
+Cover: https://cdn.myanimelist.net/images/anime/4/78339.jpg
+MAL: https://myanimelist.net/anime/31442
 Rating:
 ---
 > [!summary] Synopsis

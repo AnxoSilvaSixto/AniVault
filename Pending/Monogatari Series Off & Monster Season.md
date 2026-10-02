@@ -13,9 +13,9 @@ Genre:
   - "[[Supernatural]]"
 Themes:
   - "[[Vampire]]"
-Demographic:
-Cover: "https://cdn.myanimelist.net/images/anime/1142/146776.jpg"
-MAL: "https://myanimelist.net/anime/57864"
+Demographic: []
+Cover: https://cdn.myanimelist.net/images/anime/1142/146776.jpg
+MAL: https://myanimelist.net/anime/57864
 Rating:
 ---
 > [!summary] Synopsis

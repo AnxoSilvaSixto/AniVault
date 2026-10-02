@@ -1,7 +1,4 @@
 ```dataviewjs
-// ========================================
-// CONFIGURATION
-// ========================================
 const CONFIG = {
     folder: '"Anime"',
     property: "Themes",
@@ -25,9 +22,6 @@ const COLORS = [
 
 const OTHERS_COLOR = { bg: 'rgba(150, 150, 150, 0.8)', border: 'rgba(150, 150, 150, 1)' };
 
-// ========================================
-// DATA COLLECTION
-// ========================================
 const pages = dv.pages(CONFIG.folder);
 const counts = {};
 
@@ -51,16 +45,12 @@ pages.forEach(page => {
     });
 });
 
-// ========================================
-// DATA PROCESSING
-// ========================================
 const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
 const totalUnique = sorted.length;
 const topItems = sorted.slice(0, CONFIG.topN);
 const remainingItems = sorted.slice(CONFIG.topN);
 const othersCount = remainingItems.reduce((sum, item) => sum + item[1], 0);
 
-// Build chart data
 let labels = topItems.map(item => item[0]);
 let values = topItems.map(item => item[1]);
 
@@ -79,9 +69,6 @@ if (CONFIG.includeOthers && othersCount > 0) {
     borderColors.push(OTHERS_COLOR.border);
 }
 
-// ========================================
-// CHART CONFIGURATION
-// ========================================
 const chartData = {
     type: 'doughnut',
     data: {
@@ -189,9 +176,6 @@ const chartData = {
     }
 };
 
-// ========================================
-// RENDER CHART
-// ========================================
 const chartContainer = this.container.createEl('div');
 chartContainer.style.height = '500px'; 
 chartContainer.style.position = 'relative';

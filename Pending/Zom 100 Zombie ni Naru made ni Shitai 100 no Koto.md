@@ -13,9 +13,10 @@ Genre:
 Themes:
   - "[[Adult Cast]]"
   - "[[Survival]]"
-Demographic: "[[Seinen]]"
-Cover: "https://cdn.myanimelist.net/images/anime/1384/136408.jpg"
-MAL: "https://myanimelist.net/anime/54112"
+Demographic:
+  - "[[Seinen]]"
+Cover: https://cdn.myanimelist.net/images/anime/1384/136408.jpg
+MAL: https://myanimelist.net/anime/54112
 Rating:
 ---
 > [!summary] Synopsis

@@ -2561,25 +2561,61 @@ function resolveLinkIssues(ctx, sourcePath, candidate) {
     return issues;
   }
   if (headingPart) {
-    const targetCache = ctx.metadataCache.getFileCache(
-      ctx.markdownFiles.find((file) => file.path === resolvedPath)
-    );
+    const targetFile = ctx.markdownFiles.find((file) => file.path === resolvedPath);
+    const targetCache = targetFile ? ctx.metadataCache.getFileCache(targetFile) : null;
     const isBlock = headingPart.startsWith("^");
-    const found = isBlock ? Object.keys((_b = targetCache == null ? void 0 : targetCache.blocks) != null ? _b : {}).some(
+    if (!targetCache) {
+      const issue = makeIssue(
+        sourcePath,
+        candidate,
+        resolvedPath,
+        "info",
+        `Target metadata not available yet for "#${headingPart}" in ${resolvedPath}`,
+        candidate.isEmbed ? "embed" : candidate.isMarkdown ? "markdown-link" : "heading",
+        isBlock ? "block" : "heading",
+        {
+          title: "Link could not be verified",
+          why: "The target exists, but its heading and block metadata could not be read.",
+          nextStep: "Wait for indexing to finish, then run the scan again."
+        }
+      );
+      issue.evidence.reason = "target-metadata-unavailable";
+      issues.push(issue);
+      return issues;
+    }
+    const found = isBlock ? Object.keys((_b = targetCache.blocks) != null ? _b : {}).some(
       (id) => id.toLowerCase() === headingPart.slice(1).toLowerCase()
-    ) : ((_c = targetCache == null ? void 0 : targetCache.headings) != null ? _c : []).some(
+    ) : ((_c = targetCache.headings) != null ? _c : []).some(
       (heading) => slugifyHeading(heading.heading) === slugifyHeading(headingPart)
     );
-    if (!found) {
+    if (!found && isBlock) {
+      issues.push(
+        makeIssue(
+          sourcePath,
+          candidate,
+          resolvedPath,
+          "info",
+          `Block "#${headingPart}" not found among explicit block ids in ${resolvedPath}`,
+          candidate.isEmbed ? "embed" : candidate.isMarkdown ? "markdown-link" : "heading",
+          "block",
+          {
+            title: "Unverified block reference",
+            why: `The target note does not declare the block id "#${headingPart}" explicitly.`,
+            nextStep: "Open the target note and confirm the block reference works; update or remove the link if the block is gone.",
+            caveat: "Obsidian's implicit block ids are not stored in note metadata, so this reference may still resolve."
+          }
+        )
+      );
+    } else if (!found) {
       issues.push(
         makeIssue(
           sourcePath,
           candidate,
           resolvedPath,
           "warning",
-          `${isBlock ? "Block" : "Heading"} "#${headingPart}" not found in ${resolvedPath}`,
+          `Heading "#${headingPart}" not found in ${resolvedPath}`,
           candidate.isEmbed ? "embed" : candidate.isMarkdown ? "markdown-link" : "heading",
-          isBlock ? "block" : "heading"
+          "heading"
         )
       );
     }
@@ -2662,10 +2698,10 @@ function findResolvedPath(ctx, linkDestination, sourcePath) {
   )[0]) != null ? _c : null;
 }
 function slugifyHeading(heading) {
-  return heading.toLowerCase().trim().replace(/[^\p{L}\p{N}_\s-]/gu, "").replace(/\s+/g, "-");
+  return heading.toLowerCase().trim().replace(/[^\p{L}\p{N}_\s-]/gu, " ").replace(/\s+/g, "-").replace(/^-+|-+$/g, "");
 }
-function makeIssue(sourcePath, candidate, targetPath, severity, message, linkKind, referenceKind = "heading") {
-  var _a;
+function makeIssue(sourcePath, candidate, targetPath, severity, message, linkKind, referenceKind = "heading", unverified) {
+  var _a, _b;
   const fragmentAt = candidate.linkText.indexOf("#");
   const rawFragment = fragmentAt === -1 ? null : candidate.linkText.slice(fragmentAt + 1);
   const resolvedFragment = (_a = candidate.destination) == null ? void 0 : _a.fragment;
@@ -2673,12 +2709,12 @@ function makeIssue(sourcePath, candidate, targetPath, severity, message, linkKin
   const issue = {
     scannerId: "broken-links",
     severity,
-    title: "Broken link",
+    title: (_b = unverified == null ? void 0 : unverified.title) != null ? _b : "Broken link",
     message,
     primaryPath: sourcePath,
     relatedPaths: [targetPath],
     evidence: { link: candidate.linkText, target: targetPath, linkKind },
-    ...describeFinding(
+    ...unverified ? describeFinding("unverified", unverified.why, unverified.nextStep, unverified.caveat) : describeFinding(
       "confirmed",
       severity === "error" ? "The link target could not be resolved in the vault." : `The target note exists, but the referenced ${referenceKind} was not found.`,
       severity === "error" ? "Correct the target or remove the link from the source note." : `Correct the ${referenceKind} reference or remove it from the source note.`
@@ -2689,7 +2725,7 @@ function makeIssue(sourcePath, candidate, targetPath, severity, message, linkKin
       ...fragmentIdentity
     })
   };
-  if (candidate.fix) {
+  if (candidate.fix && !unverified) {
     const fix = candidate.fix;
     issue.fixAction = {
       kind: "remove-link-text",
@@ -3244,15 +3280,22 @@ function isExternalUrl(text3) {
 function extractBareUrls(content3) {
   const urls = [];
   const seen = /* @__PURE__ */ new Set();
-  const body = stripIgnoredMarkdownRegions(stripFrontmatter(content3));
+  const body = stripIgnoredMarkdownRegions(stripFrontmatter(content3)).replace(/!?\[[^\]\n]*\]\([ \t]*(?:<[^>\n]*>|[^)\s]*)[ \t]*\)/g, "");
   const urlPattern = /https?:\/\/[^\s<>"']+/gi;
   for (const match of body.matchAll(urlPattern)) {
-    const url = trimUrlBoundary(match[0]);
+    const url = trimUrlBoundary(cutAtNonUrlCharacter(match[0]));
     if (!url || seen.has(url)) continue;
     seen.add(url);
     urls.push(url);
   }
   return urls;
+}
+var urlCharacter = /[A-Za-z0-9\-._~!$&'()*+,;=:/?#%[\]@\p{L}\p{N}\p{M}]/u;
+function cutAtNonUrlCharacter(url) {
+  for (let index2 = 0; index2 < url.length; index2 += 1) {
+    if (!urlCharacter.test(url[index2])) return url.slice(0, index2);
+  }
+  return url;
 }
 function stripFrontmatter(content3) {
   const match = /^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/.exec(content3);
@@ -3261,14 +3304,18 @@ function stripFrontmatter(content3) {
 function stripIgnoredMarkdownRegions(content3) {
   return content3.replace(/<!--[\s\S]*?-->/g, "").replace(/^[ \t]*(`{3,}|~{3,})[^\r\n]*\r?\n[\s\S]*?^[ \t]*\1[^\r\n]*$/gm, "").replace(/(`+)[^\r\n]*?\1/g, "");
 }
+var TRAILING_URL_PUNCTUATION = new Set(".,:;!?*~_");
 function trimUrlBoundary(url) {
   var _a, _b;
   let trimmed = url;
-  while (/[),.;:!?]$/.test(trimmed)) {
-    if (trimmed.endsWith(")")) {
+  while (trimmed.length > 0) {
+    const last = trimmed[trimmed.length - 1];
+    if (last === ")") {
       const opens = ((_a = trimmed.match(/\(/g)) != null ? _a : []).length;
       const closes = ((_b = trimmed.match(/\)/g)) != null ? _b : []).length;
       if (closes <= opens) break;
+    } else if (!TRAILING_URL_PUNCTUATION.has(last)) {
+      break;
     }
     trimmed = trimmed.slice(0, -1);
   }
@@ -3881,8 +3928,19 @@ var tagUsageScanner = {
         tagPaths.set(tag, paths);
       }
     }
+    const activeAncestors = /* @__PURE__ */ new Set();
+    for (const [tag, count] of tagCounts) {
+      if (count < ctx.lowUsageTagThreshold) continue;
+      const segments = tag.split("/");
+      segments.pop();
+      while (segments.length > 0) {
+        activeAncestors.add(segments.join("/"));
+        segments.pop();
+      }
+    }
     for (const [tag, count] of tagCounts) {
       if (count >= ctx.lowUsageTagThreshold) continue;
+      if (activeAncestors.has(tag)) continue;
       if (watchedSet.has(tag)) continue;
       const paths = Array.from((_c = tagPaths.get(tag)) != null ? _c : []).sort();
       issues.push({
@@ -3908,6 +3966,7 @@ var tagUsageScanner = {
     for (const watchedTag of watchedTags) {
       const count = (_d = tagCounts.get(watchedTag)) != null ? _d : 0;
       if (count > 0) continue;
+      if (hasDescendantTag(tagCounts, watchedTag)) continue;
       issues.push({
         scannerId: "tag-usage",
         severity: "info",
@@ -3930,6 +3989,12 @@ var tagUsageScanner = {
     return issues;
   }
 };
+function hasDescendantTag(tagCounts, tag) {
+  for (const knownTag of tagCounts.keys()) {
+    if (knownTag.startsWith(`${tag}/`)) return true;
+  }
+  return false;
+}
 function collectTags(cache) {
   var _a;
   const tags = [];
@@ -9452,62 +9517,168 @@ function wikiLinkRanges(content3) {
 }
 
 // src/fix/fix-executor.ts
-async function executeFixAction(app, action) {
+async function executeFixAction(app, action, fence) {
   var _a;
   switch (action.kind) {
     case "trash-file":
-      return trashFiles(app, action.targetPaths);
+      return trashFiles(app, action.targetPaths, fence);
     case "remove-link-text": {
       const source = action.targetPaths[0];
       if (action.original !== void 0) {
-        return replaceLinkText(app, source, action.original, (_a = action.replacement) != null ? _a : "");
+        return replaceLinkText(app, source, action.original, (_a = action.replacement) != null ? _a : "", void 0, fence);
       }
-      return removeLinkText(app, source, action.linkText);
+      return removeLinkText(app, source, action.linkText, fence);
     }
     default:
       return 0;
   }
 }
-async function trashFiles(app, paths) {
+async function trashFiles(app, paths, fence) {
   let count = 0;
   for (const path of paths) {
+    if (fence && !fence.ready) break;
     const file = app.vault.getAbstractFileByPath(path);
-    if (file) {
-      await app.fileManager.trashFile(file);
+    if (file instanceof import_obsidian8.TFile) {
+      const ready = fence ? await fence.mutate(file, null, () => app.fileManager.trashFile(file)) : (await app.fileManager.trashFile(file), true);
       count++;
+      if (!ready) break;
     }
   }
   return count;
 }
-async function removeLinkText(app, sourcePath, linkText) {
-  return replaceLinkText(app, sourcePath, void 0, "", linkText);
+async function removeLinkText(app, sourcePath, linkText, fence) {
+  return replaceLinkText(app, sourcePath, void 0, "", linkText, fence);
 }
-async function replaceLinkText(app, sourcePath, original, replacement, legacyLinkText) {
+async function replaceLinkText(app, sourcePath, original, replacement, legacyLinkText, fence) {
   const file = app.vault.getAbstractFileByPath(sourcePath);
-  if (!(file instanceof import_obsidian8.TFile)) return 0;
-  const content3 = await app.vault.read(file);
-  const wiki = original === void 0 || /^!?\[\[/.test(original);
-  const ranges = (wiki ? wikiLinkRanges(content3) : markdownLinks(content3)).filter(({ start, end }) => {
-    const source = content3.slice(start, end);
-    return original !== void 0 ? source === original : source === `[[${legacyLinkText}]]` || source === `![[${legacyLinkText}]]`;
-  }).sort((left, right) => left.start - right.start);
-  let cursor = 0;
-  let updated = "";
-  for (const { start, end } of ranges) {
-    if (start < cursor) continue;
-    updated += content3.slice(cursor, start) + replacement;
-    cursor = end;
-  }
-  updated += content3.slice(cursor);
-  if (updated === content3) return 0;
-  await app.vault.modify(file, updated);
-  return 1;
+  if (!(file instanceof import_obsidian8.TFile) || fence && !fence.ready) return 0;
+  let affectedCount = 0;
+  const write = async (expectContent) => {
+    await app.vault.process(file, (content3) => {
+      const wiki = original === void 0 || /^!?\[\[/.test(original);
+      const ranges = (wiki ? wikiLinkRanges(content3) : markdownLinks(content3)).filter(({ start, end }) => {
+        const source = content3.slice(start, end);
+        return original !== void 0 ? source === original : source === `[[${legacyLinkText}]]` || source === `![[${legacyLinkText}]]`;
+      }).sort((left, right) => left.start - right.start);
+      let cursor = 0;
+      let updated = "";
+      for (const { start, end } of ranges) {
+        if (start < cursor) continue;
+        updated += content3.slice(cursor, start) + replacement;
+        cursor = end;
+      }
+      updated += content3.slice(cursor);
+      if (updated !== content3) {
+        affectedCount = 1;
+        expectContent(updated);
+      }
+      return updated;
+    });
+  };
+  if (fence) await fence.mutate(file, void 0, write);
+  else await write(() => {
+  });
+  return affectedCount;
 }
+
+// src/fix/metadata-write-fence.ts
+var METADATA_NOT_READY = "Changes may already be saved, but metadata synchronization did not complete. Remaining fixes in this batch were skipped. Run a fresh scan and review saved contents before retrying.";
+var MetadataWriteFence = class {
+  constructor(app, timeoutMs = 1e4) {
+    this.app = app;
+    this.timeoutMs = timeoutMs;
+    this.poisoned = false;
+    this.disposed = false;
+    this.cancel = /* @__PURE__ */ new Set();
+  }
+  get ready() {
+    return !this.poisoned && !this.disposed;
+  }
+  async mutate(file, content3, write) {
+    if (!this.ready) return false;
+    const path = file.path;
+    let relevant = false;
+    let resolved = false;
+    let writeDone = false;
+    let done = false;
+    let settle;
+    const waiting = new Promise((resolve) => {
+      settle = resolve;
+    });
+    const metadataRefs = [];
+    const vaultRefs = [];
+    let timer;
+    const finish = (success) => {
+      if (done) return;
+      done = true;
+      if (!success) this.poisoned = true;
+      for (const ref of metadataRefs) this.app.metadataCache.offref(ref);
+      for (const ref of vaultRefs) this.app.vault.offref(ref);
+      if (timer !== void 0) window.clearTimeout(timer);
+      this.cancel.delete(cancel);
+      settle(success);
+    };
+    const cancel = () => finish(false);
+    const check = () => {
+      if (!writeDone || !relevant || !resolved) return;
+      if (content3 === null && this.app.vault.getAbstractFileByPath(path)) return;
+      finish(true);
+    };
+    this.cancel.add(cancel);
+    metadataRefs.push(this.app.metadataCache.on("changed", (changed, data) => {
+      if (content3 === null || changed.path !== path) return;
+      relevant = data === content3;
+      resolved = false;
+    }));
+    metadataRefs.push(this.app.metadataCache.on("deleted", (deleted) => {
+      if (deleted.path !== path) return;
+      relevant = content3 === null;
+      resolved = false;
+    }));
+    if (content3 === null && file.extension !== "md") {
+      vaultRefs.push(this.app.vault.on("delete", (deleted) => {
+        if (deleted.path !== path) return;
+        relevant = true;
+        resolved = false;
+      }));
+    }
+    metadataRefs.push(this.app.metadataCache.on("resolved", () => {
+      if (!relevant) return;
+      resolved = true;
+      check();
+    }));
+    timer = window.setTimeout(cancel, this.timeoutMs);
+    try {
+      await write((updated) => {
+        content3 = updated;
+        relevant = false;
+        resolved = false;
+      });
+      writeDone = true;
+      if (content3 === void 0) finish(true);
+      else check();
+      return await waiting;
+    } catch (error) {
+      finish(false);
+      throw error;
+    }
+  }
+  dispose() {
+    this.disposed = true;
+    for (const cancel of [...this.cancel]) cancel();
+  }
+};
 
 // src/fix/fix-runner.ts
 async function runFixBatch(issues, decisions, dependencies) {
+  var _a, _b, _c;
   const frozenSettings = structuredClone(dependencies.settings());
-  const scanOnce = () => dependencies.scan(structuredClone(frozenSettings));
+  let verificationProblem;
+  const scanOnce = () => {
+    var _a2;
+    if (verificationProblem || ((_a2 = dependencies.canScan) == null ? void 0 : _a2.call(dependencies)) === false) return Promise.resolve(null);
+    return dependencies.scan(structuredClone(frozenSettings));
+  };
   const decisionsByFingerprint = new Map(
     decisions.map((decision) => [decision.fingerprint, decision])
   );
@@ -9515,6 +9686,10 @@ async function runFixBatch(issues, decisions, dependencies) {
   const pending = [];
   let scannedDuringBatch = false;
   for (const [index2, issue] of issues.entries()) {
+    if (verificationProblem || ((_a = dependencies.canScan) == null ? void 0 : _a.call(dependencies)) === false) {
+      outcomes[index2] = skipped(issue, METADATA_NOT_READY);
+      continue;
+    }
     if (isBlockedFromExecution(issue)) {
       outcomes[index2] = skipped(
         issue,
@@ -9551,12 +9726,17 @@ async function runFixBatch(issues, decisions, dependencies) {
       continue;
     }
     try {
+      const raw = await dependencies.execute(freshAction);
+      const execution = typeof raw === "number" ? { affectedCount: raw, verificationReady: true } : raw;
       pending.push({
         index: index2,
         fingerprint: issue.fingerprint,
         affectedPaths: [...freshAction.targetPaths],
-        affectedCount: await dependencies.execute(freshAction)
+        affectedCount: execution.affectedCount
       });
+      if (!execution.verificationReady) {
+        verificationProblem = (_b = execution.verificationMessage) != null ? _b : METADATA_NOT_READY;
+      }
     } catch (error) {
       outcomes[index2] = {
         fingerprint: issue.fingerprint,
@@ -9574,7 +9754,7 @@ async function runFixBatch(issues, decisions, dependencies) {
         fingerprint: action.fingerprint,
         outcome: "failed",
         phase: "verification",
-        message: "The final verification scan did not complete.",
+        message: verificationProblem != null ? verificationProblem : ((_c = dependencies.canScan) == null ? void 0 : _c.call(dependencies)) === false ? METADATA_NOT_READY : "The final verification scan did not complete.",
         affectedPaths: action.affectedPaths
       };
     }
@@ -9613,7 +9793,7 @@ function skipped(issue, message) {
 
 // src/snapshot/scan-snapshot.ts
 var SNAPSHOT_SCHEMA_VERSION = 1;
-var COMPARISON_VERSION = 3;
+var COMPARISON_VERSION = 4;
 function createScanSnapshot(result, scanProfile, toolVersion, createdAt = Date.now()) {
   return {
     schemaVersion: SNAPSHOT_SCHEMA_VERSION,
@@ -10169,6 +10349,7 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
       setTimeout: (callback, delayMs) => window.setTimeout(callback, delayMs),
       clearTimeout: (timeoutId) => window.clearTimeout(timeoutId)
     });
+    this.activeMetadataFences = /* @__PURE__ */ new Set();
   }
   async onload() {
     await this.loadSettings();
@@ -10202,6 +10383,8 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
     this.addRibbonIcon("shield-check", "Run scan", () => this.runScan());
   }
   onunload() {
+    for (const fence of this.activeMetadataFences) fence.dispose();
+    this.activeMetadataFences.clear();
   }
   async loadSettings() {
     const parsed = parsePluginData(await this.loadData());
@@ -10336,11 +10519,25 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
         await this.enqueueOperation(async () => {
           const fixSettings = structuredClone(this.settings);
           const scanProfile = await createScanProfile(fixSettings);
-          const batch = await runFixBatch(issues, decisions, {
-            settings: () => fixSettings,
-            scan: (batchSettings) => this.scan(view, batchSettings),
-            execute: (action) => executeFixAction(this.app, action)
-          });
+          const fence = new MetadataWriteFence(this.app);
+          this.activeMetadataFences.add(fence);
+          const batch = await (async () => {
+            try {
+              return await runFixBatch(issues, decisions, {
+                settings: () => fixSettings,
+                scan: (batchSettings) => this.scan(view, batchSettings),
+                canScan: () => fence.ready,
+                execute: async (action) => ({
+                  affectedCount: await executeFixAction(this.app, action, fence),
+                  verificationReady: fence.ready,
+                  verificationMessage: fence.ready ? void 0 : METADATA_NOT_READY
+                })
+              });
+            } finally {
+              fence.dispose();
+              this.activeMetadataFences.delete(fence);
+            }
+          })();
           let acceptanceFailed = false;
           let acceptanceError;
           if (batch.verificationResult) {

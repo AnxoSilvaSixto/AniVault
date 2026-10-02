@@ -12,9 +12,10 @@ Genre:
   - "[[Romance]]"
 Themes:
   - "[[Adult Cast]]"
-Demographic: "[[Seinen]]"
-Cover: "https://cdn.myanimelist.net/images/anime/1019/98620.jpg"
-MAL: "https://myanimelist.net/anime/7647"
+Demographic:
+  - "[[Seinen]]"
+Cover: https://cdn.myanimelist.net/images/anime/1019/98620.jpg
+MAL: https://myanimelist.net/anime/7647
 Rating:
 ---
 > [!summary] Synopsis

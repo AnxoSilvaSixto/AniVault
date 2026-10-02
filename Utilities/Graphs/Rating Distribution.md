@@ -1,7 +1,4 @@
 ```dataviewjs
-// ========================================
-// CONFIGURATION
-// ========================================
 const CONFIG = {
     folder: '"Anime"',
     field: 'Rating',
@@ -11,9 +8,6 @@ const CONFIG = {
     textColor: '#888'
 };
 
-// ========================================
-// HELPER FUNCTIONS
-// ========================================
 function calculateMedian(numbers) {
     const sorted = numbers.slice().sort((a, b) => a - b);
     const middle = Math.floor(sorted.length / 2);
@@ -41,9 +35,6 @@ function calculateMode(numbers) {
     return modes.length === numbers.length ? [] : modes;
 }
 
-// ========================================
-// DATA COLLECTION
-// ========================================
 const pages = dv.pages(CONFIG.folder).where(p => p[CONFIG.field] != null);
 const totalCount = pages.length;
 
@@ -52,21 +43,16 @@ if (totalCount === 0) {
 } else {
     const ratingsArray = pages.array().map(p => p[CONFIG.field]);
     
-    // ========================================
-    // STATISTICS CALCULATION
-    // ========================================
     const mean = ratingsArray.reduce((a, b) => a + b, 0) / totalCount;
     const median = calculateMedian(ratingsArray);
     const modes = calculateMode(ratingsArray);
     
-    // Distribution counts
     const ratingCounts = {};
     for (let i = 0; i <= 10; i++) ratingCounts[i] = 0;
     ratingsArray.forEach(r => { 
         if (ratingCounts.hasOwnProperty(r)) ratingCounts[r]++; 
     });
     
-    // Find most common rating
     let mostCommonRating = 0;
     let highestCount = 0;
     for (let i = 0; i <= 10; i++) {
@@ -76,17 +62,12 @@ if (totalCount === 0) {
         }
     }
     
-    // Variance and standard deviation
     const variance = ratingsArray.reduce((sq, r) => sq + Math.pow(r - mean, 2), 0) / totalCount;
     const sd = Math.sqrt(variance);
     
-    // ========================================
-    // CHART DATA PREPARATION
-    // ========================================
     const labels = Object.keys(ratingCounts);
     const barData = Object.values(ratingCounts);
 
-    // Generate normal distribution curve
     const curvePoints = [];
     const step = 0.1;
     for (let x = 0; x <= 10; x += step) {
@@ -96,9 +77,6 @@ if (totalCount === 0) {
         curvePoints.push({ x: x, y: scaledValue });
     }
 
-    // ========================================
-    // MEAN LINE PLUGIN
-    // ========================================
     const meanLinePlugin = {
         id: 'meanLinePlugin',
         afterDraw(chart) {
@@ -126,9 +104,6 @@ if (totalCount === 0) {
         }
     };
 
-    // ========================================
-    // CHART CONFIGURATION
-    // ========================================
     const chartData = {
         type: 'bar',
         data: {
@@ -237,17 +212,11 @@ if (totalCount === 0) {
         plugins: [meanLinePlugin]
     };
 
-    // ========================================
-    // RENDER CHART
-    // ========================================
     const container = this.container.createEl('div');
     container.style.height = '600px';
     container.style.width = '100%';
     window.renderChart(chartData, container);
     
-    // ========================================
-    // STATISTICS SUMMARY
-    // ========================================
     const summaryText = `
 # 📊 Rating Statistics Summary
 

@@ -13,9 +13,9 @@ Genre:
 Themes:
   - "[[Detective]]"
   - "[[Psychological]]"
-Demographic:
-Cover: "https://cdn.myanimelist.net/images/anime/1417/117422.jpg"
-MAL: "https://myanimelist.net/anime/23283"
+Demographic: []
+Cover: https://cdn.myanimelist.net/images/anime/1417/117422.jpg
+MAL: https://myanimelist.net/anime/23283
 Rating:
 ---
 > [!summary] Synopsis

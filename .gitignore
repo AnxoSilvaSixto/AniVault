@@ -23,6 +23,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.pyc
+.pytest_cache/
+.ruff_cache/
 .venv/
 .env
 

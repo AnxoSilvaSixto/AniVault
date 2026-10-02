@@ -1,12 +1,17 @@
 """Offline tests for vault YAML frontmatter helpers.
 
 Covers the frontmatter split/parse/dump helpers in
-Utilities/Scripts/sync_anime.py and the dependency-free frontmatter
-parser in Utilities/Scripts/validate_vault.py. No network, no writes.
+Utilities/Scripts/sync_anime.py, the dependency-free frontmatter
+parser in Utilities/Scripts/validate_vault.py, and the strict
+PyYAML helper in Utilities/Scripts/vault_yaml.py. No network, no writes
+(except tmp_path fixtures).
 """
 
+import pytest
 import sync_anime
 import validate_vault
+import vault_yaml
+import yaml
 
 SAMPLE_FM = """---
 ID: 482
@@ -113,3 +118,66 @@ class TestValidatorFrontmatter:
             '---\nType: "[[TV]]"\n---\n'
         )
         assert meta["Type"] == "[[TV]]"
+
+
+class TestVaultYamlStrict:
+    def test_split_valid_and_body(self):
+        fm, body = vault_yaml.split_frontmatter(SAMPLE_FM)
+        assert "ID: 482" in fm
+        assert body.strip() == "Body text here."
+
+    def test_split_missing_and_crlf(self):
+        assert vault_yaml.split_frontmatter("No frontmatter\n") is None
+        assert vault_yaml.split_frontmatter("---\nunterminated") is None
+        fm, body = vault_yaml.split_frontmatter(SAMPLE_FM.replace("\n", "\r\n"))
+        assert "ID: 482" in fm
+        assert "Body text" in body
+
+    def test_parse_strict_types_and_unquotes(self):
+        meta, body = vault_yaml.parse_frontmatter(SAMPLE_FM)
+        assert meta["ID"] == 482
+        assert meta["Rating"] == 8
+        # Strict YAML unquotes wikilinks (sync_anime keeps them verbatim).
+        assert meta["Type"] == "[[TV]]"
+        assert meta["Studio"] == ["[[MAPPA]]"]
+        assert meta["Themes"] == []
+        assert body.strip() == "Body text here."
+
+    def test_parse_missing_returns_none(self):
+        assert vault_yaml.parse_frontmatter("plain body") is None
+
+    def test_parse_empty_mapping(self):
+        # A comment-only block loads as None -> {} (an empty fence with
+        # no lines is treated as missing, same as validate_vault).
+        meta, _ = vault_yaml.parse_frontmatter("---\n# empty\n---\nbody\n")
+        assert meta == {}
+
+    def test_parse_non_mapping_raises(self):
+        with pytest.raises(TypeError):
+            vault_yaml.parse_frontmatter("---\n- just\n- a\n- list\n---\n")
+
+    def test_parse_bad_yaml_raises(self):
+        with pytest.raises(yaml.YAMLError):
+            vault_yaml.parse_frontmatter("---\nID: [unclosed\n---\n")
+
+    def test_dump_round_trip(self):
+        meta, _ = vault_yaml.parse_frontmatter(SAMPLE_FM)
+        meta2, _ = vault_yaml.parse_frontmatter(
+            vault_yaml.dump_frontmatter(meta) + "Body text here.\n"
+        )
+        assert meta2 == meta
+
+    def test_check_note_ok_and_missing(self, tmp_path):
+        ok = tmp_path / "ok.md"
+        ok.write_text(SAMPLE_FM, encoding="utf-8")
+        assert vault_yaml.check_note(ok) == []
+        bad = tmp_path / "bad.md"
+        bad.write_text("plain body, no fence\n", encoding="utf-8")
+        assert vault_yaml.check_note(bad) != []
+
+    def test_check_tree_collects_errors(self, tmp_path):
+        (tmp_path / "good.md").write_text(SAMPLE_FM, encoding="utf-8")
+        (tmp_path / "bad.md").write_text("---\nID: [unclosed\n---\n", encoding="utf-8")
+        findings = vault_yaml.check_tree(tmp_path)
+        assert len(findings) == 1
+        assert findings[0][0].name == "bad.md"
