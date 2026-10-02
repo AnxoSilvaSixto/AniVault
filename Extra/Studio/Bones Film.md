@@ -4,6 +4,6 @@ Cover: https://cdn.myanimelist.net/s/common/company_logos/2a76e6c4-fb18-4d0d-91c
 MAL: https://myanimelist.net/anime/producer/3045
 ---
 >[!tip] Information
-> Bones Film is an animation production company that was created by separating the production department of Bones.
+> Bones Film is an animation production company that was created by separating the production department of [[Bones]].
 >
 >![[Studio base.base#Bones Film]]
