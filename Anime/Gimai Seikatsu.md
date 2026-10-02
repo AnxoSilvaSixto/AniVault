@@ -21,5 +21,3 @@ Rating: 9
 > Saki, who has worked alone for the sake of her family, doesn't know how to properly rely on others, whereas Yuuta is unsure of how to truly treat her. Standing on fairly equal ground, these two gradually learn the comfort of living together.
 >
 > Their relationship progresses from strangers to friends as the days pass. This is a story that may one day lead to love.
->
-> (Source: MAL News)

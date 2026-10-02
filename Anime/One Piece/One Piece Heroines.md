@@ -18,5 +18,3 @@ Rating: 3
 ---
 >[!summary] Synopsis
 > After failing to stop the thieves due to ill-fitting shoes, Nami storms into the shop where she bought them for a refund. However, the head designer offers to make her a new pair from scratch on one condition: she must walk in their upcoming fashion show.
->
-> (Source: Crunchyroll)

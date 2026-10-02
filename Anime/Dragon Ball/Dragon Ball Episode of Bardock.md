@@ -27,8 +27,6 @@ Prequels:
 > Shown at Jump Festa 2012, held in December, 2011.
 >
 > Bardock, Goku's father, who was supposed to have died when Freeza's attack hit him along with the Planet Vegeta, was sent way back in time where the planet was inhabited by strange creatures. There, he meets Freeza's ancestor, a space pirate named Chilled, and fights him to protect the planet.
->
-> (Source: AniDB)
 <div class="media-grid">
 	<div class="media-column prequels">
 		<h4>Prequels</h4>

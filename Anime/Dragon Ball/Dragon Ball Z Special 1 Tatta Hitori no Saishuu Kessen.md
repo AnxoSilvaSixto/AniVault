@@ -23,8 +23,6 @@ Sequels:
 ---
 > [!summary] Synopsis
 > Bardock, Son Goku's father, is a low-ranking Saiyan soldier who was given the power to see into the future by the last remaining alien on a planet he just destroyed. He witnesses the destruction of his race and must now do his best to stop Frieza's impending massacre.
->
-> (Source: ANN)
 <div class="media-grid">
 	<div class="media-column sequels">
 		<h4>Sequels</h4>

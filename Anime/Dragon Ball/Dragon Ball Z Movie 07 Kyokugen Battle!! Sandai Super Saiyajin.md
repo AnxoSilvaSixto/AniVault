@@ -22,5 +22,3 @@ Rating: 4
 ---
 > [!summary] Synopsis
 > Dr. Gero's Androids #13, #14, and #15 are awakened by the laboratory computers and immediately head to the mall where Goku is shopping. It is up to Goku and his friends to defeat them.
->
-> (Source: ANN, edited)

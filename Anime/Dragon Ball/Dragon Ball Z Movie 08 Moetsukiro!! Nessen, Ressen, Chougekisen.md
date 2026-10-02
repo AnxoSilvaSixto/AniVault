@@ -24,8 +24,6 @@ Sequels:
 ---
 > [!summary] Synopsis
 > As Goku investigates the destruction of the Southern Galaxy, Vegeta is taken to be King of the New Planet Vegeta, and to destroy the Legendary Super Saiyan, Broly.
->
-> (Source: ANN)
 <div class="media-grid">
 	<div class="media-column sequels">
 		<h4>Sequels</h4>

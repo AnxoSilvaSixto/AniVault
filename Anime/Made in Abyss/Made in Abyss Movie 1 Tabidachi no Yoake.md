@@ -26,8 +26,6 @@ Sequels:
 ---
 > [!summary] Synopsis
 > The movie is a compilation of episodes 1-8 of the 2017 television series with new scenes added for the introduction. It covers the period from when Riko descends into the Abyss with her robot companion Reg, reaching the second layer where they meet the White Whistle Ozen who reveals information about Riko's mother.
->
-> (Source: Wikipedia)
 <div class="media-grid">
 	<div class="media-column side-stories">
 		<h4>Alternative Version</h4>

@@ -23,5 +23,3 @@ Rating:
 > Episode 6.5 of Monogatari Series: Off & Monster Season, adapting the short story A Cruel Fairy Tale: The Beautiful Princess.
 
 Once upon a time, there was a true story that happened about 600 years ago. It's a story of a very beautiful girl who lived in a country that no longer exists.
-
-(Source: Crunchyroll)

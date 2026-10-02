@@ -22,8 +22,6 @@ Prequels:
 ---
 > [!summary] Synopsis
 > Takagi and Nishikata's final summer in junior high is about to begin, and it's already off to a heartwarming start! When the pair find an abandoned kitten, they decide to work together and take care of their adorable new companion until they can locate its missing mother.
->
-> (Source: Sentai Filmworks)
 <div class="media-grid">
 	<div class="media-column prequels">
 		<h4>Prequels</h4>

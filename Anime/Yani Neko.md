@@ -22,5 +22,3 @@ Rating: 8
 ---
 >[!summary] Synopsis
 > Yani is a catgirl with a seriously bad smoking habit. She smokes so much that her apartment smells like ash and is littered with cigarette butts—and plenty of other trash! Every time she tries to quit, she becomes weak to the cravings and gives in almost instantly. Will she ever get her life together, or is she doomed to live as a chainsmoking slob forever?
->
-> (Source: Seven Seas Entertainment)

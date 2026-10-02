@@ -27,15 +27,11 @@ Prequels:
 >
 > With the danger of his entire team finding out about his otaku interests looming over him, Kabakura agrees to hand over the volleyball courts to Koyanagi, giving her some private coaching as well. As the two grow closer, they begin to forge an everlasting bond.
 >
-> [Written by MAL Rewrite]
->
 > Tomodachi no Kyori
 > Second OVA expanding on Naoya and Kou's relationship.
 >
 > Shain Ryokou to Negaigoto
 > Third OVA covering the employee retreat chapters.
->
-> (Source: MAL News, edited)
 <div class="media-grid">
 	<div class="media-column prequels">
 		<h4>Prequels</h4>

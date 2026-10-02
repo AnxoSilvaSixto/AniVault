@@ -30,5 +30,3 @@ Rating: 8
 > The grown-up Kaguya develops a self-indulgent personality. At Kaguya's fervent request, Iroha helps her start streaming in Tsukuyomi. With Iroha as producer and songwriter and Kaguya as streamer and singer, the two grow steadily closer. Little do they know that ominous forces lie in wait, eager to take Kaguya back to the moon.
 >
 > This is the tale of Princess Kaguya as never seen before.
->
-> (Source: Netflix, edited)

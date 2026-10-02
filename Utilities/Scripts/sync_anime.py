@@ -215,12 +215,26 @@ def wikilink(name: str) -> str:
 
 SYNOPSIS_CALLOUT_RE = re.compile(r"^>\s*\[!summary\]\s*Synopsis\s*$", re.IGNORECASE)
 CALLOUT_START_RE = re.compile(r"^>\s*\[!")
-MAL_ATTRIBUTION_RE = re.compile(r"\n{1,2}\[Written by.*?\].*$", re.IGNORECASE)
+# MAL attribution junk appears trailing AND mid-text (multi-episode OVAs
+# concatenate per-episode credits, e.g. Wotaku OVA). Strip everywhere.
+MAL_ATTRIBUTION_RE = re.compile(r"\s*\[Written by[^\]]*\]", re.IGNORECASE)
+SOURCE_CREDIT_RE = re.compile(r"\s*\(Source:[^)]*\)", re.IGNORECASE)
 
 
 def clean_synopsis_text(raw: str) -> str:
-    """Strip MAL's '[Written by X]' attribution suffix."""
-    return MAL_ATTRIBUTION_RE.sub("", (raw or "")).strip()
+    """Strip MAL attribution junk ('[Written by X]', '(Source: Y)') anywhere.
+
+    The Tenrai/Jikan synopsis carries credits trailing (e.g. '\\n\\n(Source:
+    Crunchyroll)') and sometimes mid-text (multi-episode descriptions with
+    '[Written by MAL Rewrite]' between episodes). All occurrences are
+    removed; leftover blank lines are collapsed so no empty separators
+    survive. Frontmatter 'Source:' (no parens) is untouched.
+    """
+    text = (raw or "").strip()
+    text = MAL_ATTRIBUTION_RE.sub("", text)
+    text = SOURCE_CREDIT_RE.sub("", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
 
 
 def normalize_synopsis_text(text: str) -> str:

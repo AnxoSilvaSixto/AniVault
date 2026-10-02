@@ -29,8 +29,6 @@ Sequels:
 ---
 > [!summary] Synopsis
 > Presenting all-new, creative takes on the galaxy far, far away, Star Wars: Visions will be a series of animated short films celebrating Star Wars through the lens of the world's best anime creators. The anthology collection will bring nine fantastic visions from several of the leading Japanese anime studios, offering a fresh and diverse cultural perspective to Star Wars.
->
-> (Source: Disney+)
 <div class="media-grid">
 	<div class="media-column sequels">
 		<h4>Sequels</h4>

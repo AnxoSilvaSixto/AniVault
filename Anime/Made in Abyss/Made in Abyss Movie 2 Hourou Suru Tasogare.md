@@ -28,8 +28,6 @@ Sequels:
 ---
 > [!summary] Synopsis
 > The movie is a compilation of episodes 9-13 of the 2017 television series. Riko and Reg descend to the third layer where Riko has her first experience of the Curse. They descend to the fourth layer where Riko's arm is injured by an Orbed Piercer and Reg tries to save her. Nanachi comes to their aid and saves Riko's poisoned arm. In return Nanachi asks Reg to kill her immortal companion Mitty. Nanachi then joins Riko and Reg in their quest to reach the bottom of the Abyss.
->
-> (Source: Wikipedia)
 <div class="media-grid">
 	<div class="media-column prequels">
 		<h4>Prequels</h4>
