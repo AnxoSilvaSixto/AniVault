@@ -8,15 +8,20 @@ where python >nul 2>nul
 if not errorlevel 1 (
     set "PY_CMD=python"
 ) else (
-    where py >nul 2>nul
-    if errorlevel 1 (
-        echo [ERROR] Neither python nor py was found on PATH.
-        echo Install Python from https://python.org and try again.
-        echo.
-        pause
-        exit /b 1
+    py -3.15 -c "import sys" >nul 2>nul
+    if not errorlevel 1 (
+        set "PY_CMD=py -3.15"
+    ) else (
+        where py >nul 2>nul
+        if errorlevel 1 (
+            echo [ERROR] Neither python nor py was found on PATH.
+            echo Install Python 3.15 from https://python.org and try again.
+            echo.
+            pause
+            exit /b 1
+        )
+        set "PY_CMD=py"
     )
-    set "PY_CMD=py"
 )
 
 :menu

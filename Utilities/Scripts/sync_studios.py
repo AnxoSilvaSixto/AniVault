@@ -26,6 +26,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import requests
+
 from common import client as _client
 from common import logs as _logs
 from common import yaml_utils as _yaml
@@ -650,7 +651,11 @@ def main(argv: list[str] | None = None) -> int:
 
     elapsed = time.monotonic() - start_time
     print(f"Elapsed: {elapsed:.1f}s ({len(pending)} files, {len(all_changes)} changed)")
-    return 130 if retry_interrupted else 0
+    if retry_interrupted:
+        return 130
+    # Surface unresolved failures to callers/automation; the summary alone
+    # is easy to miss in logs.
+    return 1 if still_failed else 0
 
 
 if __name__ == "__main__":

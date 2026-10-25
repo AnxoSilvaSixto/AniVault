@@ -50,6 +50,55 @@ def split_frontmatter(content: str) -> tuple[str, str] | None:
     return m.group("fm"), content[m.end() :]
 
 
+def _split_inline_list(value: str) -> list[str] | None:
+    """Split a flow-style YAML list into raw item strings.
+
+    Items keep their original quoting so dump_yaml_frontmatter() can emit
+    them verbatim. Commas inside quotes or nested brackets (wikilinks) do
+    not split an item. Returns None when the value is not a list or has an
+    unterminated quote.
+    """
+    if not (value.startswith("[") and value.endswith("]")):
+        return None
+    inner = value[1:-1].strip()
+    if not inner:
+        return []
+    items: list[str] = []
+    current: list[str] = []
+    quote = ""
+    depth = 0
+    index = 0
+    while index < len(inner):
+        char = inner[index]
+        if quote:
+            current.append(char)
+            if char == "\\" and index + 1 < len(inner):
+                current.append(inner[index + 1])
+                index += 2
+                continue
+            if char == quote:
+                quote = ""
+        elif char in "\"'":
+            quote = char
+            current.append(char)
+        elif char == "[":
+            depth += 1
+            current.append(char)
+        elif char == "]":
+            depth = max(0, depth - 1)
+            current.append(char)
+        elif char == "," and depth == 0:
+            items.append("".join(current).strip())
+            current = []
+        else:
+            current.append(char)
+        index += 1
+    if quote:
+        return None
+    items.append("".join(current).strip())
+    return [item for item in items if item]
+
+
 def parse_yaml_frontmatter(yaml_str: str) -> dict[str, object]:
     """Minimal frontmatter parse (lists + scalars only)."""
     metadata: dict[str, object] = {}
@@ -72,6 +121,15 @@ def parse_yaml_frontmatter(yaml_str: str) -> dict[str, object]:
             val = val.strip()
             if val == "[]":
                 metadata[key] = []
+            elif val in ('""', "''"):
+                metadata[key] = ""
+            elif val.startswith("[[") and val.endswith("]]"):
+                # Unquoted wikilink: keep verbatim instead of treating the
+                # brackets as a nested flow list.
+                metadata[key] = val
+            elif val.startswith("[") and val.endswith("]"):
+                inline = _split_inline_list(val)
+                metadata[key] = inline if inline is not None else val
             elif not val:
                 metadata[key] = ""
             else:
