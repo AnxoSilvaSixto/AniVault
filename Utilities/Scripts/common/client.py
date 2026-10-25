@@ -8,7 +8,7 @@ import logging
 import os
 import threading
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
 from typing import TYPE_CHECKING
 
@@ -48,11 +48,11 @@ def tier_banner(server_key: str | None = None) -> str:
 
 
 def is_auth_failure(resp: requests.Response, server_key: str | None = None) -> bool:
-    """401 is auth; keyless 403 without Retry-After is auth (never retried).
+    """401 is auth; 403 without Retry-After is auth too (bad/expired key).
     403 with Retry-After is rate-limit, still retryable."""
     if resp.status_code == 401:
         return True
-    if resp.status_code == 403 and not server_key:
+    if resp.status_code == 403:
         return not (resp.headers.get("Retry-After") or "").strip()
     return False
 
@@ -89,8 +89,8 @@ def retry_wait(
         try:
             target = parsedate_to_datetime(retry_after)
             if target.tzinfo is None:
-                target = target.replace(tzinfo=timezone.utc)
-            return max(0.0, (target - datetime.now(timezone.utc)).total_seconds())
+                target = target.replace(tzinfo=UTC)
+            return max(0.0, (target - datetime.now(UTC)).total_seconds())
         except (TypeError, ValueError):
             pass
     return backoff_base * (attempt + 1)

@@ -6,7 +6,7 @@ Usage: from common import logs as _logs
 from __future__ import annotations
 
 from collections.abc import Sequence
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import NamedTuple
 
@@ -45,7 +45,7 @@ def write_changes_report(
     summary: str = "",
 ) -> Path:
     """Write _changes_report.md review file under updates_dir."""
-    lines = [f"# {title} — {datetime.now(timezone.utc).astimezone().strftime('%Y-%m-%d %H:%M')}", ""]
+    lines = [f"# {title} — {datetime.now(UTC).astimezone().strftime('%Y-%m-%d %H:%M')}", ""]
     if summary:
         lines.append(summary)
         lines.append("")

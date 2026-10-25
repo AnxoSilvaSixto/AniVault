@@ -23,13 +23,13 @@ AniVault is a local-first Obsidian vault for tracking watched anime. Every entry
 
 ## 📊 Collection Stats
 
-> Snapshot as of `2026-10-24`. Live counts: open `Utilities/Bases/Anime tracker.base` or run `vault-inspector`.
+> Snapshot as of `2026-10-25`. Live counts: open `Utilities/Bases/Anime tracker.base` or run `vault-inspector`.
 
 | Category | Count | Notes |
 |----------|-------|-------|
-| **Anime Notes** | **371** | standalone + 57 series subfolders in `Anime/` |
-| **Reference Pages** | **185** | `Extra/` total |
-| — Studios | 92 | `Extra/Studio/` |
+| **Anime Notes** | **376** | standalone + 60 series subfolders in `Anime/` |
+| **Reference Pages** | **187** | `Extra/` total |
+| — Studios | 94 | `Extra/Studio/` |
 | — Themes | 52 | `Extra/Themes/` |
 | — Genres | 21 | `Extra/Genre/` |
 | — Sources | 10 | `Extra/Source/` |
@@ -41,24 +41,24 @@ AniVault is a local-first Obsidian vault for tracking watched anime. Every entry
 
 ## 🚀 Quick Start
 
-Needs Obsidian ≥ `1.13.4`, Git, [Baseline theme](https://github.com/aaaaalexis/baseline) + 6 plugins (`dataview`, `obsidian-charts`, `pretty-properties`, `obsidian-style-settings`, `custom-sort`, `vault-inspector`).
+Needs Obsidian ≥ `1.14.0`, Git, [Baseline theme](https://github.com/aaaaalexis/baseline) + 6 plugins (`dataview`, `obsidian-charts`, `pretty-properties`, `obsidian-style-settings`, `custom-sort`, `vault-inspector`).
 
 **1. Clone:** `git clone https://github.com/AnxoSilvaSixto/AniVault.git` → open folder as vault, trust it. Homepage is `Homepage.canvas`.
 
 **2. Enable:** `Settings → Community plugins → Enable` all 6 above. Then `Appearance → CSS snippets → Enable` `media-grid`, `obsidian-icons`, `text-centered`.
 
-**3. Verify:** open `Utilities/Bases/Anime tracker.base` and `Homepage.canvas` — you should see 371 entries and 3 charts. Run `python Utilities/Scripts/validate_vault.py`.
+**3. Verify:** open `Utilities/Bases/Anime tracker.base` and `Homepage.canvas` — you should see 376 entries and 3 charts. Run `python Utilities/Scripts/validate_vault.py`.
 
 ## 🏗️ Structure
 
 ```
 AniVault/
-├── Anime/                 # 371 notes — flat files + 57 series folders
-├── Extra/                 # 185 reference pages
+├── Anime/                 # 376 notes — flat files + 60 series folders
+├── Extra/                 # 187 reference pages
 │   ├── Demographic/       # 5
 │   ├── Genre/             # 21
 │   ├── Source/            # 10
-│   ├── Studio/            # 92
+│   ├── Studio/            # 94
 │   ├── Themes/            # 52
 │   └── Type/              # 5
 ├── Pending/               # 19 watchlist stubs — intentionally incomplete
@@ -113,7 +113,7 @@ Example: `Anime/Ansatsu Kyoushitsu/Ansatsu Kyoushitsu 2nd Season.md`.
 
 ## 🗃️ Views
 
-Bases (`Utilities/Bases/`, no Dataview needed): `Anime tracker.base` is the main table — filter/sort all 371 entries (`Full list`, `Hall of Fame`, `Top`, `Searcher`). Six dimension bases mirror `Extra/` folders.
+Bases (`Utilities/Bases/`, no Dataview needed): `Anime tracker.base` is the main table — filter/sort all 376 entries (`Full list`, `Hall of Fame`, `Top`, `Searcher`). Six dimension bases mirror `Extra/` folders.
 
 Graphs (`Utilities/Graphs/`, DataviewJS + Charts): `Genres.md`, `Themes.md`, `Studio.md` (doughnuts) + `Rating Distribution.md` (bar+curve). All query `dv.pages('"Anime"')` — never `'"Anime/"'`. First three are embedded in `Homepage.canvas`.
 
@@ -127,4 +127,4 @@ Stats are auto-maintained: run `python Utilities/Scripts/update_readme.py` befor
 
 ---
 
-*Last updated: 2026-10-24 · Vault: 371 anime · 185 refs · 19 pending*
+*Last updated: 2026-10-25 · Vault: 376 anime · 187 refs · 19 pending*

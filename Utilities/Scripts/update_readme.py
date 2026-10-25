@@ -9,12 +9,12 @@ import argparse
 import difflib
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 try:
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # pyright: ignore[reportAttributeAccessIssue]
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")  # pyright: ignore[reportAttributeAccessIssue]
 except (AttributeError, ValueError):
     pass
 
@@ -115,8 +115,8 @@ def patch(text: str, c: dict[str, int], today: str) -> tuple[str, list[str]]:
             rf"\g<1>{c[key]}",
             text,
         )
-    if n:
-        changes.append(f"structure:{name}")
+        if n:
+            changes.append(f"structure:{name}")
     text, n = re.subn(
         r"(\u251c\u2500\u2500 Pending/\s+#\s*)\d+(\s+watchlist)",
         rf"\g<1>{c['pending']}\g<2>",
@@ -198,7 +198,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     c = counts()
-    today = datetime.now(timezone.utc).astimezone().date().isoformat()
+    today = datetime.now(UTC).astimezone().date().isoformat()
     raw = args.readme.read_text(encoding="utf-8")
     line_ending = "\r\n" if "\r\n" in raw[:2000] else "\n"
     new_text, changes = patch(raw, c, today)

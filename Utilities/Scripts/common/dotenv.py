@@ -17,7 +17,7 @@ def load_dotenv(path: Path | None = None) -> None:
     """Load .env KEY=VALUE lines without overriding real env."""
     env_path = path or DEFAULT_ENV_PATH
     try:
-        text = env_path.read_text(encoding="utf-8")
+        text = env_path.read_text(encoding="utf-8-sig")
     except OSError:
         return
     for raw_line in text.splitlines():

@@ -66,7 +66,7 @@ def tier_banner() -> str:
 
 
 def is_auth_failure(resp: requests.Response) -> bool:
-    """401 is always auth; 403 without a key and without Retry-After is auth."""
+    """401 is always auth; 403 without Retry-After is auth."""
     return _client.is_auth_failure(resp, SERVER_KEY)
 
 
@@ -200,15 +200,18 @@ def parse_date_value(value) -> str:
 
 def extract_founded_date(api_data: dict) -> str:
     for key in ("established", "foundation", "founded", "founded_at", "date_established"):
-        if key in api_data and api_data[key]:
-            return parse_date_value(api_data[key])
+        value = api_data.get(key)
+        if value:
+            return parse_date_value(value)
     return ""
 
 
 def extract_picture_url(api_data: dict) -> str:
-    images = api_data.get("images") or {}
+    images = api_data.get("images")
+    images = images if isinstance(images, dict) else {}
     for size in ("jpg", "webp"):
-        url = (images.get(size) or {}).get("image_url")
+        sized = images.get(size)
+        url = sized.get("image_url") if isinstance(sized, dict) else None
         if url:
             return url
     for key in ("image_url", "picture_url", "cover_url"):
@@ -444,7 +447,7 @@ def run_parallel(session: requests.Session, pending: list[tuple[Path, str]], con
             idx = futures[future]
             try:
                 key, changes, error = future.result()
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - one worker must not abort the pool
                 fp_name = pending[idx - 1][0].stem[:50]
                 pct = (idx - 1) / total * 100 if total else 0
                 print(f"\r[{idx:>3}/{total}] ({pct:5.1f}%) {fp_name:<50} ERROR: {e} (Will retry)", flush=True)
@@ -480,7 +483,7 @@ def run_parallel(session: requests.Session, pending: list[tuple[Path, str]], con
 
 def main(argv: list[str] | None = None) -> int:
     try:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # pyright: ignore[reportAttributeAccessIssue]
     except (AttributeError, ValueError):
         pass
     setup_logging()
@@ -517,15 +520,20 @@ def main(argv: list[str] | None = None) -> int:
     if not SERVER_KEY:
         print("Hint: copy .env.example to .env and set TENRAI_SERVER_KEY for the")
         print("      server-key tier. Public tier works but is rate-limited sooner.")
-        print("      Offline checks only: pytest tests/ + python validate_vault.py.")
+        print("      Offline checks only: python Utilities/Scripts/validate_vault.py.")
 
     if not STUDIO_DIR.exists():
         print(f"[ERROR] Studio folder not found: {STUDIO_DIR}")
         return 1
 
-    already = set() if config.full else load_log(LOG_PATH)
     files = sorted(STUDIO_DIR.rglob("*.md"))
+    # Prune log entries for deleted files before using history so stale keys
+    # neither inflate the "already synced" count nor survive log rewrites.
+    valid_keys = {str(fp.relative_to(STUDIO_DIR).with_suffix("")) for fp in files}
+    history = load_log(LOG_PATH) & valid_keys
+    already = set() if config.full else history
     pending: list[tuple[Path, str]] = []
+    skipped: list[str] = []
     for fp in files:
         key = str(fp.relative_to(STUDIO_DIR).with_suffix(""))
         if key in already:
@@ -533,9 +541,13 @@ def main(argv: list[str] | None = None) -> int:
         mal_id = extract_mal_id(load_file(fp))
         if mal_id:
             pending.append((fp, mal_id))
+        else:
+            skipped.append(key)
 
     print(f"Mode    : {'FULL RESCAN' if config.full else 'Incremental'}{' (DRY RUN)' if config.dry_run else ''}")
-    print(f"Pending : {len(pending)} files")
+    print(f"Pending : {len(pending)} files ({len(already)} already synced)")
+    if skipped:
+        print(f"Skipped : {len(skipped)} file(s) without MAL link (never synced): {', '.join(sorted(skipped))}")
     if config.parallel > 1:
         print(f"Parallel: {config.parallel} workers (effective delay={config.delay / config.parallel:.3f}s/request)")
 
@@ -544,10 +556,15 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     retry_pending: list[tuple[Path, str]] = []
-    # Pre-initialize so an early Ctrl+C can't hit an unbound name in finally.
+    # Pre-initialize so an early Ctrl+C can't hit an unbound name.
+    all_changes: list[tuple[str, list[Change]]] = []
     updated: set[str] = set()
     failed_keys: list[str] = []
+    r_updated: set[str] = set()
     r_failed: list[str] = []
+    completed = False
+    interrupted = False
+    merged_history: set[str] = set(history)
 
     try:
         with create_session() as session:
@@ -555,24 +572,36 @@ def main(argv: list[str] | None = None) -> int:
                 updated, all_changes, failed_keys = run_parallel(session, pending, config)
             else:
                 updated, all_changes, failed_keys = run_sequential(session, pending, config)
+            completed = True
 
             # Collect failed files for a second retry pass
             if failed_keys:
                 failed_set = set(failed_keys)
                 retry_pending = [(fp, mid) for fp, mid in pending if str(fp.relative_to(STUDIO_DIR).with_suffix("")) in failed_set]
     except KeyboardInterrupt:
+        interrupted = True
         print("\nInterrupted. Saving log...")
     finally:
         if not config.dry_run:
-            # Union this run's results back into history (run_* return
-            # only fresh sets) and prune keys for deleted files — without
-            # this, every incremental run wipes the log and the next run
-            # refetches the whole folder.
-            valid = {str(fp.relative_to(STUDIO_DIR).with_suffix("")) for fp in files}
-            updated = (already | updated) & valid
-            write_log(LOG_PATH, updated)
+            # Union this run's results back into history (run_* return only
+            # fresh sets) and prune keys for deleted files — without this,
+            # every incremental run wipes the log and the next run refetches
+            # the whole folder. A full rescan starts from scratch so files
+            # that failed are checked again next time; an interrupted run
+            # preserves history untouched.
+            if completed:
+                merged_history = ((set() if config.full else history) | updated) & valid_keys
+            write_log(LOG_PATH, merged_history)
+
+    if interrupted:
+        # A partial pass has no meaningful changed/up-to-date breakdown;
+        # report the interrupt and let the exit code signal it.
+        elapsed = time.monotonic() - start_time
+        print(f"Elapsed: {elapsed:.1f}s ({len(pending)} files, {len(all_changes)} changed)")
+        return 130
 
     # Second pass: retry failed files with a longer delay
+    retry_interrupted = False
     if retry_pending:
         retry_config = SyncConfig(
             full=config.full,
@@ -587,17 +616,20 @@ def main(argv: list[str] | None = None) -> int:
         try:
             with create_session() as session:
                 r_updated, r_changes, r_failed = run_sequential(session, retry_pending, retry_config)
-                updated.update(r_updated)
+                merged_history |= r_updated
                 all_changes.extend(r_changes)
 
                 # Update logs after retry pass
                 if not config.dry_run:
-                    write_log(LOG_PATH, updated)
+                    write_log(LOG_PATH, merged_history & valid_keys)
         except KeyboardInterrupt:
+            retry_interrupted = True
             print("\nInterrupted during retry pass!")
 
     print("=" * 50)
-    still_failed = set(r_failed) if retry_pending else set(failed_keys)
+    # A failed first-pass file counts as recovered only when the retry pass
+    # actually processed it successfully.
+    still_failed = (set(failed_keys) - r_updated) | set(r_failed)
     ok_count = len(pending) - len(all_changes) - len(still_failed)
     summary = (f"Checked {len(pending)} files: {len(all_changes)} changed, "
                f"{ok_count} already up to date, {len(still_failed)} failed.")
@@ -618,7 +650,7 @@ def main(argv: list[str] | None = None) -> int:
 
     elapsed = time.monotonic() - start_time
     print(f"Elapsed: {elapsed:.1f}s ({len(pending)} files, {len(all_changes)} changed)")
-    return 0
+    return 130 if retry_interrupted else 0
 
 
 if __name__ == "__main__":

@@ -55,7 +55,7 @@ def tier_banner() -> str:
 
 
 def is_auth_failure(resp: requests.Response) -> bool:
-    """401 is auth; keyless 403 without Retry-After is auth (never retried).
+    """401 is auth; 403 without Retry-After is auth (never retried).
     403 with Retry-After is rate-limit, still retryable."""
     return _client.is_auth_failure(resp, SERVER_KEY)
 
@@ -211,6 +211,17 @@ def wikilink(name: str) -> str:
     return f'"[[{safe}]]"'
 
 
+def _wikilinks(items: object) -> list[str]:
+    """Build wikilinks from API list entries, skipping malformed ones."""
+    if not isinstance(items, list):
+        return []
+    return [
+        wikilink(str(item["name"]))
+        for item in items
+        if isinstance(item, dict) and item.get("name")
+    ]
+
+
 # --- Synopsis Handling ---
 
 SYNOPSIS_CALLOUT_RE = re.compile(r"^>\s*\[!summary\]\s*Synopsis\s*$", re.IGNORECASE)
@@ -320,6 +331,22 @@ CANONICAL_ORDER = ["ID", "Type", "Episodes", "Aired", "Finished", "Studio",
 LIST_SHAPE_KEYS = ("Studio", "Genre", "Themes", "Demographic")
 
 
+def ensure_list_shapes(meta: dict, target_meta: dict) -> list[Change]:
+    """Coerce managed list fields to YAML lists, preserving scalar values."""
+    shape_changes: list[Change] = []
+    for key in LIST_SHAPE_KEYS:
+        value = meta.get(key)
+        if isinstance(value, list):
+            continue
+        replacement = target_meta.get(key)
+        if not isinstance(replacement, list) or not replacement:
+            replacement = [value] if value not in (None, "") else []
+        meta[key] = replacement
+        old = "(missing)" if value in (None, "") else f"(scalar) {format_value(value)}"
+        shape_changes.append(Change(key, old, format_value(replacement)))
+    return shape_changes
+
+
 def order_frontmatter(meta: dict) -> dict:
     """Return meta with canonical keys first, extras in original order."""
     return _yaml.order_frontmatter(meta, CANONICAL_ORDER)
@@ -330,14 +357,16 @@ def compute_frontmatter_changes(current_meta: dict, api_data: dict) -> tuple[dic
     target_meta: dict = {}
     target_meta["ID"] = api_data.get("mal_id", "")
 
-    anime_type = normalize_type(api_data.get("type", ""))
+    raw_type = str(api_data.get("type") or "")
+    anime_type = normalize_type(raw_type)
     target_meta["Type"] = wikilink(anime_type) if anime_type else ""
 
     ep_count = api_data.get("episodes")
-    is_movie = api_data.get("type", "").lower() == "movie"
+    is_movie = raw_type.lower() == "movie"
     target_meta["Episodes"] = 1 if is_movie and ep_count is None else (ep_count or "")
 
-    aired = api_data.get("aired") or {}
+    aired = api_data.get("aired")
+    aired = aired if isinstance(aired, dict) else {}
     aired_date = parse_date_value(aired.get("from"))
     target_meta["Aired"] = aired_date
 
@@ -346,12 +375,16 @@ def compute_frontmatter_changes(current_meta: dict, api_data: dict) -> tuple[dic
         finished_date = aired_date
     target_meta["Finished"] = finished_date
 
-    target_meta["Studio"] = [wikilink(s["name"]) for s in (api_data.get("studios") or [])]
+    target_meta["Studio"] = _wikilinks(api_data.get("studios"))
     target_meta["Source"] = wikilink(api_data.get("source", "")) if api_data.get("source") else ""
-    target_meta["Genre"] = [wikilink(g["name"]) for g in (api_data.get("genres") or [])]
-    target_meta["Themes"] = [wikilink(t["name"]) for t in (api_data.get("themes") or [])]
-    target_meta["Demographic"] = [wikilink(d["name"]) for d in (api_data.get("demographics") or [])]
-    target_meta["Cover"] = api_data.get("images", {}).get("jpg", {}).get("large_image_url", "")
+    target_meta["Genre"] = _wikilinks(api_data.get("genres"))
+    target_meta["Themes"] = _wikilinks(api_data.get("themes"))
+    target_meta["Demographic"] = _wikilinks(api_data.get("demographics"))
+    images = api_data.get("images")
+    images = images if isinstance(images, dict) else {}
+    jpg = images.get("jpg")
+    jpg = jpg if isinstance(jpg, dict) else {}
+    target_meta["Cover"] = jpg.get("large_image_url", "")
 
     mal_id = api_data.get("mal_id")
     target_meta["MAL"] = (
@@ -426,25 +459,16 @@ def process_anime_file(filepath: Path, api_data: dict, config: SyncConfig) -> li
                 changes.append(Change("Rating", "(missing)", "0"))
             # Canonical shape: managed list fields always present as lists,
             # even when empty (validator requires list type).
-            for key in LIST_SHAPE_KEYS:
-                if merged_meta.get(key) in (None, "") and (
-                    key not in current_meta or current_meta.get(key) in (None, "")
-                ):
-                    merged_meta[key] = []
-                    changes.append(Change(key, "(missing)", "[]"))
+            changes.extend(ensure_list_shapes(merged_meta, target_meta))
             new_yaml = dump_yaml_frontmatter(merged_meta)
         else:
             # No value changes: still converge order/shape drift left by
             # older runs (e.g. MAL written 2nd, Demographic dropped) so the
             # vault returns to canonical layout over time.
             repaired = dict(current_meta)
-            shape_fix = False
-            for key in LIST_SHAPE_KEYS:
-                if key not in repaired or repaired.get(key) in (None, ""):
-                    if key not in current_meta or current_meta.get(key) in (None, ""):
-                        repaired[key] = []
-                        changes.append(Change(key, "(missing)", "[]"))
-                        shape_fix = True
+            shape_changes = ensure_list_shapes(repaired, target_meta)
+            changes.extend(shape_changes)
+            shape_fix = bool(shape_changes)
             if shape_fix or list(order_frontmatter(repaired).keys()) != list(repaired.keys()):
                 if not shape_fix:
                     changes.append(Change("Order", "non-canonical", "canonical"))
@@ -696,7 +720,7 @@ def run_parallel(
             idx = futures[future]
             try:
                 key, changes, error = future.result()
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - one worker must not abort the pool
                 fp_name = pending[idx - 1][0].stem[:50]
                 pct = (idx - 1) / total * 100 if total else 0
                 print(f"\r[{idx:>3}/{total}] ({pct:5.1f}%) {fp_name:<50} ERROR: {e} (Will retry)", flush=True)
@@ -739,7 +763,7 @@ def run_parallel(
 
 def main(argv: list[str] | None = None) -> int:
     try:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # pyright: ignore[reportAttributeAccessIssue]
     except (AttributeError, ValueError):
         pass
     setup_logging()
@@ -780,14 +804,18 @@ def main(argv: list[str] | None = None) -> int:
     if not SERVER_KEY:
         print("Hint: copy .env.example to .env and set TENRAI_SERVER_KEY for the")
         print("      server-key tier. Public tier works but is rate-limited sooner.")
-        print("      Offline checks only: pytest tests/ + python validate_vault.py.")
+        print("      Offline checks only: python Utilities/Scripts/validate_vault.py.")
 
     if not ANIME_DIR.exists():
         print(f"[ERROR] Anime folder not found: {ANIME_DIR}")
         return 1
 
     anime_files = sorted(ANIME_DIR.rglob("*.md"))
-    already = set() if config.full else load_history()
+    # Prune log entries for deleted files before using history so stale keys
+    # neither inflate the "already synced" count nor survive log rewrites.
+    valid_keys = {file_key(fp) for fp in anime_files}
+    existing = load_history() & valid_keys
+    already = set() if config.full else existing
     pending, skipped = discover_pending(anime_files, already)
 
     print(f"Mode      : {'FULL RESCAN' if config.full else 'Incremental'} ({config.mode})")
@@ -803,19 +831,19 @@ def main(argv: list[str] | None = None) -> int:
         print("Nothing new to sync. Use --full for a full rescan.")
         return 0
 
-    existing = load_history()
-    # Valid keys for pruning: entries whose files no longer exist are
-    # dropped when the log is rewritten, so it can't grow stale.
-    valid_keys = {file_key(fp) for fp in anime_files}
     # Seed working sets with history (matters for the interrupt path);
     # run_* return only this run's files, merged back in finally.
-    info_synced = set(existing)
-    synopsis_synced = set(existing)
-    merged_history = set(existing)
+    info_synced: set[str] = set(existing)
+    synopsis_synced: set[str] = set(existing)
+    merged_history: set[str] = set(existing)
     completed = False
+    interrupted = False
 
+    all_changes: list[tuple[str, list[Change]]] = []
     retry_pending: list[tuple[Path, str]] = []
     failed_keys: list[str] = []
+    r_info: set[str] = set()
+    r_synopsis: set[str] = set()
     r_failed: list[str] = []
 
     try:
@@ -831,6 +859,7 @@ def main(argv: list[str] | None = None) -> int:
                 failed_set = set(failed_keys)
                 retry_pending = [(fp, mid) for fp, mid in pending if file_key(fp) in failed_set]
     except KeyboardInterrupt:
+        interrupted = True
         print("\nInterrupted! Saving log...")
     finally:
         if not config.dry_run:
@@ -838,7 +867,15 @@ def main(argv: list[str] | None = None) -> int:
                                            valid_keys, config.mode, completed)
             write_log(ANIME_LOG_PATH, merged_history)
 
+    if interrupted:
+        # A partial pass has no meaningful changed/up-to-date breakdown;
+        # report the interrupt and let the exit code signal it.
+        elapsed = time.monotonic() - start_time
+        print(f"Elapsed: {elapsed:.1f}s ({len(pending)} files, {len(all_changes)} changed)")
+        return 130
+
     # Second pass: retry failed files with a longer delay
+    retry_interrupted = False
     if retry_pending:
         retry_config = SyncConfig(
             full=config.full,
@@ -866,12 +903,16 @@ def main(argv: list[str] | None = None) -> int:
                 if not config.dry_run:
                     write_log(ANIME_LOG_PATH, merged_history & valid_keys)
         except KeyboardInterrupt:
+            retry_interrupted = True
             print("\nInterrupted during retry pass!")
 
     print("=" * 65)
     # Full accounting: every pending file lands in exactly one bucket, so a
     # clean file like Aho Girl is "already up to date", never invisible.
-    still_failed = set(r_failed) if retry_pending else set(failed_keys)
+    # A failed first-pass file counts as recovered only when the retry pass
+    # actually processed it successfully.
+    retry_ok = r_info | r_synopsis
+    still_failed = (set(failed_keys) - retry_ok) | set(r_failed)
     ok_count = len(pending) - len(all_changes) - len(still_failed)
     summary = (f"Checked {len(pending)} files: {len(all_changes)} changed, "
                f"{ok_count} already up to date, {len(still_failed)} failed.")
@@ -894,7 +935,7 @@ def main(argv: list[str] | None = None) -> int:
 
     elapsed = time.monotonic() - start_time
     print(f"Elapsed: {elapsed:.1f}s ({len(pending)} files, {len(all_changes)} changed)")
-    return 0
+    return 130 if retry_interrupted else 0
 
 
 if __name__ == "__main__":

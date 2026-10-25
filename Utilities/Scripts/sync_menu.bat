@@ -117,7 +117,7 @@ goto afterrun
 :full_refresh
 echo.
 echo === FULL VAULT REFRESH ===
-echo Running anime + studio full rescans in serie (shared API limits)...
+echo Running anime + studio full rescans in sequence (shared API limits)...
 echo.
 echo --- [1/2] Anime full rescan ---
 echo.
@@ -127,13 +127,13 @@ echo --- [2/2] Studio full rescan ---
 echo.
 %PY_CMD% sync_studios.py --full --delay 0.3
 echo.
-echo Validating vault...
-echo.
-%PY_CMD% validate_vault.py
-echo.
 echo Updating README stats...
 echo.
 %PY_CMD% update_readme.py --quiet
+echo.
+echo Validating vault...
+echo.
+%PY_CMD% validate_vault.py
 goto afterrun
 
 :afterrun

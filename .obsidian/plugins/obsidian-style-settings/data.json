@@ -1,8 +1,6 @@
 {
-  "baseline-style@@accented-interface": true,
   "baseline-style@@color-scheme-light": "minimal-light",
   "baseline-style@@color-scheme-dark": "minimal-dark",
-  "baseline-style@@color-scheme-accent": true,
   "baseline-style@@density-modifier": 0.75,
   "baseline-style@@radius-modifier": 1,
   "baseline-style@@layout-style": "layout-frame",
@@ -73,8 +71,6 @@
   "baseline-style@@metadata-heading-off": true,
   "baseline-style@@metadata-icons-off": false,
   "baseline-style@@metadata-label-width-modifier": 1,
-  "baseline-style@@readable-spacing": true,
-  "baseline-style@@readable-spacing-modifier": 1,
   "baseline-style@@inline-title-size": "1.62em",
   "baseline-style@@inline-title-weight": 650,
   "baseline-style@@colorful-headings-text": false,
@@ -95,7 +91,6 @@
   "baseline-style@@bases-table-header-icon-display": "none",
   "baseline-style@@bases-table-align-items": "center",
   "baseline-style@@callouts-style": "callouts-outlined",
-  "baseline-style@@code-style": "code-tactile",
   "baseline-style@@code-line-numbers": true,
   "baseline-style@@code-scroll": false,
   "baseline-style@@code-size": "\"\"",
@@ -116,5 +111,6 @@
   "baseline-style@@unstyled-tags": false,
   "baseline-style@@line-width-wide": "30rem",
   "baseline-style@@blockquote-font-style": "normal",
-  "baseline-style@@plugins-grid-off": false
+  "baseline-style@@color-scheme-accent": true,
+  "baseline-style@@accented-interface": true
 }

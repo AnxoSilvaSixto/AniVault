@@ -393,6 +393,21 @@ views:
       note.Studio: 182
       note.Episodes: 75
   - type: table
+    name: Hayabusa Film
+    filters:
+      and:
+        - Studio.contains(link("Hayabusa Film"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
     name: Hoods Entertainment
     filters:
       and:
@@ -652,6 +667,21 @@ views:
     filters:
       and:
         - Studio.contains(link("Pandanium"))
+    order:
+      - file.name
+      - Studio
+      - Episodes
+      - Aired
+    sort: []
+    columnSize:
+      file.name: 271
+      note.Studio: 182
+      note.Episodes: 75
+  - type: table
+    name: Passione
+    filters:
+      and:
+        - Studio.contains(link("Passione"))
     order:
       - file.name
       - Studio

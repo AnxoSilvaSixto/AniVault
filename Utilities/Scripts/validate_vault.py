@@ -228,8 +228,11 @@ class Validator:
             if not key_match or key_match.group("indent"):
                 # Unknown YAML ignored; known fields validated below.
                 continue
-            current_key = (key_match.group("key") or "").strip()
-            metadata[current_key] = cls._scalar(key_match.group("value") or "")
+            key = (key_match.group("key") or "").strip()
+            if not key:
+                continue
+            current_key = key
+            metadata[key] = cls._scalar(key_match.group("value") or "")
         return metadata, text[match.end():]
 
     def load_notes(self) -> None:
