@@ -17,6 +17,8 @@ Demographic: []
 Cover: https://cdn.myanimelist.net/images/anime/1818/126435l.jpg
 MAL: https://myanimelist.net/anime/42310
 Rating: 8
+Sequels:
+  - "[[Cyberpunk Edgerunners 2]]"
 ---
 >[!summary] Synopsis
 > Dreams are doomed to die in Night City, a futuristic Californian metropolis. As a teenager living in the city's slums, David Martinez is trying to fulfill his mother's lifelong wish for him to reach the top of Arasaka, the world's leading security corporation. To this end, he attends the prestigious Arasaka Academy while his mother works tirelessly to keep their family afloat.

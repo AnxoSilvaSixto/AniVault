@@ -17,6 +17,8 @@ Demographic: []
 Cover: https://cdn.myanimelist.net/images/anime/1069/148148l.jpg
 MAL: https://myanimelist.net/anime/59452
 Rating: 6
+Sequels:
+  - "[[Katainaka no Ossan, Kensei ni Naru II]]"
 ---
 >[!summary] Synopsis
 > For 20 years, Beryl Gardenant has taught various people as the master of his father's sword-fighting dojo in a backwater village. Many have become astounding swordsmen themselves, but Beryl remains quite humble, referring to himself as an old man. His former disciples all disagree, including Allucia Citrus, a girl who graduated from Beryl's training over 10 years ago and is currently the commander of the Royal Order of Knights.

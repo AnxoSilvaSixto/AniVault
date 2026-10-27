@@ -19,8 +19,6 @@ MAL: https://myanimelist.net/anime/36999
 Rating: 8
 Prequels:
   - "[[Owarimonogatari 2nd Season]]"
-Sequels:
-  - "[[Monogatari Series Off & Monster Season]]"
 ---
 >[!summary] Synopsis
 > Graduation day is finally here, marking the end of Koyomi Araragi's eccentric high school life full of peculiar relationships with otherworldly beings.
@@ -35,12 +33,5 @@ Sequels:
 			<img src="https://cdn.myanimelist.net/images/anime/6/87322.jpg" class="media-poster" alt="Broken link">
 		</a>
 		<p class="media-caption">Owarimonogatari 2nd Season</p>
-	</div>
-	<div class="media-column sequels">
-		<h4>Sequels</h4>
-		<a href="Monogatari Series Off & Monster Season" class="internal-link">
-			<img src="https://cdn.myanimelist.net/images/anime/1142/146776.jpg" class="media-poster" alt="Broken link">
-		</a>
-		<p class="media-caption">Monogatari Series Off & Monster Season</p>
 	</div>
 </div>

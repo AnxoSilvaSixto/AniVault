@@ -21,7 +21,6 @@ Side Stories:
   - "[[Uma Musume Pretty Derby - BNW no Chikai]]"
   - "[[Uma Musume Pretty Derby - Road to the Top]]"
   - "[[Uma Musume Pretty Derby - Shin Jidai no Tobira]]"
-  - "[[Uma Musume Cinderella Gray]]"
 Sequels:
   - "[[Uma Musume Pretty Derby Season 2]]"
 ---
@@ -44,10 +43,6 @@ Sequels:
 			<img src="https://cdn.myanimelist.net/images/anime/1427/142210.jpg" class="media-poster" alt="Broken link">
 		</a>
 		<p class="media-caption">Uma Musume Pretty Derby - Shin Jidai no Tobira</p>
-				<a href="Uma Musume Cinderella Gray" class="internal-link">
-			<img src="https://cdn.myanimelist.net/images/anime/1626/148097.jpg" class="media-poster" alt="Broken link">
-		</a>
-		<p class="media-caption">Uma Musume Cinderella Gray</p>
 	</div>
 	<div class="media-column sequels">
 		<h4>Sequels</h4>

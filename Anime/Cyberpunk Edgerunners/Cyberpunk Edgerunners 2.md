@@ -16,6 +16,8 @@ Demographic: []
 Cover: https://cdn.myanimelist.net/images/anime/1431/160542l.jpg
 MAL: https://myanimelist.net/anime/61990
 Rating: 7
+Prequels:
+  - "[[Cyberpunk Edgerunners]]"
 ---
 >[!summary] Synopsis
 > Sequel to  Cyberpunk: Edgerunners.

@@ -21,6 +21,8 @@ MAL: https://myanimelist.net/anime/55888
 Rating: 8
 Prequels:
   - "[[Mushoku Tensei II Isekai Ittara Honki Dasu]]"
+Sequels:
+  - "[[Mushoku Tensei III Isekai Ittara Honki Dasu]]"
 ---
 >[!summary] Synopsis
 >Following the faceless god Hitogami's advice seems to have worked wonders for Rudeus Greyrat. After enrolling into the University of Magic as he was told, Rudeus reunites with his childhood friend Sylphiette, who put a valiant effort into curing his condition. The two grow ever closer together and decide to host a wedding party, inviting the friends they have made over the years to announce and formalize their relationship.

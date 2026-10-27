@@ -19,6 +19,8 @@ Demographic: []
 Cover: https://cdn.myanimelist.net/images/anime/1527/158340l.jpg
 MAL: https://myanimelist.net/anime/59193
 Rating: 10
+Prequels:
+  - "[[Mushoku Tensei II Isekai Ittara Honki Dasu Part 2]]"
 ---
 > [!summary] Synopsis
 > Third season of Mushoku Tensei: Isekai Ittara Honki Dasu.

@@ -20,6 +20,7 @@ MAL: https://myanimelist.net/anime/6702
 Rating: 6
 Side Stories:
   - "[[Fairy Tail Movie 1 Houou no Miko - Hajimari no Asa]]"
+  - "[[Fairy Tail Movie 1 Houou no Miko]]"
   - "[[Fairy Tail OVA]]"
 Sequels:
   - "[[Fairy Tail (2014)]]"
@@ -37,6 +38,10 @@ Sequels:
 			<img src="https://cdn.myanimelist.net/images/anime/8/50101.jpg" class="media-poster" alt="Broken link">
 		</a>
 		<p class="media-caption">Fairy Tail Movie 1 Houou no Miko - Hajimari no Asa</p>
+		<a href="Fairy Tail Movie 1 Houou no Miko" class="internal-link">
+			<img src="https://cdn.myanimelist.net/images/anime/13/47083.jpg" class="media-poster" alt="Broken link">
+		</a>
+		<p class="media-caption">Fairy Tail Movie 1 Houou no Miko</p>
 		<a href="Fairy Tail OVA" class="internal-link">
 			<img src="https://cdn.myanimelist.net/images/anime/10/65661.jpg" class="media-poster" alt="Broken link">
 		</a>

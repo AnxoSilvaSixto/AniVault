@@ -23,13 +23,13 @@ AniVault is a local-first Obsidian vault for tracking watched anime. Every entry
 
 ## 📊 Collection Stats
 
-> Snapshot as of `2026-10-25`. Live counts: open `Utilities/Bases/Anime tracker.base` or run `vault-inspector`.
+> Snapshot as of `2026-10-27`. Live counts: open `Utilities/Bases/Anime tracker.base` or run `vault-inspector`.
 
 | Category | Count | Notes |
 |----------|-------|-------|
 | **Anime Notes** | **376** | standalone + 60 series subfolders in `Anime/` |
-| **Reference Pages** | **187** | `Extra/` total |
-| — Studios | 94 | `Extra/Studio/` |
+| **Reference Pages** | **184** | `Extra/` total |
+| — Studios | 91 | `Extra/Studio/` |
 | — Themes | 52 | `Extra/Themes/` |
 | — Genres | 21 | `Extra/Genre/` |
 | — Sources | 10 | `Extra/Source/` |
@@ -47,25 +47,24 @@ Needs Obsidian ≥ `1.14.0`, Git, [Baseline theme](https://github.com/aaaaalexis
 
 **2. Enable:** `Settings → Community plugins → Enable` all 6 above. Then `Appearance → CSS snippets → Enable` `media-grid`, `obsidian-icons`, `text-centered`.
 
-**3. Verify:** open `Utilities/Bases/Anime tracker.base` and `Homepage.canvas` — you should see 376 entries and 3 charts. Run `python Utilities/Scripts/validate_vault.py`.
+**3. Verify:** open `Utilities/Bases/Anime tracker.base` and `Homepage.canvas` — you should see 376 entries and 3 charts. Run `python ..\bs\Utilities\Scripts\validate_vault.py` (tooling lives outside the vault).
 
 ## 🏗️ Structure
 
 ```
 AniVault/
 ├── Anime/                 # 376 notes — flat files + 60 series folders
-├── Extra/                 # 187 reference pages
+├── Extra/                 # 184 reference pages
 │   ├── Demographic/       # 5
 │   ├── Genre/             # 21
 │   ├── Source/            # 10
-│   ├── Studio/            # 94
+│   ├── Studio/            # 91
 │   ├── Themes/            # 52
 │   └── Type/              # 5
 ├── Pending/               # 19 watchlist stubs — intentionally incomplete
 ├── Utilities/
 │   ├── Bases/             # 7 .base views (tracker + dimensions)
 │   ├── Graphs/            # 4 DataviewJS chart notes
-│   ├── Scripts/           # update_readme.py, validate_vault.py, sync helpers
 │   ├── Templates/         # media-grid Template.md (needs media-grid.css)
 │   └── sortspec.md        # Custom Sort spec (folders+files A→Z)
 ├── Homepage.canvas        # Dashboard — embeds 3 graphs + 2 tracker views
@@ -79,7 +78,7 @@ AniVault/
 ![Homepage](.github/assets/homepage.png)
 ![Rating Distribution](.github/assets/rating-distribution.png)
 
-`Homepage.canvas` + `Rating Distribution.md` (366 rated, mean 6.42). Baseline theme.
+`Homepage.canvas` + `Rating Distribution.md` (376 rated, mean 6.45). Baseline theme.
 
 ## 📝 Frontmatter Schema
 
@@ -119,12 +118,12 @@ Graphs (`Utilities/Graphs/`, DataviewJS + Charts): `Genres.md`, `Themes.md`, `St
 
 ## 🔄 Automation
 
-Validator: `python Utilities/Scripts/validate_vault.py` — read-only check for frontmatter, IDs, links, media-grid targets, encoding, README counts. `Rating: 0` stays unrated.
+Validator: `python ..\bs\Utilities\Scripts\validate_vault.py` — read-only check for frontmatter, IDs, links, media-grid targets, encoding, README counts. `Rating: 0` stays unrated.
 
 Backup: weekly Windows login via `Task Scheduler → AniVault Git Backup` → `C:\Scripts\AniVault-backup.ps1` (runs `update_readme.py`, then `git add/commit/push`). Hook: `git config core.hooksPath .githooks` (blocks secrets + >10 MB).
 
-Stats are auto-maintained: run `python Utilities/Scripts/update_readme.py` before committing. Never hand-edit counts. Sync scripts (`sync_anime.py`, `sync_studios.py`) are helpers — documented in AGENTS only. Tips: new anime → `Anime/<Series>/<Title>.md` from template; watchlist stays in `Pending/`; don't create `Extra/Studio/` pages without a watched link. Docs: `.obsidian/AGENTS.md`. License: public domain, no rights reserved.
+Stats are auto-maintained: run `python ..\bs\Utilities\Scripts\update_readme.py` before committing. Never hand-edit counts. Sync scripts (`sync_anime.py`, `sync_studios.py`) are helpers — documented in AGENTS only. Tips: new anime → `Anime/<Series>/<Title>.md` from template; watchlist stays in `Pending/`; don't create `Extra/Studio/` pages without a watched link. Docs: `.obsidian/AGENTS.md`. License: public domain, no rights reserved.
 
 ---
 
-*Last updated: 2026-10-25 · Vault: 376 anime · 187 refs · 19 pending*
+*Last updated: 2026-10-27 · Vault: 376 anime · 184 refs · 19 pending*

@@ -18,6 +18,8 @@ Demographic: []
 Cover: https://cdn.myanimelist.net/images/anime/1025/147458l.jpg
 MAL: https://myanimelist.net/anime/58514
 Rating: 8
+Prequels:
+  - "[[Kusuriya no Hitorigoto]]"
 ---
 
 > [!summary] Synopsis

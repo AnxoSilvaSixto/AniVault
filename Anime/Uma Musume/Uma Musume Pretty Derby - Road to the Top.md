@@ -19,6 +19,7 @@ MAL: https://myanimelist.net/anime/51761
 Rating: 7
 Parent Stories:
   - "[[Uma Musume Pretty Derby]]"
+Alternative Version:
   - "[[Uma Musume Pretty Derby - Road to the Top (Movie)]]"
 ---
 >[!summary] Synopsis

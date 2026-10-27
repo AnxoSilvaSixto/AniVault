@@ -18,6 +18,8 @@ Demographic: []
 Cover: https://cdn.myanimelist.net/images/anime/1708/138033l.jpg
 MAL: https://myanimelist.net/anime/54492
 Rating: 8
+Sequels:
+  - "[[Kusuriya no Hitorigoto 2nd Season]]"
 ---
 
 > [!summary] Synopsis

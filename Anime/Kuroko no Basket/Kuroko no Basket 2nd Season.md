@@ -18,7 +18,7 @@ Cover: https://cdn.myanimelist.net/images/anime/9/56155l.jpg
 MAL: https://myanimelist.net/anime/16894
 Rating: 6
 Prequels:
-  - "[[Karakai Jouzu no Takagi-san]]"
+  - "[[Kuroko no Basket]]"
 Sequels:
   - "[[Kuroko no Basket 3rd Season]]"
 ---
@@ -31,10 +31,10 @@ Sequels:
 <div class="media-grid">
 	<div class="media-column prequels">
 		<h4>Prequels</h4>
-		<a href="Karakai Jouzu no Takagi-san" class="internal-link">
+		<a href="Kuroko no Basket" class="internal-link">
 			<img src="https://cdn.myanimelist.net/images/anime/11/50453.jpg" class="media-poster" alt="Broken link">
 		</a>
-		<p class="media-caption">Karakai Jouzu no Takagi-san</p>
+		<p class="media-caption">Kuroko no Basket</p>
 	</div>
 	<div class="media-column sequels">
 		<h4>Sequels</h4>

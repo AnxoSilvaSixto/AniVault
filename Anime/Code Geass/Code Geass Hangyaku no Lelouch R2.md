@@ -19,7 +19,7 @@ Demographic: []
 Cover: https://cdn.myanimelist.net/images/anime/1088/135089l.jpg
 MAL: https://myanimelist.net/anime/2904
 Rating: 6
-Sequels:
+Prequels:
   - "[[Code Geass Hangyaku no Lelouch]]"
 ---
 > [!summary] Synopsis
@@ -27,8 +27,8 @@ Sequels:
 >
 > Lelouch Lamperouge, having lost all memory of his double life, is living peacefully alongside his friends as a high school student at Ashford Academy. His former partner C.C., unable to accept this turn of events, takes it upon herself to remind him of his past purpose, hoping that the mastermind Zero will rise once again to finish what he started.
 <div class="media-grid">
-	<div class="media-column sequels">
-		<h4>Sequels</h4>
+	<div class="media-column prequels">
+		<h4>Prequels</h4>
 		<a href="Code Geass Hangyaku no Lelouch" class="internal-link">
 			<img src="https://cdn.myanimelist.net/images/anime/1032/135088.jpg" class="media-poster" alt="Broken link">
 		</a>

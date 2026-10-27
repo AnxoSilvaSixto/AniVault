@@ -1,3 +1,0 @@
-# Ruff treats Utilities/Scripts as the first-party root so `common` is
-# grouped as a local import regardless of the directory ruff runs from.
-src = ["Utilities/Scripts"]

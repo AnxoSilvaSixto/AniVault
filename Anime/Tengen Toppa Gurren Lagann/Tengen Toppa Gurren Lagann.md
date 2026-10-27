@@ -19,6 +19,7 @@ MAL: https://myanimelist.net/anime/2001
 Rating: 8
 Alternative Version:
   - "[[Tengen Toppa Gurren Lagann Movie 1 Gurren-hen]]"
+  - "[[Tengen Toppa Gurren Lagann Movie 2 Lagann-hen]]"
 ---
 >[!summary] Synopsis
 >Simon and Kamina were born and raised in a deep, underground village, hidden from the fabled surface. Kamina is a free-spirited loose cannon bent on making a name for himself, while Simon is a timid young boy with no real aspirations. One day while excavating the earth, Simon stumbles upon a mysterious object that turns out to be the ignition key to an ancient artifact of war, which the duo dubs Lagann. Using their new weapon, Simon and Kamina fend off a surprise attack from the surface with the help of Yoko Littner, a hot-blooded redhead wielding a massive gun who wanders the world above.
@@ -31,5 +32,9 @@ Alternative Version:
 			<img src="https://cdn.myanimelist.net/images/anime/1270/115752.jpg" class="media-poster" alt="Broken link">
 		</a>
 		<p class="media-caption">Tengen Toppa Gurren Lagann Movie 1 Gurren-hen</p>
+		<a href="Tengen Toppa Gurren Lagann Movie 2 Lagann-hen" class="internal-link">
+			<img src="https://cdn.myanimelist.net/images/anime/12/19698.jpg" class="media-poster" alt="Broken link">
+		</a>
+		<p class="media-caption">Tengen Toppa Gurren Lagann Movie 2 Lagann-hen</p>
 	</div>
 </div>

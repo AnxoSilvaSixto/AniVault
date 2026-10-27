@@ -17,6 +17,8 @@ Demographic: []
 Cover: https://cdn.myanimelist.net/images/anime/1100/157173l.jpg
 MAL: https://myanimelist.net/anime/61897
 Rating: 6
+Prequels:
+  - "[[Katainaka no Ossan, Kensei ni Naru]]"
 ---
 > [!summary] Synopsis
 > Second season of Katainaka no Ossan, Kensei ni Naru.

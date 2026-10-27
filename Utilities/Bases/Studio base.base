@@ -603,21 +603,6 @@ views:
       note.Studio: 182
       note.Episodes: 75
   - type: table
-    name: Namu Animation
-    filters:
-      and:
-        - Studio.contains(link("Namu Animation"))
-    order:
-      - file.name
-      - Studio
-      - Episodes
-      - Aired
-    sort: []
-    columnSize:
-      file.name: 271
-      note.Studio: 182
-      note.Episodes: 75
-  - type: table
     name: Nexus
     filters:
       and:
