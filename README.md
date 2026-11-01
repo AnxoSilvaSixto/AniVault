@@ -23,7 +23,7 @@ AniVault is a local-first Obsidian vault for tracking watched anime. Every entry
 
 ## 📊 Collection Stats
 
-> Snapshot as of `2026-10-27`. Live counts: open `Utilities/Bases/Anime tracker.base` or run `vault-inspector`.
+> Snapshot as of `2026-11-01`. Live counts: open `Utilities/Bases/Anime tracker.base` or run `vault-inspector`.
 
 | Category | Count | Notes |
 |----------|-------|-------|
@@ -126,4 +126,4 @@ Stats are auto-maintained: run `python ..\bs\Utilities\Scripts\update_readme.py`
 
 ---
 
-*Last updated: 2026-10-27 · Vault: 376 anime · 184 refs · 19 pending*
+*Last updated: 2026-11-01 · Vault: 376 anime · 184 refs · 19 pending*
