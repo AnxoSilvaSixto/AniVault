@@ -24,7 +24,7 @@ __export(main_exports, {
   migrateExcalidrawFrontmatterKey: () => migrateExcalidrawFrontmatterKey
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian9 = require("obsidian");
+var import_obsidian10 = require("obsidian");
 
 // src/report/InspectorView.ts
 var import_obsidian4 = require("obsidian");
@@ -172,6 +172,7 @@ function formatDuration(ms) {
 
 // src/report/render-summary.ts
 function renderSummary(container, result, options) {
+  var _a, _b;
   const duration = formatDuration(result.finishedAt - result.startedAt);
   const summary = container.createDiv({ cls: "vi-summary" });
   summary.createEl("h2", { text: "Scan results" });
@@ -181,6 +182,15 @@ function renderSummary(container, result, options) {
   meta.createSpan({ text: duration });
   meta.createSpan({ text: `${result.scannersRun.length} scanners` });
   meta.createSpan({ text: `Ignored ${result.ignoredIssues.length}` });
+  const exclusions = (_b = (_a = result.exclusions) == null ? void 0 : _a.filter((entry) => entry.ruleCount > 0)) != null ? _b : [];
+  if (exclusions.length > 0) {
+    const details = summary.createEl("details");
+    details.createEl("summary", { text: "Scan exclusions" });
+    for (const entry of exclusions) {
+      details.createDiv({ text: `${SCANNER_LABELS[entry.scannerId]}: ${entry.excludedFiles} files excluded by ${entry.ruleCount} rule(s)` });
+    }
+    details.createDiv({ text: "Excluded notes still count as link targets and reference sources. Manage rules in settings." });
+  }
 }
 function renderChanges(summary, result, options) {
   const comparison = options.comparison;
@@ -2061,6 +2071,78 @@ var InspectorView = class extends import_obsidian4.ItemView {
   }
 };
 
+// src/utils/file-types.ts
+var ATTACHMENT_EXTENSIONS = /* @__PURE__ */ new Set([
+  "png",
+  "jpg",
+  "jpeg",
+  "gif",
+  "svg",
+  "webp",
+  "pdf",
+  "mp3",
+  "mp4",
+  "wav",
+  "mov",
+  "zip"
+]);
+function isAttachment(path) {
+  const ext = getExtension(path);
+  return ext !== "" && ATTACHMENT_EXTENSIONS.has(ext);
+}
+function isMarkdown(path) {
+  const ext = getExtension(path);
+  return ext === "md";
+}
+
+// src/utils/tags.ts
+function normalizeTagName(value) {
+  return value.trim().replace(/^#/, "");
+}
+
+// src/scanner/exclusions.ts
+function normalizeExclusionRules(rules) {
+  const merged = /* @__PURE__ */ new Map();
+  for (const rule of rules) {
+    const value = rule.kind === "tag" ? normalizeTagName(rule.value).toLowerCase() : normalizePath(rule.value.trim());
+    if (!value) continue;
+    const scanners = rule.scanners === "all" ? "all" : SCANNER_IDS.filter((id) => rule.scanners.includes(id));
+    if (scanners !== "all" && !scanners.length) continue;
+    const key = JSON.stringify([rule.kind, value]);
+    const previous2 = merged.get(key);
+    const scope = (previous2 == null ? void 0 : previous2.scanners) === "all" || scanners === "all" ? "all" : SCANNER_IDS.filter((id) => scanners.includes(id) || (previous2 == null ? void 0 : previous2.scanners.includes(id)));
+    merged.set(key, { kind: rule.kind, value, scanners: scope });
+  }
+  return [...merged.entries()].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([, rule]) => rule);
+}
+function getExclusionRules(settings) {
+  var _a;
+  return normalizeExclusionRules([
+    ...(_a = settings.exclusionRules) != null ? _a : [],
+    ...settings.ignoredFolders.map((value) => ({ kind: "folder", value, scanners: "all" })),
+    ...SCANNER_IDS.flatMap((id) => {
+      var _a2;
+      return ((_a2 = settings.ignoredFoldersByScanner[id]) != null ? _a2 : []).map((value) => ({ kind: "folder", value, scanners: [id] }));
+    })
+  ]);
+}
+function collectNoteTags(cache) {
+  var _a, _b;
+  const frontmatter = (_a = cache == null ? void 0 : cache.frontmatter) == null ? void 0 : _a.tags;
+  const values = Array.isArray(frontmatter) ? frontmatter : typeof frontmatter === "string" ? [frontmatter] : [];
+  return [...new Set([
+    ...values.filter((value) => typeof value === "string"),
+    ...((_b = cache == null ? void 0 : cache.tags) != null ? _b : []).map((tag) => tag.tag)
+  ].map((tag) => normalizeTagName(tag).toLowerCase()).filter(Boolean))];
+}
+function matchesExclusion(rule, path, tags) {
+  return rule.kind === "folder" ? isInFolder(path, rule.value) : tags.some((tag) => tag === rule.value || tag.startsWith(`${rule.value}/`));
+}
+function isExcludedFile(ctx, path) {
+  var _a;
+  return ((_a = ctx.excludedPaths) == null ? void 0 : _a.has(path)) === true || isIgnoredPath(path, ctx.ignoredFolders);
+}
+
 // src/utils/vault-links.ts
 var indexCache = /* @__PURE__ */ new WeakMap();
 function getLinkTarget(linkText) {
@@ -2350,6 +2432,12 @@ var ScanRunner = class {
       emptyNoteWordThreshold: settings.emptyNoteWordThreshold,
       referenceIndex
     };
+    const rules = getExclusionRules(settings);
+    const tagsByPath = new Map(rules.some((rule) => rule.kind === "tag") ? markdownFiles.map((file) => {
+      var _a2, _b2;
+      return [file.path, collectNoteTags((_b2 = (_a2 = app.metadataCache).getFileCache) == null ? void 0 : _b2.call(_a2, file))];
+    }) : []);
+    const exclusions = [];
     const scannersRun = [];
     const issues = [];
     const ignoredIssues = [];
@@ -2374,7 +2462,15 @@ var ScanRunner = class {
       }
       scannersRun.push(scanner.id);
       emitProgress("scanner-start");
+      const scannerRules = rules.filter((rule) => rule.scanners === "all" || rule.scanners.includes(scanner.id));
+      const excludedPaths = new Set(allFiles.filter((file) => scannerRules.some((rule) => {
+        var _a2;
+        return matchesExclusion(rule, file.path, (_a2 = tagsByPath.get(file.path)) != null ? _a2 : []);
+      })).map((file) => file.path));
+      const subjects = scanner.id === "orphan-attachments" ? allFiles.filter((file) => isAttachment(file.path)) : scanner.id === "duplicate-files" || scanner.id === "large-files" ? allFiles : markdownFiles;
+      exclusions.push({ scannerId: scanner.id, excludedFiles: subjects.filter((file) => excludedPaths.has(file.path)).length, ruleCount: scannerRules.length });
       const scannerContext = {
+        excludedPaths,
         ...ctx,
         ignoredFolders: getEffectiveIgnoredFolders(
           settings.ignoredFolders,
@@ -2407,6 +2503,7 @@ var ScanRunner = class {
       issues,
       ignoredIssues,
       filesScanned: allFiles.length,
+      exclusions,
       scannersRun
     };
   }
@@ -2449,7 +2546,7 @@ var brokenLinksScanner = {
     const issues = [];
     const { markdownFiles, metadataCache } = ctx;
     for (const file of markdownFiles) {
-      if (isIgnoredPath(file.path, ctx.ignoredFolders)) continue;
+      if (isExcludedFile(ctx, file.path)) continue;
       const cache = metadataCache.getFileCache(file);
       if (!cache) continue;
       const meta = metadataCache;
@@ -2754,7 +2851,7 @@ var duplicateFilesScanner = {
     var _a, _b, _c;
     const issues = [];
     const files = ctx.allFiles.filter(
-      (f) => f.stat.size > 0 && !isIgnoredPath(f.path, ctx.ignoredFolders)
+      (f) => f.stat.size > 0 && !isExcludedFile(ctx, f.path)
     );
     const filesByPath = new Map(files.map((file) => [file.path, file]));
     const index2 = ctx.referenceIndex;
@@ -2941,7 +3038,7 @@ var emptyNotesScanner = {
     const issues = [];
     const index2 = ctx.referenceIndex;
     for (const file of ctx.markdownFiles) {
-      if (isIgnoredPath(file.path, ctx.ignoredFolders)) continue;
+      if (isExcludedFile(ctx, file.path)) continue;
       const content3 = await ctx.vault.cachedRead(file);
       const body = stripFrontmatterAndTitle(content3);
       const wordCount = countWords(body);
@@ -3240,7 +3337,7 @@ async function collectExternalUrls(ctx) {
   const entries = [];
   const seen = /* @__PURE__ */ new Set();
   for (const file of ctx.markdownFiles) {
-    if (isIgnoredPath(file.path, ctx.ignoredFolders)) continue;
+    if (isExcludedFile(ctx, file.path)) continue;
     const cache = ctx.metadataCache.getFileCache(file);
     if (!cache) continue;
     const links = (_a = cache.links) != null ? _a : [];
@@ -3654,7 +3751,7 @@ var frontmatterTypesScanner = {
     const ignoredProps = new Set(ctx.ignoredProperties);
     const propertyTypes = /* @__PURE__ */ new Map();
     for (const file of ctx.markdownFiles) {
-      if (isIgnoredPath(file.path, ctx.ignoredFolders)) continue;
+      if (isExcludedFile(ctx, file.path)) continue;
       const cache = ctx.metadataCache.getFileCache(file);
       const frontmatter = cache == null ? void 0 : cache.frontmatter;
       if (!frontmatter) continue;
@@ -3733,37 +3830,13 @@ var frontmatterTypesScanner = {
   }
 };
 
-// src/utils/file-types.ts
-var ATTACHMENT_EXTENSIONS = /* @__PURE__ */ new Set([
-  "png",
-  "jpg",
-  "jpeg",
-  "gif",
-  "svg",
-  "webp",
-  "pdf",
-  "mp3",
-  "mp4",
-  "wav",
-  "mov",
-  "zip"
-]);
-function isAttachment(path) {
-  const ext = getExtension(path);
-  return ext !== "" && ATTACHMENT_EXTENSIONS.has(ext);
-}
-function isMarkdown(path) {
-  const ext = getExtension(path);
-  return ext === "md";
-}
-
 // src/scanner/scanners/large-files.ts
 var largeFilesScanner = {
   id: "large-files",
   scan(ctx) {
     const issues = [];
     for (const file of ctx.allFiles) {
-      if (isIgnoredPath(file.path, ctx.ignoredFolders)) continue;
+      if (isExcludedFile(ctx, file.path)) continue;
       const isMd = isMarkdown(file.path);
       if (isMd && isIgnoredLargeMarkdown(file, ctx)) continue;
       const threshold = isMd ? ctx.largeMarkdownBytes : ctx.largeAttachmentBytes;
@@ -3819,7 +3892,7 @@ var orphanAttachmentsScanner = {
     const issues = [];
     const index2 = ctx.referenceIndex;
     for (const file of ctx.allFiles) {
-      if (isIgnoredPath(file.path, ctx.ignoredFolders)) continue;
+      if (isExcludedFile(ctx, file.path)) continue;
       if (!isAttachment(file.path)) continue;
       if (isReferenced(index2, file.path)) continue;
       const severity = isRecent(file.stat.mtime) ? "info" : "warning";
@@ -3899,11 +3972,6 @@ function isRecent(mtime) {
   return mtime > oneWeekAgo;
 }
 
-// src/utils/tags.ts
-function normalizeTagName(value) {
-  return value.trim().replace(/^#/, "");
-}
-
 // src/scanner/scanners/tag-usage.ts
 var tagUsageScanner = {
   id: "tag-usage",
@@ -3917,7 +3985,7 @@ var tagUsageScanner = {
     );
     const watchedSet = new Set(watchedTags);
     for (const file of ctx.markdownFiles) {
-      if (isIgnoredPath(file.path, ctx.ignoredFolders)) continue;
+      if (isExcludedFile(ctx, file.path)) continue;
       const cache = ctx.metadataCache.getFileCache(file);
       if (!cache) continue;
       const tags = collectTags(cache);
@@ -3971,12 +4039,12 @@ var tagUsageScanner = {
         scannerId: "tag-usage",
         severity: "info",
         title: "Missing watched tag",
-        message: `Watched tag "${watchedTag}" does not appear in the vault`,
+        message: `Watched tag "${watchedTag}" does not appear in the current scan scope`,
         relatedPaths: [],
         evidence: { tag: watchedTag, count: 0, watched: true },
         ...describeFinding(
           "confirmed",
-          `Tag "${watchedTag}" is in the configured watchlist but does not appear in the vault.`,
+          `Tag "${watchedTag}" is in the configured watchlist but does not appear in the current scan scope.`,
           "Add the tag where expected or remove it from the watchlist.",
           "The tag may have been intentionally retired or renamed."
         ),
@@ -4038,6 +4106,7 @@ function createEmptyIgnoredFoldersByScanner() {
   return result;
 }
 var DEFAULT_SETTINGS = {
+  exclusionRules: [],
   enabledScanners: Object.fromEntries(
     SCANNER_IDS.map((id) => [id, id !== "external-links"])
   ),
@@ -4062,13 +4131,130 @@ var DEFAULT_SETTINGS = {
 };
 
 // src/settings/settings-tab.ts
+var import_obsidian7 = require("obsidian");
+
+// src/settings/exclusion-settings.ts
 var import_obsidian6 = require("obsidian");
-function parseFolderList(value) {
-  return [...new Set(
-    value.split(",").map((folder) => folder.trim()).filter(Boolean)
-  )];
+function replaceExclusionRules(settings, rules) {
+  settings.exclusionRules = normalizeExclusionRules(rules);
+  settings.ignoredFolders = [];
+  settings.ignoredFoldersByScanner = createEmptyIgnoredFoldersByScanner();
 }
-var InspectorSettingTab = class extends import_obsidian6.PluginSettingTab {
+var ExclusionEditor = class extends import_obsidian6.Modal {
+  constructor(app, rule, save) {
+    super(app);
+    this.rule = rule;
+    this.save = save;
+  }
+  onOpen() {
+    this.setTitle("Scan exclusion");
+    const draft = structuredClone(this.rule);
+    let all2 = draft.scanners === "all";
+    const selected = new Set(all2 ? [] : draft.scanners);
+    const scannerRows = [];
+    new import_obsidian6.Setting(this.contentEl).setName("Match by").addDropdown((dropdown) => dropdown.addOption("folder", "Folder").addOption("tag", "Tag").setValue(draft.kind).onChange((value) => {
+      draft.kind = value === "tag" ? "tag" : "folder";
+    }));
+    new import_obsidian6.Setting(this.contentEl).setName("Folder or tag").setDesc("Use a vault-relative folder or tag name. Tags include subtags and match inline tags and frontmatter tags. References from excluded notes remain available to other checks.").addText((text3) => text3.setValue(draft.value).setPlaceholder("E.g. Archive or #archive").onChange((value) => {
+      draft.value = value;
+    }));
+    new import_obsidian6.Setting(this.contentEl).setName("Apply to").addDropdown((dropdown) => dropdown.addOption("all", "All scanners").addOption("selected", "Selected scanners").setValue(all2 ? "all" : "selected").onChange((value) => {
+      all2 = value === "all";
+      for (const row of scannerRows) row.settingEl.hidden = all2;
+    }));
+    for (const id of SCANNER_IDS) {
+      const row = new import_obsidian6.Setting(this.contentEl).setName(SCANNER_LABELS[id]).addToggle((toggle) => {
+        toggle.setValue(selected.has(id)).onChange((value) => {
+          if (value) selected.add(id);
+          else selected.delete(id);
+        });
+      });
+      row.settingEl.hidden = all2;
+      row.settingEl.addClass("vi-exclusion-scanner");
+      scannerRows.push(row);
+    }
+    new import_obsidian6.Setting(this.contentEl).addButton((button) => button.setButtonText("Cancel").onClick(() => this.close())).addButton((button) => button.setButtonText("Save").setCta().onClick(async () => {
+      draft.scanners = all2 ? "all" : [...selected];
+      const normalized = normalizeExclusionRules([draft]);
+      if (!normalized.length) {
+        new import_obsidian6.Notice("Enter a folder or tag and select at least one scanner.");
+        return;
+      }
+      if (await this.save(normalized[0])) this.close();
+    }));
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+};
+function exclusionSettingItems(plugin, refresh) {
+  const rules = getExclusionRules(plugin.settings);
+  const persist = async (updated) => {
+    const previous2 = {
+      exclusionRules: plugin.settings.exclusionRules,
+      ignoredFolders: plugin.settings.ignoredFolders,
+      ignoredFoldersByScanner: plugin.settings.ignoredFoldersByScanner
+    };
+    replaceExclusionRules(plugin.settings, updated);
+    try {
+      await plugin.saveSettings();
+    } catch (e) {
+      Object.assign(plugin.settings, previous2);
+      new import_obsidian6.Notice("Could not save scan exclusions. Check available disk space and vault permissions, then try again.");
+      return false;
+    }
+    refresh();
+    return true;
+  };
+  return [
+    ...rules.map((rule, index2) => ({
+      name: `${rule.kind === "tag" ? "Tag" : "Folder"}: ${rule.value}`,
+      desc: rule.scanners === "all" ? "All scanners" : rule.scanners.map((id) => SCANNER_LABELS[id]).join(", "),
+      render: (setting) => {
+        setting.addButton((button) => button.setButtonText("Edit").onClick(() => {
+          new ExclusionEditor(plugin.app, rule, async (updated) => {
+            return persist(rules.map((existing, i) => i === index2 ? updated : existing));
+          }).open();
+        })).addButton((button) => button.setButtonText("Remove").onClick(async () => {
+          await persist(rules.filter((_, i) => i !== index2));
+        }));
+      }
+    })),
+    {
+      name: "Add exclusion",
+      desc: "Exclude folders or tagged notes from all or selected scanners. Tags include subtags, inline tags, and frontmatter tags. Excluded notes still contribute references to other checks.",
+      render: (setting) => {
+        setting.addButton((button) => button.setButtonText("Add exclusion").onClick(() => {
+          new ExclusionEditor(plugin.app, { kind: "folder", value: "", scanners: "all" }, async (rule) => {
+            return persist([...rules, rule]);
+          }).open();
+        }));
+      }
+    }
+  ];
+}
+function exclusionSettingsDefinition(plugin) {
+  return {
+    name: "Exclusion rules",
+    desc: "Exclude folders or tagged notes from all or selected scanners.",
+    render: (setting) => {
+      const container = setting.settingEl;
+      container.addClass("vi-exclusion-rules");
+      const refresh = () => {
+        container.empty();
+        for (const item of exclusionSettingItems(plugin, refresh)) {
+          const row = new import_obsidian6.Setting(container).setName(item.name);
+          if (item.desc !== void 0) row.setDesc(item.desc);
+          item.render(row);
+        }
+      };
+      refresh();
+    }
+  };
+}
+
+// src/settings/settings-tab.ts
+var InspectorSettingTab = class extends import_obsidian7.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -4085,13 +4271,16 @@ var InspectorSettingTab = class extends import_obsidian6.PluginSettingTab {
     }));
   }
   display() {
+    this.renderSettings();
+  }
+  renderSettings() {
     const { containerEl } = this;
     containerEl.empty();
-    new import_obsidian6.Setting(containerEl).setName("Scanning").setHeading();
+    new import_obsidian7.Setting(containerEl).setName("Scanning").setHeading();
     for (const section of this.getSections()) {
-      new import_obsidian6.Setting(containerEl).setName(section.heading).setHeading();
+      new import_obsidian7.Setting(containerEl).setName(section.heading).setHeading();
       for (const item of section.items) {
-        const setting = new import_obsidian6.Setting(containerEl).setName(item.name);
+        const setting = new import_obsidian7.Setting(containerEl).setName(item.name);
         if (item.desc !== void 0) {
           setting.setDesc(item.desc);
         }
@@ -4282,18 +4471,6 @@ var InspectorSettingTab = class extends import_obsidian6.PluginSettingTab {
         heading: "Ignored items",
         items: [
           {
-            name: "Ignored folders (comma-separated)",
-            desc: "Files in these folders are excluded from every scanner.",
-            render: (setting) => {
-              setting.addText(
-                (text3) => text3.setValue(this.plugin.settings.ignoredFolders.join(", ")).setPlaceholder("E.g. Templates, archive").onChange(async (value) => {
-                  this.plugin.settings.ignoredFolders = parseFolderList(value);
-                  await this.plugin.saveSettings();
-                })
-              );
-            }
-          },
-          {
             name: "Ignore unresolved note links",
             desc: "Unresolved plain wikilinks such as [[Future Note]] are treated as intentional. Embeds, missing attachments, Markdown links, and missing headings are still reported. Path-like wikilinks are also ignored, so leave this off when typos must fail the scan.",
             render: (setting) => {
@@ -4320,21 +4497,8 @@ var InspectorSettingTab = class extends import_obsidian6.PluginSettingTab {
         ]
       },
       {
-        heading: "Scanner-specific ignored folders",
-        items: SCANNER_IDS.map((id) => ({
-          name: SCANNER_LABELS[id],
-          desc: `Additional folders excluded only from ${SCANNER_LABELS[id]}.`,
-          render: (setting) => {
-            setting.addText(
-              (text3) => text3.setValue(
-                this.plugin.settings.ignoredFoldersByScanner[id].join(", ")
-              ).setPlaceholder("E.g. Templates, archive").onChange(async (value) => {
-                this.plugin.settings.ignoredFoldersByScanner[id] = parseFolderList(value);
-                await this.plugin.saveSettings();
-              })
-            );
-          }
-        }))
+        heading: "Scan exclusions",
+        items: [exclusionSettingsDefinition(this.plugin)]
       },
       {
         heading: "Export",
@@ -4359,7 +4523,7 @@ var InspectorSettingTab = class extends import_obsidian6.PluginSettingTab {
 
 // src/report/markdown-export.ts
 function generateMarkdownReport(result, mode = "full") {
-  var _a, _b, _c;
+  var _a, _b, _c, _d, _e;
   const lines = [];
   const now = /* @__PURE__ */ new Date();
   lines.push(mode === "summary" ? "# Vault Inspector Summary" : "# Vault Inspector Report");
@@ -4381,6 +4545,14 @@ function generateMarkdownReport(result, mode = "full") {
   lines.push(`| Warnings | ${warnings} |`);
   lines.push(`| Info | ${infos} |`);
   lines.push(``);
+  const exclusions = (_b = (_a = result.exclusions) == null ? void 0 : _a.filter((entry) => entry.ruleCount > 0)) != null ? _b : [];
+  if (exclusions.length > 0) {
+    lines.push("## Scan exclusions", "", "| Scanner | Excluded files | Rules |", "|---|---|---|");
+    for (const entry of exclusions) {
+      lines.push(`| ${SCANNER_LABELS[entry.scannerId]} | ${entry.excludedFiles} | ${entry.ruleCount} |`);
+    }
+    lines.push("", "Excluded notes remain link targets and reference sources. Counts are per scanner, not additive.", "");
+  }
   const grouped = groupByScanner2(result.issues);
   if (mode === "summary") {
     lines.push("Finding details are omitted from this summary.");
@@ -4390,13 +4562,13 @@ function generateMarkdownReport(result, mode = "full") {
     lines.push("| Scanner | Findings |");
     lines.push("|---|---|");
     for (const scannerId of result.scannersRun) {
-      lines.push(`| ${SCANNER_LABELS[scannerId]} | ${((_a = grouped[scannerId]) != null ? _a : []).length} |`);
+      lines.push(`| ${SCANNER_LABELS[scannerId]} | ${((_c = grouped[scannerId]) != null ? _c : []).length} |`);
     }
     lines.push(``);
     return lines.join("\n");
   }
   for (const scannerId of result.scannersRun) {
-    const issues = (_b = grouped[scannerId]) != null ? _b : [];
+    const issues = (_d = grouped[scannerId]) != null ? _d : [];
     lines.push(`## ${SCANNER_LABELS[scannerId]} (${issues.length})`);
     lines.push(``);
     if (issues.length === 0) {
@@ -4414,7 +4586,7 @@ function generateMarkdownReport(result, mode = "full") {
         lines.push(`- **Caveat:** ${escapeMd(issue.explanation.caveat)}`);
       }
       lines.push(`- **Next step:** ${escapeMd(issue.explanation.nextStep)}`);
-      const location = (_c = issue.primaryPath) != null ? _c : issue.relatedPaths[0];
+      const location = (_e = issue.primaryPath) != null ? _e : issue.relatedPaths[0];
       if (location) lines.push(`- **Location:** \`${escapeInlineCode(location)}\``);
       lines.push(`- **Message:** ${escapeMd(issue.message)}`);
       for (const detail of getMarkdownDetails(issue)) {
@@ -4549,13 +4721,13 @@ function escapeInlineCode(text3) {
 }
 
 // src/report/export-warning-modal.ts
-var import_obsidian7 = require("obsidian");
+var import_obsidian8 = require("obsidian");
 function showLargeReportWarningModal(app, details) {
   return new Promise((resolve) => {
     new LargeReportWarningModal(app, details, resolve).open();
   });
 }
-var LargeReportWarningModal = class extends import_obsidian7.Modal {
+var LargeReportWarningModal = class extends import_obsidian8.Modal {
   constructor(app, details, resolve) {
     super(app);
     this.details = details;
@@ -4620,7 +4792,7 @@ function getReportExportPreflight(report) {
 }
 
 // src/fix/fix-executor.ts
-var import_obsidian8 = require("obsidian");
+var import_obsidian9 = require("obsidian");
 
 // node_modules/mdast-util-to-string/lib/index.js
 var emptyOptions = {};
@@ -9538,7 +9710,7 @@ async function trashFiles(app, paths, fence) {
   for (const path of paths) {
     if (fence && !fence.ready) break;
     const file = app.vault.getAbstractFileByPath(path);
-    if (file instanceof import_obsidian8.TFile) {
+    if (file instanceof import_obsidian9.TFile) {
       const ready = fence ? await fence.mutate(file, null, () => app.fileManager.trashFile(file)) : (await app.fileManager.trashFile(file), true);
       count++;
       if (!ready) break;
@@ -9551,7 +9723,7 @@ async function removeLinkText(app, sourcePath, linkText, fence) {
 }
 async function replaceLinkText(app, sourcePath, original, replacement, legacyLinkText, fence) {
   const file = app.vault.getAbstractFileByPath(sourcePath);
-  if (!(file instanceof import_obsidian8.TFile) || fence && !fence.ready) return 0;
+  if (!(file instanceof import_obsidian9.TFile) || fence && !fence.ready) return 0;
   let affectedCount = 0;
   const write = async (expectContent) => {
     await app.vault.process(file, (content3) => {
@@ -10080,16 +10252,7 @@ function isRecord3(value) {
 async function createScanProfile(settings) {
   const canonical = {
     enabledScanners: SCANNER_IDS.filter((scannerId) => settings.enabledScanners[scannerId]),
-    ignoredFolders: normalizeFolders(settings.ignoredFolders),
-    ignoredFoldersByScanner: Object.fromEntries(
-      SCANNER_IDS.map((scannerId) => {
-        var _a;
-        return [
-          scannerId,
-          normalizeFolders((_a = settings.ignoredFoldersByScanner[scannerId]) != null ? _a : [])
-        ];
-      })
-    ),
+    exclusionRules: getExclusionRules(settings),
     ignoreUnresolvedNoteLinks: settings.ignoreUnresolvedNoteLinks,
     largeMarkdownBytes: settings.largeMarkdownBytes,
     largeAttachmentBytes: settings.largeAttachmentBytes,
@@ -10112,9 +10275,6 @@ function normalizeSet(values) {
 }
 function normalizeWatchedTags(values) {
   return normalizeSet(values.map(normalizeTagName).filter(Boolean));
-}
-function normalizeFolders(values) {
-  return normalizeSet(values.map(normalizePath).filter(Boolean));
 }
 
 // src/scanner/result-diff.ts
@@ -10328,7 +10488,7 @@ function openPluginSettings(app, pluginId) {
 }
 
 // src/main.ts
-var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
+var VaultInspectorPlugin = class extends import_obsidian10.Plugin {
   constructor() {
     super(...arguments);
     this.settings = DEFAULT_SETTINGS;
@@ -10339,7 +10499,7 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
     this.operationRunning = false;
     this.startupScanScheduler = null;
     this.scanRunner = new ScanRunner(async (url, method) => {
-      const response = await (0, import_obsidian9.requestUrl)({
+      const response = await (0, import_obsidian10.requestUrl)({
         url,
         method,
         headers: method === "GET" ? { Range: "bytes=0-0" } : void 0
@@ -10377,7 +10537,7 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
       now: () => Date.now(),
       whenSettled: (run) => this.app.workspace.onLayoutReady(run),
       runAutomaticScan: (settings) => this.enqueueOperation(() => runScanSession(this.scanDeps(), settings, {}, "automatic")),
-      notify: (message) => new import_obsidian9.Notice(message)
+      notify: (message) => new import_obsidian10.Notice(message)
     });
     this.startupScanScheduler.schedule();
     this.addRibbonIcon("shield-check", "Run scan", () => this.runScan());
@@ -10549,7 +10709,7 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
                 scanProfile
               );
               if (accepted.persistWarning) {
-                new import_obsidian9.Notice(
+                new import_obsidian10.Notice(
                   `Scan completed, but the comparison snapshot could not be saved: ${accepted.persistWarning}`
                 );
               }
@@ -10574,10 +10734,10 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
         const path = (_a = issue.primaryPath) != null ? _a : issue.relatedPaths[0];
         if (!path) return;
         const file = this.app.vault.getAbstractFileByPath(path);
-        if (file instanceof import_obsidian9.TFile) {
+        if (file instanceof import_obsidian10.TFile) {
           await view.revealIssue(issue);
         } else {
-          new import_obsidian9.Notice(`File not found: ${path}`);
+          new import_obsidian10.Notice(`File not found: ${path}`);
         }
       },
       onRunScan: () => {
@@ -10644,7 +10804,7 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
       }),
       onOpenScannerSettings: () => {
         if (openPluginSettings(this.app, this.manifest.id)) return;
-        new import_obsidian9.Notice([
+        new import_obsidian10.Notice([
           "Open Settings",
           "Vault Inspector",
           "Scanner-specific ignored folders."
@@ -10679,11 +10839,11 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
       this.viewHooks(view)
     );
     if (outcome.status === "failed") {
-      new import_obsidian9.Notice(`Vault Inspector scan failed: ${outcome.message}`);
+      new import_obsidian10.Notice(`Vault Inspector scan failed: ${outcome.message}`);
       return;
     }
     if (outcome.persistWarning) {
-      new import_obsidian9.Notice(
+      new import_obsidian10.Notice(
         `Scan completed, but the comparison snapshot could not be saved: ${outcome.persistWarning}`
       );
     }
@@ -10713,7 +10873,7 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
       this.viewHooks(view)
     );
     if (outcome.status === "failed") {
-      new import_obsidian9.Notice(`Vault Inspector scan failed: ${outcome.message}`);
+      new import_obsidian10.Notice(`Vault Inspector scan failed: ${outcome.message}`);
       return null;
     }
     return outcome.result;
@@ -10723,7 +10883,7 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
     const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_INSPECTOR);
     const view = (_a = leaves[0]) == null ? void 0 : _a.view;
     if (!view || !view.hasResult()) {
-      new import_obsidian9.Notice("Run a scan first before exporting.");
+      new import_obsidian10.Notice("Run a scan first before exporting.");
       return;
     }
     try {
@@ -10752,9 +10912,9 @@ var VaultInspectorPlugin = class extends import_obsidian9.Plugin {
         await this.app.vault.createFolder(folder);
       }
       await this.app.vault.create(filepath, report);
-      new import_obsidian9.Notice(`${exportKind} exported to ${filepath}`);
+      new import_obsidian10.Notice(`${exportKind} exported to ${filepath}`);
     } catch (error) {
-      new import_obsidian9.Notice(`Report export failed: ${errorMessage3(error)}`);
+      new import_obsidian10.Notice(`Report export failed: ${errorMessage3(error)}`);
     }
   }
 };
